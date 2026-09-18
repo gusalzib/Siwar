@@ -217,8 +217,13 @@ ProductSchema.index({
   'name.sv': 'text',
   'name.en': 'text',
   brand: 'text',
+  'ingredients.ar': 'text',
+  'ingredients.sv': 'text',
+  'ingredients.en': 'text',
 })
 
+// Multikey index for fast faceted filtering & allergen exclusions (FR-2)
+ProductSchema.index({ allergens: 1 })
 // ---------------------------------------------------------------------------
 // 4. Model Export
 // Prevents Nuxt/Nitro hot reload from recompiling existing Mongoose models
