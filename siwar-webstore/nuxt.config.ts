@@ -8,6 +8,10 @@ export default defineNuxtConfig({
     typeCheck: true,
   },
 
+  runtimeConfig: {
+    mongodbUri: process.env.MONGODB_URI,
+  },
+
   modules: [
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt',
