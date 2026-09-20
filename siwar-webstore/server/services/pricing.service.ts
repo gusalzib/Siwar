@@ -59,7 +59,6 @@ export function calculateJamforpris(
   netQuantity: number,
   unit: SupportedUnit
 ): number {
-  // TODO: Normalize quantity to base 1 kg or 1 L and apply half-up rounding
 
   if (netQuantity <= 0){
     throw new Error("Quantity must be greater than zero");
@@ -106,7 +105,6 @@ export function calculateMomsSplit(
   lineItems: LineItemInput[],
   shippingFeeMinor: number = 0
 ): MomsSplitResult {
-  // TODO: Iterate line items, calculate VAT per line with Math.round, and bucket results
 
   // the 12 tier for food products
     const moms12tier: TaxBracketBreakdown = {
