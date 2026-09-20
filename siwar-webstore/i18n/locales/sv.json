@@ -1,5 +1,10 @@
 {
   "welcome": "Välkommen till Siwar",
   "cart": "Varukorg",
-  "checkout": "Kassa"
+  "checkout": "Kassa",
+  "inventory": {
+    "IN_STOCK": "I lager",
+    "OUT_OF_STOCK_ONLINE": "Tillfälligt slut online",
+    "OUT_OF_STOCK": "Slut i lager"
+  }
 }
