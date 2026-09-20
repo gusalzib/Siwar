@@ -16,7 +16,7 @@ export interface IProductPrice {
 // Structure for net content size, used to calculate comparison prices (jämförpris)
 export interface INetQuantity {
   value: number // Numeric quantity (e.g., 400 or 1.5)
-  unit: 'g' | 'kg' | 'ml' | 'l' | 'st' | 'dl' | 'cl' // Measurement unit
+  unit: 'g' | 'kg' | 'ml' | 'l' | 'st' | 'dl' | 'cl' | 'قطعة'// Measurement unit
 }
 
 // Structure for product photography with accessibility alt text
