@@ -1,10 +1,18 @@
 {
   "welcome": "Välkommen till Siwar",
-  "cart": "Varukorg",
   "checkout": "Kassa",
   "inventory": {
     "IN_STOCK": "I lager",
     "OUT_OF_STOCK_ONLINE": "Tillfälligt slut online",
     "OUT_OF_STOCK": "Slut i lager"
+  },
+  "cart": {
+    "cart": "Varukorg",
+    "validation": {
+      "OK": "Varan lades till i varukorgen",
+      "EXCEEDS_AVAILABLE_STOCK": "Endast {count} st fanns tillgängliga online. Antalet i din varukorg har justerats.",
+      "OUT_OF_STOCK_ONLINE": "Varan är tyvärr tillfälligt slut online.",
+      "INVALID_QUANTITY": "Ogiltigt antal angivet."
+    }
   }
 }
