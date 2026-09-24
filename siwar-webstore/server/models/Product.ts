@@ -1,5 +1,5 @@
 // server/models/Product.ts
-import { Schema, model, models, type Document, type Types, type Model } from 'mongoose'
+import mongoose, { Schema, model, type Document, type Types, type Model } from 'mongoose'
 
 // ---------------------------------------------------------------------------
 // 1. TypeScript Interfaces
@@ -228,4 +228,4 @@ ProductSchema.index({ allergens: 1 })
 // 4. Model Export
 // Prevents Nuxt/Nitro hot reload from recompiling existing Mongoose models
 // ---------------------------------------------------------------------------
-export const Product = (models.Product as Model<IProduct>) || model<IProduct>('Product', ProductSchema)
+export const Product = (mongoose.models.Product as Model<IProduct>) || model<IProduct>('Product', ProductSchema)

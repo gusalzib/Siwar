@@ -1,5 +1,5 @@
 // server/models/Allergen.ts
-import { Schema, model, models, type Document, type Model } from 'mongoose'
+import mongoose, { Schema, model, type Document, type Model } from 'mongoose'
 
 // Blueprint for the Allergen entity
 export interface IAllergen extends Document {
@@ -45,4 +45,4 @@ const AllergenSchema = new Schema<IAllergen>(
   }
 )
 
-export const Allergen = (models.Allergen as Model<IAllergen>) || model<IAllergen>('Allergen', AllergenSchema)
+export const Allergen = (mongoose.models.Allergen as Model<IAllergen>) || model<IAllergen>('Allergen', AllergenSchema)
