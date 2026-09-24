@@ -1,5 +1,18 @@
 {
   "welcome": "Welcome to Siwar",
-  "cart": "Shopping Cart",
-  "checkout": "Checkout"
+  "checkout": "Checkout",
+  "inventory": {
+      "IN_STOCK": "In stock",
+      "OUT_OF_STOCK_ONLINE": "Temporarily out of stock online",
+      "OUT_OF_STOCK": "Out of stock"
+  },
+  "cart": {
+    "cart": "Shopping Cart",
+    "validation": {
+      "OK": "Item added to cart",
+      "EXCEEDS_AVAILABLE_STOCK": "Only {count} items were available online. Your cart quantity has been adjusted.",
+      "OUT_OF_STOCK_ONLINE": "Item is temporarily out of stock online.",
+      "INVALID_QUANTITY": "Invalid quantity specified."
+    }
+  }
 }
