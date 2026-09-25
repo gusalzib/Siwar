@@ -217,7 +217,7 @@ describe('Inventory Service - evaluateCheckoutStock', () => {
     expect(result.summaryMessage).toBe('CART_STOCK_ADJUSTED')
 
     expect(result.items).toHaveLength(1)
-    expect(result.items[0]).toEqual({
+    expect(result.items[0]!).toEqual({
       productId: 'prod_halva',
       requestedQuantity: 2,
       availableStock: 0,
@@ -242,8 +242,8 @@ describe('Inventory Service - evaluateCheckoutStock', () => {
 
     expect(result.isValid).toBe(false)
     expect(result.hasAdjustments).toBe(true)
-    expect(result.items[0].adjustedQuantity).toBe(2)
-    expect(result.items[0].code).toBe('EXCEEDS_AVAILABLE_STOCK')
+    expect(result.items[0]!.adjustedQuantity).toBe(2)
+    expect(result.items[0]!.code).toBe('EXCEEDS_AVAILABLE_STOCK')
   })
 
   it('approves checkout when all cart items are fully available in live stock', () => {
@@ -276,7 +276,7 @@ describe('Inventory Service - evaluateCheckoutStock', () => {
 
     expect(result.isValid).toBe(false)
     expect(result.hasAdjustments).toBe(true)
-    expect(result.items[0]).toEqual({
+    expect(result.items[0]!).toEqual({
       productId: 'prod_deleted',
       requestedQuantity: 1,
       availableStock: 0,
