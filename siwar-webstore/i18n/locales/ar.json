@@ -1,5 +1,8 @@
 {
   "welcome": "مرحباً بكم في سوار",
+  "storeName": "متجر سوار",
+  
+  "welcomeMessage": "اكتشف الشرق مع سوار",
   "checkout": "الدفع",
 
   "inventory": {
@@ -15,7 +18,24 @@
         "OUT_OF_STOCK_ONLINE": "نفدت الكمية المتاحة عبر الإنترنت مؤقتاً.",
         "INVALID_QUANTITY": "الكمية المحددة غير صالحة."
       }
+  },
+  "admin": {
+    "login": {
+      "adminLogin": "تسجيل دخول المشرف",
+      "title": "لوحة إدارة متجر سوار",
+      "subtitle": "قم بتسجيل الدخول باستخدام بيانات المسؤول لإدارة المتجر",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "admin{'@'}siwar.se",
+      "passwordLabel": "كلمة المرور",
+      "passwordPlaceholder": "••••••••••••",
+      "togglePassword": "عرض كلمة المرور",
+      "submit": "تسجيل الدخول",
+      "submitting": "جارٍ تسجيل الدخول...",
+      "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "callToAction": {
+    "startShopping": "ابدأ التسوق"
   }
-
 }
 

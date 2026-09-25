@@ -1,5 +1,8 @@
 {
   "welcome": "Welcome to Siwar",
+  "storeName": "Siwar Webstore",
+  
+  "welcomeMessage": "Explore the orient with Siwar",
   "checkout": "Checkout",
   "inventory": {
       "IN_STOCK": "In stock",
@@ -14,5 +17,23 @@
       "OUT_OF_STOCK_ONLINE": "Item is temporarily out of stock online.",
       "INVALID_QUANTITY": "Invalid quantity specified."
     }
+  },
+  "admin": {
+    "login": {
+      "adminLogin": "Admin Login",
+      "title": "Siwar Store Administration",
+      "subtitle": "Log in with your administrator credentials to manage the store",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "admin{'@'}siwar.se",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••••••",
+      "togglePassword": "Show password",
+      "submit": "Log In",
+      "submitting": "Logging in...",
+      "invalidCredentials": "Invalid email or password. Please try again."
+    }
+  },
+  "callToAction":{
+    "startShopping": "Start Shopping"
   }
 }

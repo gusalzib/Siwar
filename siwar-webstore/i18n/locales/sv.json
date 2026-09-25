@@ -1,5 +1,8 @@
 {
   "welcome": "Välkommen till Siwar",
+  "storeName": "Siwar Webstore",
+  
+  "welcomeMessage": "Upptäck orienten med Siwar",
   "checkout": "Kassa",
   "inventory": {
     "IN_STOCK": "I lager",
@@ -14,5 +17,23 @@
       "OUT_OF_STOCK_ONLINE": "Varan är tyvärr tillfälligt slut online.",
       "INVALID_QUANTITY": "Ogiltigt antal angivet."
     }
+  },
+  "admin": {
+    "login": {
+      "adminLogin": "Admininloggning",
+      "title": "Siwar Butiksadministration",
+      "subtitle": "Logga in med dina administratörsuppgifter för att hantera butiken",
+      "emailLabel": "E-postadress",
+      "emailPlaceholder": "admin{'@'}siwar.se",
+      "passwordLabel": "Lösenord",
+      "passwordPlaceholder": "••••••••••••",
+      "togglePassword": "Visa lösenord",
+      "submit": "Logga in",
+      "submitting": "Loggar in...",
+      "invalidCredentials": "Ogiltig e-postadress eller lösenord. Försök igen."
+    }
+  },
+  "callToAction": {
+    "startShopping": "Börja handla"
   }
 }
