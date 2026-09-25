@@ -84,21 +84,21 @@ function getLocalizedText(obj?: Record<string, string>): string {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 p-6 md:p-10">
+  <div class="min-h-screen bg-base-200 p-6 md:p-10">
     <div class="mx-auto max-w-7xl space-y-6">
       <!-- Header & Add Button -->
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 class="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 class="text-2xl font-bold tracking-tight text-base-content">
             {{ t('admin.products.title') }}
           </h1>
-          <p class="text-sm text-slate-500">
+          <p class="text-sm text-base-content/60">
             {{ t('admin.products.subtitle') }}
           </p>
         </div>
         <NuxtLink
           to="/admin/products/new"
-          class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          class="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-content shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -108,7 +108,7 @@ function getLocalizedText(obj?: Record<string, string>): string {
       </div>
 
       <!-- Filters Panel -->
-      <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <!-- Keyword Search -->
           <div>
@@ -118,7 +118,7 @@ function getLocalizedText(obj?: Record<string, string>): string {
               v-model="searchQuery"
               type="text"
               :placeholder="t('admin.products.searchPlaceholder')"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              class="w-full rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm text-base-content placeholder-base-content/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -126,7 +126,7 @@ function getLocalizedText(obj?: Record<string, string>): string {
           <div>
             <select
               v-model="selectedCategory"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              class="w-full rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">{{ t('admin.products.filters.allCategories') }}</option>
               <option v-for="cat in categories" :key="cat.id" :value="cat.id">
@@ -139,7 +139,7 @@ function getLocalizedText(obj?: Record<string, string>): string {
           <div>
             <select
               v-model="selectedStockStatus"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              class="w-full rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="all">{{ t('admin.products.filters.stockLevel.all') }}</option>
               <option value="low">{{ t('admin.products.filters.stockLevel.lowStock') }}</option>
@@ -153,9 +153,9 @@ function getLocalizedText(obj?: Record<string, string>): string {
               id="missing-translations"
               v-model="onlyMissingTranslations"
               type="checkbox"
-              class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+              class="h-4 w-4 rounded border-base-300 bg-base-100 text-primary focus:ring-primary"
             />
-            <label for="missing-translations" class="text-sm font-medium text-slate-700 cursor-pointer">
+            <label for="missing-translations" class="text-sm font-medium text-base-content/80 cursor-pointer">
               {{ t('admin.products.filters.translations.missing') }}
             </label>
           </div>
@@ -169,7 +169,7 @@ function getLocalizedText(obj?: Record<string, string>): string {
           <button
             type="button"
             @click="resetFilters"
-            class="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+            class="text-xs font-semibold text-primary hover:text-primary/80"
           >
             {{ t('admin.products.filters.reset') }}
           </button>
@@ -177,10 +177,10 @@ function getLocalizedText(obj?: Record<string, string>): string {
       </div>
 
       <!-- Data Table -->
-      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm">
         <div class="overflow-x-auto">
-          <table class="w-full border-collapse text-left text-sm text-slate-600">
-            <thead class="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+          <table class="w-full border-collapse text-left text-sm text-base-content/80">
+            <thead class="border-b border-base-300 bg-base-200 text-xs font-semibold uppercase text-base-content/60">
               <tr>
                 <th scope="col" class="px-4 py-3.5">{{ t('admin.products.table.image') }}</th>
                 <th scope="col" class="px-4 py-3.5">{{ t('admin.products.table.product') }}</th>
@@ -191,10 +191,10 @@ function getLocalizedText(obj?: Record<string, string>): string {
                 <th scope="col" class="px-4 py-3.5 text-right">{{ t('admin.products.table.actions') }}</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-200">
+            <tbody class="divide-y divide-base-300">
               <!-- Loading State -->
               <tr v-if="isLoading">
-                <td colspan="7" class="px-4 py-12 text-center text-sm text-slate-400">
+                <td colspan="7" class="px-4 py-12 text-center text-sm text-base-content/60">
                   {{ t('admin.products.loading') }}
                 </td>
               </tr>
@@ -202,8 +202,8 @@ function getLocalizedText(obj?: Record<string, string>): string {
               <!-- Empty State -->
               <tr v-else-if="!products || products.length === 0">
                 <td colspan="7" class="px-4 py-12 text-center">
-                  <p class="font-medium text-slate-800">{{ t('admin.products.empty.title') }}</p>
-                  <p class="mt-1 text-sm text-slate-400">{{ t('admin.products.empty.description') }}</p>
+                  <p class="font-medium text-base-content">{{ t('admin.products.empty.title') }}</p>
+                  <p class="mt-1 text-sm text-base-content/60">{{ t('admin.products.empty.description') }}</p>
                 </td>
               </tr>
 
@@ -211,18 +211,18 @@ function getLocalizedText(obj?: Record<string, string>): string {
               <tr
                 v-for="product in products"
                 :key="product.id"
-                class="hover:bg-slate-50 transition"
+                class="hover:bg-base-200 transition"
               >
                 <!-- Thumbnail -->
                 <td class="px-4 py-3">
-                  <div class="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-slate-100 border border-slate-200">
+                  <div class="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-base-300 border border-base-300">
                     <img
                       v-if="product.images && product.images[0]?.url"
                       :src="product.images[0].url"
                       :alt="getLocalizedText(product.name)"
                       class="h-full w-full object-cover"
                     />
-                    <div v-else class="flex h-full w-full items-center justify-center text-slate-300">
+                    <div v-else class="flex h-full w-full items-center justify-center text-base-content/60">
                       <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
@@ -232,10 +232,10 @@ function getLocalizedText(obj?: Record<string, string>): string {
 
                 <!-- Product Name & Language Status -->
                 <td class="px-4 py-3">
-                  <div class="font-medium text-slate-900">
+                  <div class="font-medium text-base-content">
                     {{ getLocalizedText(product.name) }}
                   </div>
-                  <div class="text-xs text-slate-400">
+                  <div class="text-xs text-base-content/60">
                     {{ product.brand }}
                   </div>
                   <!-- Translation Badges -->
@@ -256,13 +256,13 @@ function getLocalizedText(obj?: Record<string, string>): string {
                 </td>
 
                 <!-- Category -->
-                <td class="px-4 py-3 text-slate-700">
+                <td class="px-4 py-3 text-base-content/80">
                   {{ product.category?.name ? getLocalizedText(product.category.name) : '—' }}
                 </td>
 
                 <!-- Multi-Currency Pricing -->
                 <td class="px-4 py-3">
-                  <div class="text-xs space-y-0.5 font-mono text-slate-700">
+                  <div class="text-xs space-y-0.5 font-mono text-base-content/80">
                     <div>{{ toMajorUnits(product.price?.SEK || 0) }} SEK</div>
                     <div>{{ toMajorUnits(product.price?.EUR || 0) }} EUR</div>
                     <div>{{ toMajorUnits(product.price?.USD || 0) }} USD</div>
@@ -272,21 +272,21 @@ function getLocalizedText(obj?: Record<string, string>): string {
                 <!-- Inventory & Safety Buffer -->
                 <td class="px-4 py-3">
                   <div class="text-xs space-y-1">
-                    <div class="font-medium text-slate-900">
+                    <div class="font-medium text-base-content">
                       {{ product.stockQuantity }} / {{ product.safetyBuffer }} /
-                      <span :class="product.availableStock > 0 ? 'text-emerald-700 font-semibold' : 'text-red-600 font-semibold'">
+                      <span :class="product.availableStock > 0 ? 'text-success font-semibold' : 'text-error font-semibold'">
                         {{ product.availableStock }}
                       </span>
                     </div>
                     <span
                       v-if="product.stockQuantity <= 0"
-                      class="inline-block rounded bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800"
+                      class="inline-block rounded bg-error/20 px-2 py-0.5 text-[10px] font-semibold text-error"
                     >
                       {{ t('admin.products.status.outOfStockBadge') }}
                     </span>
                     <span
                       v-else-if="product.stockQuantity <= product.safetyBuffer"
-                      class="inline-block rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800"
+                      class="inline-block rounded bg-warning/20 px-2 py-0.5 text-[10px] font-semibold text-warning"
                     >
                       {{ t('admin.products.status.lowStockBadge') }}
                     </span>
@@ -296,7 +296,7 @@ function getLocalizedText(obj?: Record<string, string>): string {
                 <!-- Active / Archived Status -->
                 <td class="px-4 py-3">
                   <span
-                    :class="product.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'"
+                    :class="product.isActive ? 'bg-success/20 text-success' : 'bg-base-300 text-base-content/80'"
                     class="rounded-full px-2.5 py-1 text-xs font-semibold"
                   >
                     {{ product.isActive ? t('admin.products.status.active') : t('admin.products.status.archived') }}
@@ -308,7 +308,7 @@ function getLocalizedText(obj?: Record<string, string>): string {
                   <div class="flex items-center justify-end gap-2">
                     <NuxtLink
                       :to="`/admin/products/${product.id}`"
-                      class="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                      class="rounded p-1 text-base-content/60 hover:bg-base-300 hover:text-base-content"
                       :title="t('admin.products.actions.edit')"
                     >
                       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -320,7 +320,7 @@ function getLocalizedText(obj?: Record<string, string>): string {
                       type="button"
                       :disabled="isActionLoading === product.id"
                       @click="toggleArchive(product.id)"
-                      class="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50"
+                      class="rounded p-1 text-base-content/60 hover:bg-base-300 hover:text-base-content disabled:opacity-50"
                       :title="product.isActive ? t('admin.products.actions.archive') : t('admin.products.actions.unarchive')"
                     >
                       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -332,7 +332,7 @@ function getLocalizedText(obj?: Record<string, string>): string {
                       type="button"
                       :disabled="isActionLoading === product.id"
                       @click="deleteProduct(product.id)"
-                      class="rounded p-1 text-red-500 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+                      class="rounded p-1 text-error hover:bg-error/10 hover:text-error/80 disabled:opacity-50"
                       :title="t('admin.products.actions.delete')"
                     >
                       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

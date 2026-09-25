@@ -52,14 +52,14 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-12">
-    <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl border border-slate-200">
+  <div class="flex min-h-screen items-center justify-center bg-base-200 px-4 py-12">
+    <div class="w-full max-w-md rounded-2xl bg-base-100 p-8 shadow-xl border border-base-300">
       <!-- Header -->
       <div class="mb-8 text-center">
-        <h1 class="text-2xl font-bold tracking-tight text-slate-900">
+        <h1 class="text-2xl font-bold tracking-tight text-base-content">
           {{ t('admin.login.title') }}
         </h1>
-        <p class="mt-2 text-sm text-slate-500">
+        <p class="mt-2 text-sm text-base-content/70">
           {{ t('admin.login.subtitle') }}
         </p>
       </div>
@@ -67,11 +67,11 @@ async function handleLogin() {
       <!-- Error Alert -->
       <div
         v-if="errorMessage"
-        class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 text-sm text-red-700"
+        class="mb-6 rounded-lg bg-error/10 p-4 border border-error/20 text-sm text-error"
         role="alert"
       >
         <div class="flex items-center gap-2">
-          <svg class="h-5 w-5 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <span>{{ errorMessage }}</span>
@@ -81,7 +81,7 @@ async function handleLogin() {
       <!-- Login Form -->
       <form @submit.prevent="handleLogin" class="space-y-5">
         <div>
-          <label for="email" class="block text-sm font-medium text-slate-700">
+          <label for="email" class="block text-sm font-medium text-base-content/80">
             {{ t('admin.login.emailLabel') }}
           </label>
           <div class="mt-1">
@@ -92,13 +92,13 @@ async function handleLogin() {
               autocomplete="email"
               required
               :placeholder="t('admin.login.emailPlaceholder')"
-              class="block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+              class="block w-full rounded-lg border border-base-300 bg-base-100 px-3 py-2.5 text-base-content placeholder-base-content/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
             />
           </div>
         </div>
 
         <div>
-          <label for="password" class="block text-sm font-medium text-slate-700">
+          <label for="password" class="block text-sm font-medium text-base-content/80">
             {{ t('admin.login.passwordLabel') }}
           </label>
           <div class="relative mt-1">
@@ -109,13 +109,13 @@ async function handleLogin() {
               autocomplete="current-password"
               required
               :placeholder="t('admin.login.passwordPlaceholder')"
-              class="block w-full rounded-lg border border-slate-300 px-3 py-2.5 pr-10 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+              class="block w-full rounded-lg border border-base-300 bg-base-100 px-3 py-2.5 pr-10 text-base-content placeholder-base-content/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
             />
             <button
               type="button"
               @click="showPassword = !showPassword"
               :aria-label="t('admin.login.togglePassword')"
-              class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none"
+              class="absolute inset-y-0 right-0 flex items-center pr-3 text-base-content/50 hover:text-base-content focus:outline-none"
               tabindex="-1"
             >
               <!-- Eye open -->
@@ -134,11 +134,11 @@ async function handleLogin() {
         <button
           type="submit"
           :disabled="isLoading"
-          class="flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-emerald-400"
+          class="flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-content shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
         >
           <svg
             v-if="isLoading"
-            class="mr-2 h-4 w-4 animate-spin text-white"
+            class="mr-2 h-4 w-4 animate-spin text-primary-content"
             fill="none"
             viewBox="0 0 24 24"
           >
