@@ -31,6 +31,54 @@
       "submit": "Log In",
       "submitting": "Logging in...",
       "invalidCredentials": "Invalid email or password. Please try again."
+    },
+    "products": {
+      "title": "Product Management",
+      "subtitle": "View, edit, and filter products, inventory buffers, and translations",
+      "addNew": "Add New Product",
+      "searchPlaceholder": "Search by name or brand...",
+      "filters": {
+        "allCategories": "All Categories",
+        "stockLevel": {
+          "label": "Stock Level",
+          "all": "All Stock Levels",
+          "lowStock": "Low Stock (at or below safety buffer)",
+          "outOfStock": "Out of Stock (0 units)"
+        },
+        "translations": {
+          "label": "Translation Status",
+          "all": "All Products",
+          "missing": "Missing Translations Only"
+        },
+        "reset": "Reset Filters"
+      },
+      "table": {
+        "image": "Image",
+        "product": "Product",
+        "category": "Category",
+        "pricing": "Prices (SEK / EUR / USD)",
+        "stock": "Inventory (Physical / Buffer / Online)",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "archived": "Archived",
+        "lowStockBadge": "Low Stock",
+        "outOfStockBadge": "Out of Stock"
+      },
+      "actions": {
+        "edit": "Edit",
+        "archive": "Archive",
+        "unarchive": "Unarchive",
+        "delete": "Delete",
+        "deleteConfirm": "Are you sure you want to permanently delete this product? This action cannot be undone."
+      },
+      "empty": {
+        "title": "No products found",
+        "description": "Try adjusting your filters or create a new product for the store."
+      },
+      "loading": "Loading products..."
     }
   },
   "callToAction":{

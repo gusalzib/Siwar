@@ -31,6 +31,54 @@
       "submit": "Logga in",
       "submitting": "Loggar in...",
       "invalidCredentials": "Ogiltig e-postadress eller lösenord. Försök igen."
+    },
+    "products": {
+      "title": "Produkthantering",
+      "subtitle": "Visa, redigera och filtrera produkter, lagernivåer och översättningar",
+      "addNew": "Skapa ny produkt",
+      "searchPlaceholder": "Sök på namn eller varumärke...",
+      "filters": {
+        "allCategories": "Alla kategorier",
+        "stockLevel": {
+          "label": "Lagernivå",
+          "all": "Alla lagernivåer",
+          "lowStock": "Lågt lager (vid eller under säkerhetsbuffert)",
+          "outOfStock": "Slut i lager (0 st)"
+        },
+        "translations": {
+          "label": "Översättningsstatus",
+          "all": "Alla produkter",
+          "missing": "Endast saknade översättningar"
+        },
+        "reset": "Återställ filter"
+      },
+      "table": {
+        "image": "Bild",
+        "product": "Produkt",
+        "category": "Kategori",
+        "pricing": "Priser (SEK / EUR / USD)",
+        "stock": "Lager (Fysiskt / Buffert / Online)",
+        "status": "Status",
+        "actions": "Åtgärder"
+      },
+      "status": {
+        "active": "Aktiv",
+        "archived": "Arkiverad",
+        "lowStockBadge": "Lågt lager",
+        "outOfStockBadge": "Slut"
+      },
+      "actions": {
+        "edit": "Redigera",
+        "archive": "Arkivera",
+        "unarchive": "Återaktivera",
+        "delete": "Radera",
+        "deleteConfirm": "Är du säker på att du vill radera denna produkt permanent? Åtgärden kan inte ångras."
+      },
+      "empty": {
+        "title": "Inga produkter hittades",
+        "description": "Prova att justera dina sökfilter eller skapa en ny produkt."
+      },
+      "loading": "Laddar produkter..."
     }
   },
   "callToAction": {
