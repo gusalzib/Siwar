@@ -65,6 +65,14 @@ const logout = async () => {
             <Icon name="lucide:layout-dashboard" class="h-4 w-4" />
             {{ t('admin.nav.products') }}
           </NuxtLink>
+          <NuxtLink to="/admin/allergens" class="btn btn-ghost btn-sm font-semibold text-primary">
+            <Icon name="lucide:layout-dashboard" class="h-4 w-4" />
+            {{ t('admin.nav.allergens') }}
+          </NuxtLink>
+          <NuxtLink to="/admin/categories" class="btn btn-ghost btn-sm font-semibold text-primary">
+            <Icon name="lucide:layout-dashboard" class="h-4 w-4" />
+            {{ t('admin.nav.categories') }}
+          </NuxtLink>
         </div>
 
         <!-- Language Dropdown -->
