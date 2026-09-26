@@ -21,7 +21,9 @@
   "admin": {
     "nav": {
       "products": "Manage Products",
-      "logout": "Log Out"
+      "logout": "Log Out",
+      "categories": "Categories",
+      "allergens": "Allergens"
     },
     "login": {
       "adminLogin": "Admin Login",
@@ -83,6 +85,122 @@
         "description": "Try adjusting your filters or create a new product for the store."
       },
       "loading": "Loading products..."
+    },
+
+
+    "productForm": {
+      "newTitle": "Create New Product",
+      "newSubtitle": "Configure product details, multi-currency prices, and inventory buffers",
+      "backToList": "Back to Products",
+      "tabs": {
+        "ar": "Arabic",
+        "sv": "Swedish",
+        "en": "English"
+      },
+      "sections": {
+        "general": "General Information",
+        "pricing": "Independent Multi-Currency Pricing (AC-1)",
+        "inventory": "Inventory & Safety Buffer (AC-3)",
+        "specs": "Specifications & Tax",
+        "allergens": "Allergen Declarations",
+        "images": "Product Photography",
+        "status": "Publication Status"
+      },
+      "fields": {
+        "name": "Product Name",
+        "namePlaceholder": "e.g., Baklava Pistachio 500g",
+        "description": "Marketing Description",
+        "descriptionPlaceholder": "Detailed description...",
+        "ingredients": "Ingredients (Food Regulatory)",
+        "ingredientsPlaceholder": "Ingredients separated by commas...",
+        "brand": "Brand / Producer",
+        "brandPlaceholder": "e.g., Sera or Al Wadi",
+        "category": "Category",
+        "categorySelect": "Select a category...",
+        "priceSEK": "Price in SEK",
+        "priceEUR": "Price in EUR",
+        "priceUSD": "Price in USD",
+        "currencyNote": "Enter decimal amounts (e.g. 45.50). Stored internally as integer minor units (öre/cents) without forced dynamic conversions.",
+        "discount": "Discount (%)",
+        "stockQuantity": "Physical Stock Quantity",
+        "safetyBuffer": "Safety Buffer Override",
+        "safetyBufferHelp": "Protects physical shelf stock from online overselling. Available Online = Total Stock - Buffer.",
+        "netValue": "Net Quantity Value",
+        "netUnit": "Measurement Unit",
+        "grossWeight": "Gross Shipping Weight (grams)",
+        "momsRate": "Moms Rate (VAT)",
+        "moms12": "12% Food & Pantry",
+        "moms25": "25% Non-food & Shipping",
+        "countryOfOrigin": "Country of Origin",
+        "countryPlaceholder": "e.g., Lebanon, Turkey",
+        "barcode": "Barcode (EAN / GTIN)",
+        "barcodePlaceholder": "7350000000000",
+        "isActive": "Publish product immediately to storefront",
+        "imageUrl": "Image URL (CDN)",
+        "imageUrlPlaceholder": "https://cdn.siwar.se/products/sample.webp",
+        "imageAlt": "Accessibility Alt Text",
+        "imageAltPlaceholder": "Front packaging view",
+        "imagePrimary": "Primary Thumbnail",
+        "addImage": "Add Image",
+        "removeImage": "Remove",
+        "noImagesAdded": "No images added yet. Click on \"Add Image\"."
+      },
+      "actions": {
+        "submit": "Save Product",
+        "submitting": "Saving...",
+        "cancel": "Cancel"
+      },
+      "feedback": {
+        "success": "Product created successfully!",
+        "error": "Failed to create product. Please verify all required fields."
+      },
+      "images": {
+        "title": "Product Photography Gallery",
+        "uploadButton": "Upload Image",
+        "uploading": "Optimizing & uploading...",
+        "dropzone": "Drop image here or click to browse (JPG, PNG, WebP up to 10 MB)",
+        "noImages": "No images uploaded yet. Upload a photo to assign it as the primary store thumbnail.",
+        "primaryBadge": "Primary Thumbnail",
+        "setAsPrimary": "Set as primary",
+        "altPlaceholder": "Descriptive alt text for screen readers & SEO",
+        "remove": "Remove image",
+        "uploadError": "Failed to upload image. Please verify file format and size."
+      }
+    },
+
+
+
+    "categories": {
+      "title": "Category Management",
+      "subtitle": "View, edit, and organize categories, URL slugs, and translations",
+      "add": "Add New Category",
+      "addTitle": "Create New Category",
+      "name": "Category Name",
+      "slug": "URL Slug",
+      "actions": "Actions",
+      "empty": "No categories found",
+      "nameEn": "Name (English)",
+      "nameSv": "Name (Swedish)",
+      "nameAr": "Name (Arabic)",
+      "isActive": "Publish category to storefront",
+      "cancel": "Cancel",
+      "save": "Save Category"
+    },
+    "allergens": {
+      "title": "Allergen Management",
+      "subtitle": "View, edit, and manage food regulatory allergens and translations",
+      "add": "Add New Allergen",
+      "addTitle": "Create New Allergen",
+      "code": "Code",
+      "codeLabel": "Allergen Code (e.g., GLUTEN or MILK)",
+      "name": "Name",
+      "nameEn": "Name (English)",
+      "nameSv": "Name (Swedish)",
+      "nameAr": "Name (Arabic)",
+      "actions": "Actions",
+      "empty": "No allergens found",
+      "cancel": "Cancel",
+      "save": "Save Allergen"
     }
   },
   "callToAction":{

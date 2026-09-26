@@ -21,7 +21,9 @@
   "admin": {
     "nav": {
       "products": "Hantera produkter",
-      "logout": "Logga ut"
+      "logout": "Logga ut",
+      "categories": "Kategorier",
+      "allergens": "Allergener"
     },
     "login": {
       "adminLogin": "Admininloggning",
@@ -83,6 +85,124 @@
         "description": "Prova att justera dina sökfilter eller skapa en ny produkt."
       },
       "loading": "Laddar produkter..."
+    },
+
+
+
+    "productForm": {
+      "newTitle": "Skapa ny produkt",
+      "newSubtitle": "Fyll i produktinformation, manuella flervalutapriser och lagerbuffert",
+      "backToList": "Tillbaka till produkter",
+      "tabs": {
+        "ar": "Arabiska",
+        "sv": "Svenska",
+        "en": "Engelska"
+      },
+      "sections": {
+        "general": "Grundinformation",
+        "pricing": "Oberoende flervalutapriser (AC-1)",
+        "inventory": "Lager och säkerhetsbuffert (AC-3)",
+        "specs": "Specifikationer och moms",
+        "allergens": "Allergendeklarationer",
+        "images": "Produktbilder",
+        "status": "Publiceringsstatus"
+      },
+      "fields": {
+        "name": "Produktnamn",
+        "namePlaceholder": "T.ex. Baklava Pistage 500g",
+        "description": "Marknadsföringsbeskrivning",
+        "descriptionPlaceholder": "Detaljerad beskrivning...",
+        "ingredients": "Ingredienser (EU 1169/2011)",
+        "ingredientsPlaceholder": "Ingredienser i fallande viktordning...",
+        "brand": "Varumärke / Producent",
+        "brandPlaceholder": "T.ex. Sera eller Al Wadi",
+        "category": "Kategori",
+        "categorySelect": "Välj kategori...",
+        "priceSEK": "Pris i SEK",
+        "priceEUR": "Pris i EUR",
+        "priceUSD": "Pris i USD",
+        "currencyNote": "Ange belopp med decimaler (t.ex. 45.50). Priserna sparas i minor units (öre/cent) utan automatisk växlingskurs.",
+        "discount": "Rabatt (%)",
+        "stockQuantity": "Fysiskt lagerantal",
+        "safetyBuffer": "Säkerhetsbuffert",
+        "safetyBufferHelp": "Reserverar detta antal för butikshyllan. Tillgängligt online = Fysiskt lager - Säkerhetsbuffert.",
+        "netValue": "Nettoinnehåll",
+        "netUnit": "Måttenhet",
+        "grossWeight": "Bruttovikt för frakt (gram)",
+        "momsRate": "Momssats",
+        "moms12": "12% Livsmedel",
+        "moms25": "25% Övrigt & frakt",
+        "countryOfOrigin": "Ursprungsland",
+        "countryPlaceholder": "T.ex. Libanon, Turkiet",
+        "barcode": "Streckkod (EAN / GTIN)",
+        "barcodePlaceholder": "7350000000000",
+        "isActive": "Publicera produkten omedelbart i butiken",
+        "imageUrl": "Bild-URL (CDN)",
+        "imageUrlPlaceholder": "https://cdn.siwar.se/products/sample.webp",
+        "imageAlt": "Alt-text för tillgänglighet",
+        "imageAltPlaceholder": "Framsida av förpackning",
+        "imagePrimary": "Primär bild",
+        "addImage": "Lägg till bild",
+        "removeImage": "Ta bort",
+        "noImagesAdded": "Inga bilder tillagda ännu. Klicka på \"Lägg till bild\"."
+      },
+      "actions": {
+        "submit": "Spara produkt",
+        "submitting": "Sparar...",
+        "cancel": "Avbryt"
+      },
+      "feedback": {
+        "success": "Produkten har skapats!",
+        "error": "Kunde inte skapa produkten. Kontrollera alla obligatoriska fält."
+      },
+      "images": {
+        "title": "Produktbilder och fotogalleri",
+        "uploadButton": "Ladda upp bild",
+        "uploading": "Optimerar och laddar upp...",
+        "dropzone": "Släpp bilden här eller klicka för att välja fil (JPG, PNG, WebP upp till 10 MB)",
+        "noImages": "Inga bilder tillagda ännu. Ladda upp en bild för att sätta den som primär omslagsbild.",
+        "primaryBadge": "Huvudbild",
+        "setAsPrimary": "Gör till huvudbild",
+        "altPlaceholder": "Beskrivande alt-text för skärmläsare och SEO",
+        "remove": "Ta bort bild",
+        "uploadError": "Kunde inte ladda upp bilden. Kontrollera filtyp och storlek."
+      }
+    },
+
+
+
+
+    "categories": {
+      "title": "Kategorihantering",
+      "subtitle": "Visa, redigera och organisera kategorier, URL-slugs och översättningar",
+      "add": "Lägg till kategori",
+      "addTitle": "Skapa ny kategori",
+      "name": "Kategorinamn",
+      "slug": "URL-slug",
+      "actions": "Åtgärder",
+      "empty": "Inga kategorier hittades",
+      "nameEn": "Namn (engelska)",
+      "nameSv": "Namn (svenska)",
+      "nameAr": "Namn (arabiska)",
+      "isActive": "Publicera kategori i butiken",
+      "cancel": "Avbryt",
+      "save": "Spara kategori"
+    },
+    "allergens": {
+      "title": "Allergenhantering",
+      "subtitle": "Visa, redigera och hantera lagstadgade allergener och översättningar",
+      "add": "Lägg till allergen",
+      "addTitle": "Skapa ny allergen",
+      "code": "Kod",
+      "codeLabel": "Allergenkod (t.ex. GLUTEN eller MILK)",
+      "name": "Namn",
+      "nameEn": "Namn (engelska)",
+      "nameSv": "Namn (svenska)",
+      "nameAr": "Namn (arabiska)",
+      "actions": "Åtgärder",
+      "empty": "Inga allergener hittades",
+      "cancel": "Avbryt",
+      "save": "Spara allergen"
     }
   },
   "callToAction": {
