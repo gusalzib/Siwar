@@ -1,5 +1,5 @@
 // server/models/Category.ts
-import { Schema, model, models, type Document, type Types } from 'mongoose'
+import mongoose, { Schema, model, type Document, type Types, type Model } from 'mongoose'
 
 // ---------------------------------------------------------------------------
 // 1. TypeScript Interface
@@ -86,4 +86,4 @@ const CategorySchema = new Schema<ICategory>(
 // Nuxt 3 reloads server files during development. Checking 'models.Category'
 // first prevents Mongoose from crashing with an "OverwriteModelError".
 // ---------------------------------------------------------------------------
-export const Category = models.Category || model<ICategory>('Category', CategorySchema)
+export const Category = (mongoose.models.Category as Model<ICategory>) || model<ICategory>('Category', CategorySchema)
