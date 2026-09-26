@@ -211,30 +211,33 @@ async function handleSubmit() {
         <!-- 1. Multilingual Content Card -->
         <div class="card bg-base-100 border border-base-200 shadow-sm">
           <div class="card-body space-y-4">
-            <div class="flex items-center justify-between border-b border-base-200 pb-3">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between border-b border-base-400 pb-3 gap-3">
               <h2 class="card-title text-base font-semibold">
                 {{ t('admin.productForm.sections.general') }}
               </h2>
               <!-- Language Switch Tabs -->
-              <div class="tabs tabs-boxed">
+              <div class="flex flex-wrap items-center gap-1 p-2 bg-base-200/50 rounded-xl border border-base-600 w-full lg:w-auto">
+                <div class="px-2 text-base-content/40 flex items-center justify-center">
+                  <Icon name="lucide:languages" class="size-4" />
+                </div>
                 <button
                   type="button"
                   @click="activeLangTab = 'ar'"
-                  :class="['tab tab-sm font-semibold transition-colors', activeLangTab === 'ar' ? 'tab-active !bg-brand-500 !text-white' : 'hover:text-brand-500']"
+                  :class="['btn btn-sm border-none rounded-lg font-medium transition-all shadow-none', activeLangTab === 'ar' ? 'bg-brand-500 p-2 text-white hover:bg-brand-600 !shadow-sm' : 'bg-transparent text-base-content/60 hover:bg-base-200 hover:text-base-content']"
                 >
                   {{ t('admin.productForm.tabs.ar') }}
                 </button>
                 <button
                   type="button"
                   @click="activeLangTab = 'sv'"
-                  :class="['tab tab-sm font-semibold transition-colors', activeLangTab === 'sv' ? 'tab-active !bg-brand-500 !text-white' : 'hover:text-brand-500']"
+                  :class="['btn btn-sm border-none rounded-lg font-medium transition-all shadow-none', activeLangTab === 'sv' ? 'bg-brand-500 p-2 text-white hover:bg-brand-600 !shadow-sm' : 'bg-transparent text-base-content/60 hover:bg-base-200 hover:text-base-content']"
                 >
                   {{ t('admin.productForm.tabs.sv') }}
                 </button>
                 <button
                   type="button"
                   @click="activeLangTab = 'en'"
-                  :class="['tab tab-sm font-semibold transition-colors', activeLangTab === 'en' ? 'tab-active !bg-brand-500 !text-white' : 'hover:text-brand-500']"
+                  :class="['btn btn-sm border-none rounded-lg font-medium transition-all shadow-none', activeLangTab === 'en' ? 'bg-brand-500 p-2 text-white hover:bg-brand-600 !shadow-sm' : 'bg-transparent text-base-content/60 hover:bg-base-200 hover:text-base-content']"
                 >
                   {{ t('admin.productForm.tabs.en') }}
                 </button>
@@ -252,7 +255,7 @@ async function handleSubmit() {
                 required
                 :dir="activeLangTab === 'ar' ? 'rtl' : 'ltr'"
                 :placeholder="t('admin.productForm.fields.namePlaceholder')"
-                class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
               />
             </div>
 
@@ -267,7 +270,7 @@ async function handleSubmit() {
                 required
                 :dir="activeLangTab === 'ar' ? 'rtl' : 'ltr'"
                 :placeholder="t('admin.productForm.fields.descriptionPlaceholder')"
-                class="textarea textarea-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                class="textarea textarea-bordered p-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
               ></textarea>
             </div>
 
@@ -281,7 +284,7 @@ async function handleSubmit() {
                 rows="2"
                 :dir="activeLangTab === 'ar' ? 'rtl' : 'ltr'"
                 :placeholder="t('admin.productForm.fields.ingredientsPlaceholder')"
-                class="textarea textarea-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                class="textarea textarea-bordered p-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
               ></textarea>
             </div>
 
@@ -296,7 +299,7 @@ async function handleSubmit() {
                   type="text"
                   required
                   :placeholder="t('admin.productForm.fields.brandPlaceholder')"
-                  class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                  class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
                 />
               </div>
 
@@ -307,7 +310,7 @@ async function handleSubmit() {
                 <select
                   v-model="form.category"
                   required
-                  class="select select-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                  class="select select-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
                 >
                   <option disabled value="">{{ t('admin.productForm.fields.categorySelect') }}</option>
                   <option v-for="cat in categories" :key="cat.id" :value="cat.id">
@@ -325,10 +328,10 @@ async function handleSubmit() {
             <h2 class="card-title text-base font-semibold">
               {{ t('admin.productForm.sections.pricing') }}
             </h2>
-            <div class="alert alert-info bg-info/10 text-info-content text-xs rounded-lg py-2">
+            <!-- <div class="alert alert-info bg-info/10 text-info-content text-xs rounded-lg py-2">
               <Icon name="lucide:info" class="size-4 shrink-0 text-info" />
               <span>{{ t('admin.productForm.fields.currencyNote') }}</span>
-            </div>
+            </div> -->
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <!-- SEK -->
@@ -344,7 +347,7 @@ async function handleSubmit() {
                     min="0"
                     required
                     placeholder="45.00"
-                    class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-12 font-mono"
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-12 font-mono"
                   />
                   <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-semibold text-base-content/40">SEK</span>
                 </div>
@@ -363,7 +366,7 @@ async function handleSubmit() {
                     min="0"
                     required
                     placeholder="4.50"
-                    class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-12 font-mono"
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-12 font-mono"
                   />
                   <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-semibold text-base-content/40">EUR</span>
                 </div>
@@ -382,7 +385,7 @@ async function handleSubmit() {
                     min="0"
                     required
                     placeholder="5.00"
-                    class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-12 font-mono"
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-12 font-mono"
                   />
                   <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-semibold text-base-content/40">USD</span>
                 </div>
@@ -400,7 +403,7 @@ async function handleSubmit() {
                 min="0"
                 max="100"
                 placeholder="0"
-                class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
               />
             </div>
           </div>
@@ -424,7 +427,7 @@ async function handleSubmit() {
                   min="0"
                   step="1"
                   required
-                  class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                  class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
                 />
               </div>
 
@@ -439,7 +442,7 @@ async function handleSubmit() {
                   min="0"
                   step="1"
                   required
-                  class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                  class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
                 />
                 <label class="label">
                   <span class="label-text-alt text-base-content/60">{{ t('admin.productForm.fields.safetyBufferHelp') }}</span>
@@ -469,7 +472,7 @@ async function handleSubmit() {
                   min="0.01"
                   required
                   placeholder="500"
-                  class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                  class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
                 />
               </div>
 
@@ -478,7 +481,7 @@ async function handleSubmit() {
                 <label class="label">
                   <span class="label-text font-medium">{{ t('admin.productForm.fields.netUnit') }} *</span>
                 </label>
-                <select v-model="form.netQuantity.unit" required class="select select-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full">
+                <select v-model="form.netQuantity.unit" required class="select select-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full">
                   <option value="g">g (gram)</option>
                   <option value="kg">kg (kilogram)</option>
                   <option value="ml">ml (milliliter)</option>
@@ -498,7 +501,7 @@ async function handleSubmit() {
                   min="0"
                   required
                   placeholder="550"
-                  class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                  class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
                 />
               </div>
             </div>
@@ -509,7 +512,7 @@ async function handleSubmit() {
                 <label class="label">
                   <span class="label-text font-medium">{{ t('admin.productForm.fields.momsRate') }} *</span>
                 </label>
-                <select v-model="form.momsRate" required class="select select-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full">
+                <select v-model="form.momsRate" required class="select select-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full">
                   <option :value="12">{{ t('admin.productForm.fields.moms12') }}</option>
                   <option :value="25">{{ t('admin.productForm.fields.moms25') }}</option>
                 </select>
@@ -524,7 +527,7 @@ async function handleSubmit() {
                   v-model="form.countryOfOrigin"
                   type="text"
                   :placeholder="t('admin.productForm.fields.countryPlaceholder')"
-                  class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                  class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
                 />
               </div>
 
@@ -537,7 +540,7 @@ async function handleSubmit() {
                   v-model="form.barcode"
                   type="text"
                   :placeholder="t('admin.productForm.fields.barcodePlaceholder')"
-                  class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full font-mono"
+                  class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full font-mono"
                 />
               </div>
             </div>
@@ -560,7 +563,7 @@ async function handleSubmit() {
                   v-model="form.allergens"
                   type="checkbox"
                   :value="allergen.id"
-                  class="checkbox checkbox-primary checkbox-sm"
+                  class="checkbox checkbox-primary checkbox-sm border-2 border-base-content/40"
                 />
                 <span class="label-text text-xs font-medium">
                   {{ getLocalizedText(allergen.name) }}
@@ -590,7 +593,7 @@ async function handleSubmit() {
                   type="button"
                   :disabled="isUploadingImage"
                   @click="triggerFileInput"
-                  class="btn border-2 border-gold-400 bg-transparent text-gold-500 hover:bg-gold-400 hover:border-gold-400 hover:!text-white btn-sm gap-2 transition-all disabled:opacity-50"
+                  class="btn border-2 border-gold-400 bg-transparent text-gold-500 hover:bg-gold-400 hover:border-gold-400 hover:!text-white btn-sm px-4 py-7 gap-2 transition-all disabled:opacity-50"
                 >
                   <span v-if="isUploadingImage" class="loading loading-spinner loading-xs"></span>
                   <Icon v-else name="lucide:upload" class="size-4" />
@@ -643,7 +646,7 @@ async function handleSubmit() {
                     v-model="img.altText"
                     type="text"
                     :placeholder="t('admin.productForm.images.altPlaceholder')"
-                    class="input input-bordered input-sm w-full text-xs"
+                    class="input input-bordered px-4 input-sm w-full text-xs"
                   />
                   <div class="text-[10px] text-base-content/40 font-mono truncate mt-1">
                     {{ img.url }}
@@ -685,7 +688,7 @@ async function handleSubmit() {
               <input
                 v-model="form.isActive"
                 type="checkbox"
-                class="checkbox checkbox-primary"
+                class="checkbox checkbox-primary border-2 border-base-content/40"
               />
               <span class="label-text font-semibold text-sm">
                 {{ t('admin.productForm.fields.isActive') }}
@@ -696,14 +699,14 @@ async function handleSubmit() {
 
         <!-- Bottom Action Bar -->
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-base-200">
-          <NuxtLink to="/admin/products" class="btn bg-transparent border-none text-base-content/70 hover:bg-error/20 hover:text-error transition-colors gap-2">
+          <NuxtLink to="/admin/products" class="btn bg-transparent border-none text-base-content/70 hover:bg-error/20 hover:text-error transition-colors gap-2 px-6">
             <Icon name="lucide:x" class="size-4" />
             {{ t('admin.productForm.actions.cancel') }}
           </NuxtLink>
           <button
             type="submit"
             :disabled="isSubmitting || isUploadingImage"
-            class="btn bg-brand-500 border-none text-white hover:bg-brand-600 shadow-sm gap-2 transition-all"
+            class="btn bg-brand-500 border-none text-white hover:bg-brand-600 shadow-sm gap-2 px-8 transition-all"
           >
             <span v-if="isSubmitting" class="loading loading-spinner loading-sm"></span>
             <Icon v-else name="lucide:save" class="size-4" />
