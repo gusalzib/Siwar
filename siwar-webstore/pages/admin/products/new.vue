@@ -14,8 +14,10 @@ const activeLangTab = ref<'ar' | 'sv' | 'en'>('ar')
 
 // Loading & feedback states
 const isSubmitting = ref(false)
+const isUploadingImage = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const fileInputRef = ref<HTMLInputElement | null>(null)
 
 // Form State
 const form = ref({
@@ -54,50 +56,86 @@ function getLocalizedText(obj?: Record<string, string>): string {
   return obj[locale.value] || obj['sv'] || obj['en'] || obj['ar'] || ''
 }
 
-// Image list helpers
-function addImageField() {
-  form.value.images.push({
-    url: '',
-    altText: '',
-    isPrimary: form.value.images.length === 0,
-  })
+// ---------------------------------------------------------------------------
+// Image Management & Upload Pipeline
+// ---------------------------------------------------------------------------
+
+/**
+ * Triggers the hidden native file input.
+ */
+function triggerFileInput() {
+  fileInputRef.value?.click()
 }
 
 /**
- * Removes an image entry from the product gallery by its array index.
- * 
- * Purpose & Invariant:
- * Every product with photos must maintain exactly one primary image (`isPrimary: true`) 
- * to serve as the storefront thumbnail, cart preview, and SEO share image.
- * If the user deletes the photo currently marked as primary, this function 
- * automatically heals the state by promoting the first remaining photo to primary.
- *
- * @param index - The zero-based array index of the image being deleted
+ * Handles file selection from disk, sends multipart data to /api/admin/upload,
+ * and pushes the optimized WebP URL directly into form.images.
+ */
+async function handleFileUpload(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  isUploadingImage.value = true
+  errorMessage.value = ''
+
+  try {
+    const uploadData = new FormData()
+    uploadData.append('file', file)
+
+    const response = await $fetch<{ url: string }>('/api/admin/upload', {
+      method: 'POST',
+      body: uploadData,
+    })
+
+    // Add to gallery; automatically designate as primary if it's the first photo
+    const isFirstImage = form.value.images.length === 0
+    form.value.images.push({
+      url: response.url,
+      altText: form.value.name[locale.value] || form.value.brand || '',
+      isPrimary: isFirstImage,
+    })
+  } catch (err: any) {
+    errorMessage.value = err?.data?.statusMessage || err?.message || t('admin.productForm.images.uploadError')
+  } finally {
+    isUploadingImage.value = false
+    // Reset file input so staff can upload consecutive photos with the same filename
+    if (target) target.value = ''
+  }
+}
+
+/**
+ * Removes an image entry by index while guaranteeing the primary image invariant:
+ * If the deleted image was primary, automatically promotes the next photo to primary.
  */
 function removeImageField(index: number) {
   form.value.images.splice(index, 1)
-  if (form.value.images.length > 0 && !form.value.images.some(img => img.isPrimary)) {
-    const firstImage = form.value.images[0]
-    if (firstImage) {
-      firstImage.isPrimary = true
+  if (form.value.images.length > 0 && !form.value.images.some((img) => img.isPrimary)) {
+    const firstRemaining = form.value.images[0]
+    if (firstRemaining) {
+      firstRemaining.isPrimary = true
     }
   }
 }
 
+/**
+ * Designates a specific photo index as the primary thumbnail.
+ */
 function setPrimaryImage(index: number) {
   form.value.images.forEach((img, i) => {
     img.isPrimary = i === index
   })
 }
 
+// ---------------------------------------------------------------------------
 // Form Submission
+// ---------------------------------------------------------------------------
 async function handleSubmit() {
   errorMessage.value = ''
   successMessage.value = ''
   isSubmitting.value = true
 
   try {
-    // Convert decimal price entries to integer minor units safely via toMinorUnits (AC-1)
     const payload = {
       name: form.value.name,
       description: form.value.description,
@@ -111,7 +149,7 @@ async function handleSubmit() {
       },
       discount: Number(form.value.discount) || 0,
       stockQuantity: Number(form.value.stockQuantity),
-      safetyBuffer: Number(form.value.safetyBuffer), // AC-3
+      safetyBuffer: Number(form.value.safetyBuffer),
       netQuantity: {
         value: Number(form.value.netQuantity.value),
         unit: form.value.netQuantity.unit,
@@ -121,7 +159,7 @@ async function handleSubmit() {
       countryOfOrigin: form.value.countryOfOrigin,
       barcode: form.value.barcode || undefined,
       allergens: form.value.allergens,
-      images: form.value.images.filter(img => img.url.trim() !== ''),
+      images: form.value.images.filter((img) => img.url.trim() !== ''),
       isActive: form.value.isActive,
     }
 
@@ -130,7 +168,6 @@ async function handleSubmit() {
       body: payload,
     })
 
-    successMessage.value = t('admin.productForm.feedback.success')
     await navigateTo('/admin/products')
   } catch (err: any) {
     errorMessage.value = err?.data?.statusMessage || err?.data?.message || t('admin.productForm.feedback.error')
@@ -533,63 +570,110 @@ async function handleSubmit() {
           </div>
         </div>
 
-        <!-- 6. Product Photography (Image URLs) -->
+        <!-- 6. Product Photography (Direct R2 Upload Pipeline) -->
         <div class="card bg-base-100 border border-base-200 shadow-sm">
           <div class="card-body space-y-4">
             <div class="flex items-center justify-between border-b border-base-200 pb-3">
               <h2 class="card-title text-base font-semibold">
-                {{ t('admin.productForm.sections.images') }}
+                {{ t('admin.productForm.images.title') }}
               </h2>
-              <button
-                type="button"
-                @click="addImageField"
-                class="btn border-2 border-gold-400 bg-transparent text-gold-500 hover:bg-gold-400 hover:border-gold-400 hover:!text-white btn-sm gap-1 transition-all"
-              >
-                <Icon name="lucide:plus" class="size-4" />
-                {{ t('admin.productForm.fields.addImage') }}
-              </button>
-            </div>
-
-            <div v-if="form.images.length === 0" class="text-sm text-base-content/40 italic py-2">
-              {{ t('admin.productForm.fields.noImagesAdded') }}
-            </div>
-
-            <div
-              v-for="(img, idx) in form.images"
-              :key="idx"
-              class="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-lg border border-base-200"
-            >
-              <input
-                v-model="img.url"
-                type="url"
-                required
-                :placeholder="t('admin.productForm.fields.imageUrlPlaceholder')"
-                class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors input-sm flex-1 font-mono text-xs"
-              />
-              <input
-                v-model="img.altText"
-                type="text"
-                :placeholder="t('admin.productForm.fields.imageAltPlaceholder')"
-                class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors input-sm flex-1 text-xs"
-              />
-              <label class="label cursor-pointer gap-2">
+              <div>
+                <!-- Hidden Native File Input -->
                 <input
-                  type="radio"
-                  name="primary_image"
-                  :checked="img.isPrimary"
-                  @change="setPrimaryImage(idx)"
-                  class="radio radio-primary radio-sm"
+                  ref="fileInputRef"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  class="hidden"
+                  @change="handleFileUpload"
                 />
-                <span class="label-text text-xs">{{ t('admin.productForm.fields.imagePrimary') }}</span>
-              </label>
-              <button
-                type="button"
-                @click="removeImageField(idx)"
-                class="btn btn-ghost btn-sm text-error"
-                :title="t('admin.productForm.fields.removeImage')"
+                <button
+                  type="button"
+                  :disabled="isUploadingImage"
+                  @click="triggerFileInput"
+                  class="btn border-2 border-gold-400 bg-transparent text-gold-500 hover:bg-gold-400 hover:border-gold-400 hover:!text-white btn-sm gap-2 transition-all disabled:opacity-50"
+                >
+                  <span v-if="isUploadingImage" class="loading loading-spinner loading-xs"></span>
+                  <Icon v-else name="lucide:upload" class="size-4" />
+                  {{ isUploadingImage ? t('admin.productForm.images.uploading') : t('admin.productForm.images.uploadButton') }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Empty State Dropzone -->
+            <div
+              v-if="form.images.length === 0"
+              @click="triggerFileInput"
+              class="border-2 border-dashed border-base-content/20 hover:border-brand-500 rounded-xl p-8 text-center cursor-pointer transition-colors bg-base-200/20"
+            >
+              <div class="flex flex-col items-center justify-center gap-2">
+                <div class="p-3 bg-base-100 rounded-full shadow-sm text-base-content/60">
+                  <Icon name="lucide:image-plus" class="size-6" />
+                </div>
+                <p class="text-sm font-medium text-base-content">
+                  {{ t('admin.productForm.images.dropzone') }}
+                </p>
+                <p class="text-xs text-base-content/50">
+                  {{ t('admin.productForm.images.noImages') }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Uploaded Image Gallery Grid -->
+            <div v-else class="space-y-3">
+              <div
+                v-for="(img, idx) in form.images"
+                :key="img.url"
+                class="flex flex-col sm:flex-row items-center gap-4 p-3 rounded-xl border border-base-200 bg-base-100 shadow-sm"
               >
-                <Icon name="lucide:trash-2" class="size-4" />
-              </button>
+                <!-- Thumbnail Preview -->
+                <div class="relative size-16 shrink-0 rounded-lg overflow-hidden bg-base-200 border border-base-200">
+                  <img :src="img.url" :alt="img.altText" class="size-full object-cover" />
+                  <span
+                    v-if="img.isPrimary"
+                    class="absolute top-1 left-1 badge badge-xs badge-primary font-bold shadow"
+                  >
+                    ★
+                  </span>
+                </div>
+
+                <!-- Alt Text Input -->
+                <div class="flex-1 w-full sm:w-auto">
+                  <label class="sr-only">Alt Text</label>
+                  <input
+                    v-model="img.altText"
+                    type="text"
+                    :placeholder="t('admin.productForm.images.altPlaceholder')"
+                    class="input input-bordered input-sm w-full text-xs"
+                  />
+                  <div class="text-[10px] text-base-content/40 font-mono truncate mt-1">
+                    {{ img.url }}
+                  </div>
+                </div>
+
+                <!-- Primary Radio Selector -->
+                <label class="label cursor-pointer gap-2 shrink-0">
+                  <input
+                    type="radio"
+                    name="primary_product_photo"
+                    :checked="img.isPrimary"
+                    @change="setPrimaryImage(idx)"
+                    class="radio radio-primary radio-sm"
+                  />
+                  <span class="label-text text-xs font-medium">
+                    {{ t('admin.productForm.images.setAsPrimary') }}
+                  </span>
+                </label>
+
+                <!-- Delete Image Button -->
+                <button
+                  type="button"
+                  @click="removeImageField(idx)"
+                  class="btn btn-ghost btn-sm text-error shrink-0"
+                  :title="t('admin.productForm.images.remove')"
+                >
+                  <Icon name="lucide:trash-2" class="size-4" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -618,7 +702,7 @@ async function handleSubmit() {
           </NuxtLink>
           <button
             type="submit"
-            :disabled="isSubmitting"
+            :disabled="isSubmitting || isUploadingImage"
             class="btn bg-brand-500 border-none text-white hover:bg-brand-600 shadow-sm gap-2 transition-all"
           >
             <span v-if="isSubmitting" class="loading loading-spinner loading-sm"></span>
