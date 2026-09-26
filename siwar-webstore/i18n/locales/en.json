@@ -11,6 +11,7 @@
   },
   "cart": {
     "cart": "Shopping Cart",
+    "add": "Add to Cart",
     "validation": {
       "OK": "Item added to cart",
       "EXCEEDS_AVAILABLE_STOCK": "Only {count} items were available online. Your cart quantity has been adjusted.",
@@ -202,6 +203,57 @@
       "cancel": "Cancel",
       "save": "Save Allergen"
     }
+  },
+
+
+
+
+  "home": {
+    "hero": {
+      "slide1": {
+        "badge": "Special Deals",
+        "title": "Authentic Spices & Middle Eastern Pantry",
+        "subtitle": "Discover our hand-picked selection of premium pulses, cold-pressed oils, and spices.",
+        "cta": "Shop Deals"
+      },
+      "slide2": {
+        "badge": "New Arrivals",
+        "title": "Handmade Baklava & Traditional Sweets",
+        "subtitle": "Artisanal pistachio pastries and Middle Eastern treats delivered straight to your door.",
+        "cta": "Explore Sweets"
+      }
+    },
+    "search": {
+      "label": "Store Search",
+      "placeholder": "Search products (in Swedish, Arabic, or English)...",
+      "submit": "Search",
+      "quickAllergenPrefix": "Quick filter allergen-free:"
+    },
+    "categories": {
+      "heading": "Shop by Category",
+      "subheading": "Explore authentic pantry essentials and regional delicacies",
+      "explore": "View all in category"
+    }
+  },
+  "catalog": {
+    "viewProduct": "View product",
+    "title": "Product Catalog",
+    "searchPlaceholder": "Search by product name or brand...",
+    "filtersTitle": "Filters",
+    "resetFilters": "Reset all",
+    "categories": "Categories",
+    "allergenExclusionTitle": "Exclude Allergens",
+    "brands": "Brands",
+    "origin": "Country of Origin",
+    "noResults": "No products matched your search filters.",
+    "clearSearch": "Clear filters",
+    "sort": {
+      "newest": "Newest arrivals",
+      "priceAsc": "Price: Low to High",
+      "priceDesc": "Price: High to Low"
+    },
+    "prev": "Previous",
+    "next": "Next"
   },
   "callToAction":{
     "startShopping": "Start Shopping"
