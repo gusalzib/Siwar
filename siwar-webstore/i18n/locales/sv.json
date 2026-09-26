@@ -11,6 +11,8 @@
   },
   "cart": {
     "cart": "Varukorg",
+    "add": "Köp",
+    "addToCart":"Lägg i varukorgen",
     "validation": {
       "OK": "Varan lades till i varukorgen",
       "EXCEEDS_AVAILABLE_STOCK": "Endast {count} st fanns tillgängliga online. Antalet i din varukorg har justerats.",
@@ -204,6 +206,56 @@
       "cancel": "Avbryt",
       "save": "Spara allergen"
     }
+  },
+
+
+
+  "home": {
+    "hero": {
+      "slide1": {
+        "badge": "Kampanj",
+        "title": "Autentiska kryddor & orientaliskt skafferi",
+        "subtitle": "Upptäck vårt handplockade sortiment av baljväxter, oljor och färska nötter.",
+        "cta": "Se alla erbjudanden"
+      },
+      "slide2": {
+        "badge": "Nyinkommet",
+        "title": "Färska orientaliska delikatesser & baklava",
+        "subtitle": "Hantverksmässigt tillverkad pistaschbaklava och sötsaker levererade till dörren.",
+        "cta": "Upptäck sötsaker"
+      }
+    },
+    "search": {
+      "label": "Sök i butiken",
+      "placeholder": "Sök produkt (på svenska, arabiska eller engelska)...",
+      "submit": "Sök",
+      "quickAllergenPrefix": "Snabbfilter utan:"
+    },
+    "categories": {
+      "heading": "Handla efter kategori",
+      "subheading": "Utforska vårt breda sortiment av orientaliska råvaror och favoriter",
+      "explore": "Visa alla i kategorin"
+    }
+  },
+  "catalog": {
+    "viewProduct": "Visa produkt",
+    "title": "Produktsortiment",
+    "searchPlaceholder": "Sök efter produkt eller varumärke...",
+    "filtersTitle": "Filtrera",
+    "resetFilters": "Rensa alla",
+    "categories": "Kategorier",
+    "allergenExclusionTitle": "Exkludera allergener",
+    "brands": "Varumärken",
+    "origin": "Ursprungsland",
+    "noResults": "Inga produkter matchade dina valda filter.",
+    "clearSearch": "Återställ filter",
+    "sort": {
+      "newest": "Senast inkommet",
+      "priceAsc": "Pris: Lägst först",
+      "priceDesc": "Pris: Högst först"
+    },
+    "prev": "Föregående",
+    "next": "Nästa"
   },
   "callToAction": {
     "startShopping": "Börja handla"
