@@ -1,7 +1,7 @@
 // server/api/admin/products/index.post.ts
 import { isValidObjectId } from 'mongoose'
-import { Product } from '~/server/models/Product'
-import { isValidMinorUnit } from '~/utils/currency'
+import { Product } from '../../../models/Product'
+import { isValidMinorUnit } from '../../../../utils/currency'
 
 /**
  * Route: POST /api/admin/products

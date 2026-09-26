@@ -304,42 +304,44 @@ function getLocalizedText(obj?: Record<string, string>): string {
                 </td>
 
                 <!-- Action Buttons -->
-                <td class="px-4 py-3 text-right">
-                  <div class="flex items-center justify-end gap-2">
-                    <NuxtLink
-                      :to="`/admin/products/${product.id}`"
-                      class="rounded p-1 text-base-content/60 hover:bg-base-300 hover:text-base-content"
-                      :title="t('admin.products.actions.edit')"
-                    >
-                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </NuxtLink>
+                <td class="px-4 py-3 text-end">
+                    <div class="flex items-center justify-end gap-1">
+                        <!-- Edit Link -->
+                        <NuxtLink
+                            :to="`/admin/products/${product.id}`"
+                            class="btn btn-ghost btn-xs btn-square text-base-content/70 hover:text-brand-500"
+                            :title="t('admin.products.actions.edit')"
+                        >
+                        <Icon name="lucide:pencil" class="size-4" />
+                        </NuxtLink>
 
-                    <button
-                      type="button"
-                      :disabled="isActionLoading === product.id"
-                      @click="toggleArchive(product.id)"
-                      class="rounded p-1 text-base-content/60 hover:bg-base-300 hover:text-base-content disabled:opacity-50"
-                      :title="product.isActive ? t('admin.products.actions.archive') : t('admin.products.actions.unarchive')"
-                    >
-                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                      </svg>
-                    </button>
+                        <!-- Toggle Archive / Active Status -->
+                        <button
+                            type="button"
+                            :disabled="isActionLoading === product.id"
+                            @click="toggleArchive(product.id)"
+                            class="btn btn-ghost btn-xs btn-square text-base-content/70 hover:text-warning disabled:opacity-50"
+                            :title="product.isActive ? t('admin.products.actions.archive') : t('admin.products.actions.unarchive')"
+                        >
+                        <span v-if="isActionLoading === product.id" class="loading loading-spinner loading-xs"></span>
+                        <Icon
+                            v-else
+                            :name="product.isActive ? 'lucide:archive' : 'lucide:archive-restore'"
+                            class="size-4"
+                        />
+                        </button>
 
-                    <button
-                      type="button"
-                      :disabled="isActionLoading === product.id"
-                      @click="deleteProduct(product.id)"
-                      class="rounded p-1 text-error hover:bg-error/10 hover:text-error/80 disabled:opacity-50"
-                      :title="t('admin.products.actions.delete')"
-                    >
-                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
+                        <!-- Delete Product -->
+                        <button
+                            type="button"
+                            :disabled="isActionLoading === product.id"
+                            @click="deleteProduct(product.id)"
+                            class="btn btn-ghost btn-xs btn-square text-error/80 hover:bg-error/10 hover:text-error disabled:opacity-50"
+                            :title="t('admin.products.actions.delete')"
+                        >
+                        <Icon name="lucide:trash-2" class="size-4" />
+                        </button>
+                    </div>
                 </td>
               </tr>
             </tbody>

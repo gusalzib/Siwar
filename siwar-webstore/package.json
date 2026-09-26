@@ -30,11 +30,12 @@
     "@nuxt/icon": "^2.5.1",
     "@nuxtjs/tailwindcss": "^6.14.0",
     "@types/bcrypt": "^6.0.0",
+    "@types/node": "^26.6.3",
     "@types/sharp": "^0.31.1",
     "daisyui": "^5.7.46",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.1",
+    "vitest": "^5.0.2",
     "vue-tsc": "^3.3.11"
   }
 }
