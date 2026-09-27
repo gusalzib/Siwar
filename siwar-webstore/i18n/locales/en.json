@@ -4,6 +4,11 @@
   
   "welcomeMessage": "Explore the orient with Siwar",
   "checkout": "Checkout",
+  "nav": {
+    "home": "Home",
+    "catalog": "Product Catalog",
+    "store": "Store"
+  },
   "inventory": {
       "IN_STOCK": "In stock",
       "OUT_OF_STOCK_ONLINE": "Temporarily out of stock online",
@@ -44,6 +49,27 @@
       "subtitle": "View, edit, and filter products, inventory buffers, and translations",
       "addNew": "Add New Product",
       "searchPlaceholder": "Search by name or brand...",
+      "notFound": "Product not found",
+      "noImage": "No image available",
+      "jamforpris": "Unit price",
+      "taxIncluded": "Incl. {rate}% VAT",
+      "ingredientsTitle": "Ingredients",
+      "allergensTitle": "Allergens",
+      "nutritionTitle": "Nutritional Facts",
+      "nutritionPer100": "Nutrition declaration per 100g / 100ml",
+      "nutritionAmount": "Amount",
+      "nutritionOnPackageNotice": "Full nutrition facts are displayed on the packaging image in the gallery.",
+
+      "nutrition": {
+          "energy": "Energy",
+          "fat": "Fat",
+          "saturatedFat": "of which saturates",
+          "carbohydrates": "Carbohydrate",
+          "sugars": "of which sugars",
+          "protein": "Protein",
+          "salt": "Salt"
+        },
+
       "filters": {
         "allCategories": "All Categories",
         "stockLevel": {
@@ -105,7 +131,8 @@
         "specs": "Specifications & Tax",
         "allergens": "Allergen Declarations",
         "images": "Product Photography",
-        "status": "Publication Status"
+        "status": "Publication Status",
+        "nutrition": "Nutrition facts per 100g / 100ml (Optional)"
       },
       "fields": {
         "name": "Product Name",
@@ -144,7 +171,8 @@
         "imagePrimary": "Primary Thumbnail",
         "addImage": "Add Image",
         "removeImage": "Remove",
-        "noImagesAdded": "No images added yet. Click on \"Add Image\"."
+        "noImagesAdded": "No images added yet. Click on \"Add Image\".",
+        "nutritionHelp": "Filled in for food products. Leave blank if nutritional values are visible directly on the packaging image."
       },
       "actions": {
         "submit": "Save Product",

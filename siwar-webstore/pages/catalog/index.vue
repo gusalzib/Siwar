@@ -5,7 +5,7 @@ import { ref, watch } from 'vue'
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
-
+const localePath = useLocalePath() 
 // Active Store Currency
 const activeCurrency = useState<'SEK' | 'EUR' | 'USD'>('activeCurrency', () => 'SEK')
 
@@ -430,7 +430,7 @@ function getLocalized(obj?: Record<string, string>): string {
                         {{ product.brand }} <span v-if="product.countryOfOrigin">• {{ product.countryOfOrigin }}</span>
                     </span>
                     <h4 class="font-bold text-base text-base-content group-hover:text-primary transition line-clamp-2 mt-1">
-                    <NuxtLink :to="`/products/${product.id}`">
+                    <NuxtLink :to="localePath(`/products/${product.id}`)">
                         {{ getLocalized(product.name) }}
                     </NuxtLink>
                     </h4>
@@ -450,7 +450,7 @@ function getLocalized(obj?: Record<string, string>): string {
                 <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-base-200">
                     <!-- View Product (Semantic NuxtLink Button) -->
                     <NuxtLink
-                        :to="`/products/${product.id}`"
+                        :to="localePath(`/products/${product.id}`)"
                         class="btn btn-sm btn-outline h-auto min-h-8 py-1.5 leading-tight border-base-content/20 text-base-content hover:bg-base-200 hover:border-base-content/30 gap-1.5 font-semibold transition-all"
                     >
                     <Icon name="lucide:eye" class="size-4" />

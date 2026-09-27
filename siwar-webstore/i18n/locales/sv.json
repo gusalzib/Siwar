@@ -4,6 +4,11 @@
   
   "welcomeMessage": "Upptäck orienten med Siwar",
   "checkout": "Kassa",
+  "nav": {
+      "home": "Hem",
+      "catalog": "Produktkatalog",
+      "store": "Butik"
+    },
   "inventory": {
     "IN_STOCK": "I lager",
     "OUT_OF_STOCK_ONLINE": "Tillfälligt slut online",
@@ -45,6 +50,28 @@
       "subtitle": "Visa, redigera och filtrera produkter, lagernivåer och översättningar",
       "addNew": "Skapa ny produkt",
       "searchPlaceholder": "Sök på namn eller varumärke...",
+
+      "notFound": "Produkten hittades inte",
+      "noImage": "Ingen bild tillgänglig",
+      "jamforpris": "Jämförpris",
+      "taxIncluded": "Inkl. {rate}% moms",
+      "ingredientsTitle": "Ingredienser",
+      "allergensTitle": "Allergener",
+      "nutritionTitle": "Näringsvärde",
+      "nutritionPer100": "Näringsvärde per 100g / 100ml",
+      "nutritionAmount": "Mängd",
+      "nutritionOnPackageNotice": "Fullständig näringsdeklaration finns avbildad på produktens förpackning i bildgalleriet.",
+
+      "nutrition": {
+        "energy": "Energi",
+        "fat": "Fett",
+        "saturatedFat": "varav mättat fett",
+        "carbohydrates": "Kolhydrater",
+        "sugars": "varav sockerarter",
+        "protein": "Protein",
+        "salt": "Salt"
+        },
+
       "filters": {
         "allCategories": "Alla kategorier",
         "stockLevel": {
@@ -107,7 +134,8 @@
         "specs": "Specifikationer och moms",
         "allergens": "Allergendeklarationer",
         "images": "Produktbilder",
-        "status": "Publiceringsstatus"
+        "status": "Publiceringsstatus",
+        "nutrition": "Näringsdeklaration per 100g / 100ml (Valfritt)"
       },
       "fields": {
         "name": "Produktnamn",
@@ -146,7 +174,8 @@
         "imagePrimary": "Primär bild",
         "addImage": "Lägg till bild",
         "removeImage": "Ta bort",
-        "noImagesAdded": "Inga bilder tillagda ännu. Klicka på \"Lägg till bild\"."
+        "noImagesAdded": "Inga bilder tillagda ännu. Klicka på \"Lägg till bild\".",
+        "nutritionHelp": "Fylls i för livsmedel. Lämna tomt om näringsvärden visas direkt på förpackningsbilden."
       },
       "actions": {
         "submit": "Spara produkt",

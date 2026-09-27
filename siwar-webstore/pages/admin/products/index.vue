@@ -8,6 +8,7 @@ definePageMeta({
 })
 
 const { t, locale } = useI18n()
+const localePath = useLocalePath();
 
 // Active filter states
 const searchQuery = ref('')
@@ -97,8 +98,8 @@ function getLocalizedText(obj?: Record<string, string>): string {
           </p>
         </div>
         <NuxtLink
-          to="/admin/products/new"
-          class="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-content shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary"
+            :to="localePath('/admin/products/new')"
+            class="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-content shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -308,7 +309,7 @@ function getLocalizedText(obj?: Record<string, string>): string {
                     <div class="flex items-center justify-end gap-1">
                         <!-- Edit Link -->
                         <NuxtLink
-                            :to="`/admin/products/${product.id}`"
+                            :to="localePath(`/admin/products/${product.id}`)"
                             class="btn btn-ghost btn-xs btn-square text-base-content/70 hover:text-brand-500"
                             :title="t('admin.products.actions.edit')"
                         >

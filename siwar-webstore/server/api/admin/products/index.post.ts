@@ -134,6 +134,7 @@ export default defineEventHandler(async (event) => {
     momsRate: Number(body.momsRate),
     countryOfOrigin: body.countryOfOrigin?.trim() || '',
     allergens: Array.isArray(body.allergens) ? body.allergens.filter(isValidObjectId) : [],
+    nutritionTable: body.nutritionTable || undefined,
     barcode: body.barcode?.trim() || undefined,
     images: Array.isArray(body.images) ? body.images : [],
     isActive: body.isActive !== false,

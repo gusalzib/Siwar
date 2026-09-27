@@ -10,6 +10,7 @@ definePageMeta({
 const route = useRoute()
 const productId = String(route.params.id)
 const { t, locale } = useI18n()
+const localePath = useLocalePath();
 
 // Active tab for multilingual translation fields
 const activeLangTab = ref<'ar' | 'sv' | 'en'>('ar')
@@ -214,7 +215,7 @@ async function handleSubmit() {
         <!-- Top Bar -->
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <NuxtLink to="/admin/products" class="btn border-2 border-base-content/20 bg-transparent hover:bg-brand-500 hover:border-brand-500 hover:text-white text-base-content btn-sm gap-2 transition-all">
+            <NuxtLink .to="localePath('/admin/products')" class="btn border-2 border-base-content/20 bg-transparent hover:bg-brand-500 hover:border-brand-500 hover:text-white text-base-content btn-sm gap-2 transition-all">
               <Icon name="lucide:arrow-left" class="size-4" />
               {{ t('admin.productForm.backToList') }}
             </NuxtLink>
@@ -606,7 +607,7 @@ async function handleSubmit() {
 
           <!-- Action Bar -->
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-base-200">
-            <NuxtLink to="/admin/products" class="btn bg-transparent border-none text-base-content/70 hover:bg-error/20 hover:text-error transition-colors gap-2">
+            <NuxtLink :to="localePath('/admin/products')" class="btn bg-transparent border-none text-base-content/70 hover:bg-error/20 hover:text-error transition-colors gap-2">
               <Icon name="lucide:x" class="size-4" />
               {{ t('admin.productForm.actions.cancel') }}
             </NuxtLink>
