@@ -5,6 +5,10 @@
   "welcomeMessage": "اكتشف الشرق مع سوار",
   "checkout": "الدفع",
 
+  "nav": {
+      "home": "الرئيسية",
+      "catalog": "كتالوج المنتجات"
+    },
   "inventory": {
     "IN_STOCK": "متوفر في المخزون",
     "OUT_OF_STOCK_ONLINE": "نفدت الكمية المتاحة عبر الإنترنت مؤقتاً",
@@ -45,6 +49,28 @@
       "subtitle": "عرض وتعديل وتصفية المنتجات ومستويات المخزون والترجمات",
       "addNew": "إضافة منتج جديد",
       "searchPlaceholder": "البحث بالاسم أو العلامة التجارية...",
+
+      "notFound": "المنتج غير موجود",
+      "noImage": "لا توجد صورة",
+      "jamforpris": "السعر المقارن",
+      "taxIncluded": "شامل {rate}% ضريبة",
+      "ingredientsTitle": "المكونات",
+      "allergensTitle": "مسببات الحساسية",
+      "nutritionTitle": "القيمة الغذائية",
+      "nutritionPer100": "القيمة الغذائية لكل 100 غرام / 100 مل",
+      "nutritionAmount": "الكمية",
+      "nutritionOnPackageNotice": "جدول القيمة الغذائية الكامل موضح مباشرة على غلاف المنتج في معرض الصور.",
+
+      "nutrition": {
+        "energy": "الطاقة",
+        "fat": "الدهون",
+        "saturatedFat": "منها دهون مشبعة",
+        "carbohydrates": "الكربوهيدرات",
+        "sugars": "منها سكريات",
+        "protein": "البروتين",
+        "salt": "الملح"
+      },
+
       "filters": {
         "allCategories": "جميع الفئات",
         "stockLevel": {

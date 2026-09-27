@@ -4,6 +4,10 @@
   
   "welcomeMessage": "Upptäck orienten med Siwar",
   "checkout": "Kassa",
+  "nav": {
+      "home": "Hem",
+      "catalog": "Produktkatalog"
+    },
   "inventory": {
     "IN_STOCK": "I lager",
     "OUT_OF_STOCK_ONLINE": "Tillfälligt slut online",
@@ -45,6 +49,28 @@
       "subtitle": "Visa, redigera och filtrera produkter, lagernivåer och översättningar",
       "addNew": "Skapa ny produkt",
       "searchPlaceholder": "Sök på namn eller varumärke...",
+
+      "notFound": "Produkten hittades inte",
+      "noImage": "Ingen bild tillgänglig",
+      "jamforpris": "Jämförpris",
+      "taxIncluded": "Inkl. {rate}% moms",
+      "ingredientsTitle": "Ingredienser",
+      "allergensTitle": "Allergener",
+      "nutritionTitle": "Näringsvärde",
+      "nutritionPer100": "Näringsvärde per 100g / 100ml",
+      "nutritionAmount": "Mängd",
+      "nutritionOnPackageNotice": "Fullständig näringsdeklaration finns avbildad på produktens förpackning i bildgalleriet.",
+
+      "nutrition": {
+        "energy": "Energi",
+        "fat": "Fett",
+        "saturatedFat": "varav mättat fett",
+        "carbohydrates": "Kolhydrater",
+        "sugars": "varav sockerarter",
+        "protein": "Protein",
+        "salt": "Salt"
+        },
+
       "filters": {
         "allCategories": "Alla kategorier",
         "stockLevel": {

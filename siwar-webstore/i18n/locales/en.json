@@ -4,6 +4,10 @@
   
   "welcomeMessage": "Explore the orient with Siwar",
   "checkout": "Checkout",
+  "nav": {
+    "home": "Home",
+    "catalog": "Product Catalog"
+  },
   "inventory": {
       "IN_STOCK": "In stock",
       "OUT_OF_STOCK_ONLINE": "Temporarily out of stock online",
@@ -44,6 +48,27 @@
       "subtitle": "View, edit, and filter products, inventory buffers, and translations",
       "addNew": "Add New Product",
       "searchPlaceholder": "Search by name or brand...",
+      "notFound": "Product not found",
+      "noImage": "No image available",
+      "jamforpris": "Unit price",
+      "taxIncluded": "Incl. {rate}% VAT",
+      "ingredientsTitle": "Ingredients",
+      "allergensTitle": "Allergens",
+      "nutritionTitle": "Nutritional Facts",
+      "nutritionPer100": "Nutrition declaration per 100g / 100ml",
+      "nutritionAmount": "Amount",
+      "nutritionOnPackageNotice": "Full nutrition facts are displayed on the packaging image in the gallery.",
+
+      "nutrition": {
+          "energy": "Energy",
+          "fat": "Fat",
+          "saturatedFat": "of which saturates",
+          "carbohydrates": "Carbohydrate",
+          "sugars": "of which sugars",
+          "protein": "Protein",
+          "salt": "Salt"
+        },
+
       "filters": {
         "allCategories": "All Categories",
         "stockLevel": {
