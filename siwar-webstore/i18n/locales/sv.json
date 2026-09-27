@@ -6,7 +6,8 @@
   "checkout": "Kassa",
   "nav": {
       "home": "Hem",
-      "catalog": "Produktkatalog"
+      "catalog": "Produktkatalog",
+      "store": "Butik"
     },
   "inventory": {
     "IN_STOCK": "I lager",

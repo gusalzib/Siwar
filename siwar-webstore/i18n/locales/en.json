@@ -6,7 +6,8 @@
   "checkout": "Checkout",
   "nav": {
     "home": "Home",
-    "catalog": "Product Catalog"
+    "catalog": "Product Catalog",
+    "store": "Store"
   },
   "inventory": {
       "IN_STOCK": "In stock",
