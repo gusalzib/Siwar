@@ -1,30 +1,30 @@
 <!-- pages/index.vue -->
-<!-- <script setup lang="ts">
-const { t } = useI18n()
-</script> -->
-
-<!-- <template>
-  <div class="card bg-base-100 shadow-xl">
-    <div class="card-body">
-      <h2 class="card-title text-2xl font-bold">
-        {{ t('welcome') }}
-      </h2>
-      <p class="text-base-content/80 mt-4">
-        {{ t('welcomeMessage') }}
-      </p>
-      <div class="card-actions justify-end mt-4">
-        <button class="btn btn-primary">{{ t('callToAction.startShopping') }}</button>
-      </div>
-    </div>
-  </div>
-</template> -->
-
-
-<!-- pages/index.vue -->
 <script setup lang="ts">
 import { ref } from 'vue'
 
+interface LocalizedField {
+  [key: string]: string
+}
+
+interface CategoryFacet {
+  id: string
+  name: LocalizedField
+  slug: LocalizedField
+}
+
+interface AllergenFacet {
+  id: string
+  code: string
+  name: LocalizedField
+}
+
+interface FilterFacets {
+  categories: CategoryFacet[]
+  allergens: AllergenFacet[]
+}
+
 const { t, locale } = useI18n()
+const localePath = useLocalePath()
 const router = useRouter()
 
 // 1. Local search input state
@@ -32,38 +32,42 @@ const searchInput = ref('')
 const selectedAllergens = ref<string[]>([])
 
 // 2. Fetch Category taxonomy and common allergens for quick pills
-const { data: facetData } = await useAsyncData('home-categories', () =>
-  $fetch('/api/catalog/filters')
+const { data: facetData } = await useAsyncData<FilterFacets>(
+  'home-categories',
+  () => $fetch<FilterFacets>('/api/catalog/filters' as string)
 )
 
 // Helper: Safely resolve localized text across Arabic, Swedish, and English
 function getLocalized(obj?: Record<string, string>): string {
   if (!obj) return ''
-  return obj[locale.value] || obj['sv'] || obj['en'] || obj['ar'] || ''
+  return obj[locale.value] || obj.sv || obj.en || obj.ar || ''
 }
 
-// 3. Seamless Transition to /catalog on Search Submission
+// 3. Seamless Transition to /catalog preserving active locale
 function submitSearch() {
   const query: Record<string, string | undefined> = {}
-  
+
   if (searchInput.value.trim()) {
     query.q = searchInput.value.trim()
   }
-  
+
   if (selectedAllergens.value.length > 0) {
     query.excludeAllergens = selectedAllergens.value.join(',')
   }
 
-  router.push({
-    path: '/catalog',
-    query,
-  })
+  // localePath keeps the current language prefix (e.g., /sv/catalog or /en/catalog)
+  router.push(
+    localePath({
+      path: '/catalog',
+      query,
+    })
+  )
 }
 
-function toggleQuickAllergen(allergenId: string) {
-  const idx = selectedAllergens.value.indexOf(allergenId)
+function toggleQuickAllergen(allergenCodeOrId: string) {
+  const idx = selectedAllergens.value.indexOf(allergenCodeOrId)
   if (idx >= 0) selectedAllergens.value.splice(idx, 1)
-  else selectedAllergens.value.push(allergenId)
+  else selectedAllergens.value.push(allergenCodeOrId)
 }
 </script>
 
@@ -73,7 +77,10 @@ function toggleQuickAllergen(allergenId: string) {
     <section class="relative w-full">
       <div class="carousel w-full rounded-3xl overflow-hidden shadow-lg border border-base-200">
         <!-- Slide 1: Pantry & Spices -->
-        <div id="slide1" class="carousel-item relative w-full bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white min-h-[300px] md:min-h-[360px] flex items-center p-8 md:p-14">
+        <div
+          id="slide1"
+          class="carousel-item relative w-full bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white min-h-[300px] md:min-h-[360px] flex items-center p-8 md:p-14"
+        >
           <div class="max-w-xl space-y-4">
             <span class="badge badge-accent font-semibold tracking-wide">
               {{ t('home.hero.slide1.badge') }}
@@ -85,13 +92,14 @@ function toggleQuickAllergen(allergenId: string) {
               {{ t('home.hero.slide1.subtitle') }}
             </p>
             <NuxtLink
-              to="/catalog"
+              :to="localePath('/catalog')"
               class="btn btn-primary gap-2 text-white shadow-md font-bold"
             >
               <span>{{ t('home.hero.slide1.cta') }}</span>
               <Icon name="lucide:arrow-right" class="size-4 rtl:rotate-180" />
             </NuxtLink>
           </div>
+
           <!-- Carousel navigation controls -->
           <div class="absolute flex justify-between transform -translate-y-1/2 left-4 right-4 top-1/2 pointer-events-none">
             <a href="#slide2" class="btn btn-circle btn-sm btn-ghost bg-black/20 text-white pointer-events-auto">❮</a>
@@ -100,7 +108,10 @@ function toggleQuickAllergen(allergenId: string) {
         </div>
 
         <!-- Slide 2: Sweets & Fresh Bakery -->
-        <div id="slide2" class="carousel-item relative w-full bg-gradient-to-r from-amber-900 via-orange-900 to-amber-800 text-white min-h-[300px] md:min-h-[360px] flex items-center p-8 md:p-14">
+        <div
+          id="slide2"
+          class="carousel-item relative w-full bg-gradient-to-r from-amber-900 via-orange-900 to-amber-800 text-white min-h-[300px] md:min-h-[360px] flex items-center p-8 md:p-14"
+        >
           <div class="max-w-xl space-y-4">
             <span class="badge badge-warning font-semibold tracking-wide">
               {{ t('home.hero.slide2.badge') }}
@@ -112,13 +123,14 @@ function toggleQuickAllergen(allergenId: string) {
               {{ t('home.hero.slide2.subtitle') }}
             </p>
             <NuxtLink
-              to="/catalog"
+              :to="localePath('/catalog')"
               class="btn btn-warning gap-2 font-bold"
             >
               <span>{{ t('home.hero.slide2.cta') }}</span>
               <Icon name="lucide:arrow-right" class="size-4 rtl:rotate-180" />
             </NuxtLink>
           </div>
+
           <!-- Carousel navigation controls -->
           <div class="absolute flex justify-between transform -translate-y-1/2 left-4 right-4 top-1/2 pointer-events-none">
             <a href="#slide1" class="btn btn-circle btn-sm btn-ghost bg-black/20 text-white pointer-events-auto">❮</a>
@@ -146,7 +158,7 @@ function toggleQuickAllergen(allergenId: string) {
                 class="input input-bordered join-item w-full focus:outline-none"
               />
             </div>
-            
+
             <!-- Submit Button -->
             <button
               type="submit"
@@ -157,7 +169,7 @@ function toggleQuickAllergen(allergenId: string) {
             </button>
           </form>
 
-          <!-- Quick Allergen Exclusion Pills (AC-2 Entrypoint) -->
+          <!-- Quick Allergen Exclusion Pills -->
           <div v-if="facetData?.allergens?.length" class="flex flex-wrap items-center gap-2 pt-2 text-xs">
             <span class="text-base-content/70 font-semibold flex items-center gap-1">
               <Icon name="lucide:shield-alert" class="size-4 text-warning" />
@@ -169,14 +181,14 @@ function toggleQuickAllergen(allergenId: string) {
               type="button"
               :class="[
                 'badge badge-lg transition cursor-pointer gap-1 font-medium',
-                selectedAllergens.includes(allergen.id)
+                selectedAllergens.includes(allergen.code || allergen.id)
                   ? 'badge-error text-white'
                   : 'badge-outline hover:badge-error'
               ]"
-              @click="toggleQuickAllergen(allergen.id)"
+              @click="toggleQuickAllergen(allergen.code || allergen.id)"
             >
               <Icon
-                :name="selectedAllergens.includes(allergen.id) ? 'lucide:check' : 'lucide:plus'"
+                :name="selectedAllergens.includes(allergen.code || allergen.id) ? 'lucide:check' : 'lucide:plus'"
                 class="size-3"
               />
               <span>{{ getLocalized(allergen.name) }}</span>
@@ -197,12 +209,12 @@ function toggleQuickAllergen(allergenId: string) {
         </p>
       </div>
 
-      <!-- Category Grid -->
+      <!-- Category Grid (Locale-Preserving) -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
         <NuxtLink
           v-for="cat in facetData?.categories"
           :key="cat.id"
-          :to="{ path: '/catalog', query: { category: cat.slug?.[locale] || cat.id } }"
+          :to="localePath({ path: '/catalog', query: { category: cat.slug?.[locale] || cat.id } })"
           class="card bg-base-100 border border-base-200 hover:border-primary/50 shadow-sm hover:shadow-md transition-all duration-200 group overflow-hidden"
         >
           <div class="card-body p-6 flex flex-col justify-between h-44">
@@ -210,7 +222,10 @@ function toggleQuickAllergen(allergenId: string) {
               <div class="rounded-2xl bg-primary/10 text-primary p-3 group-hover:scale-110 transition-transform">
                 <Icon name="lucide:shopping-bag" class="size-6" />
               </div>
-              <Icon name="lucide:chevron-right" class="size-5 text-base-content/30 group-hover:text-primary group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition" />
+              <Icon
+                name="lucide:chevron-right"
+                class="size-5 text-base-content/30 group-hover:text-primary group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition"
+              />
             </div>
 
             <div>

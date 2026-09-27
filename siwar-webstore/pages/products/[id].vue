@@ -102,6 +102,8 @@ function addToCart() {
   if (!product.value?.availability?.canAddToCart) return
   // Dispatches to Pinia cart store
 }
+
+const localePath = useLocalePath()
 </script>
 
 <template>
@@ -109,10 +111,10 @@ function addToCart() {
     <!-- Breadcrumb Navigation -->
     <nav class="text-sm breadcrumbs mb-6 text-base-content/60">
       <ul>
-        <li><NuxtLink to="/">{{ t('nav.home') }}</NuxtLink></li>
-        <li><NuxtLink to="/catalog">{{ t('nav.catalog') }}</NuxtLink></li>
+        <li><NuxtLink :to="localePath('/')">{{ t('nav.home') }}</NuxtLink></li>
+        <li><NuxtLink :to="localePath('/catalog')">{{ t('nav.catalog') }}</NuxtLink></li>
         <li v-if="product.category">
-          <NuxtLink :to="`/catalog?category=${getLocalized(product.category.slug)}`">
+          <NuxtLink :to="localePath(`/catalog?category=${getLocalized(product.category.slug)}`)">
             {{ getLocalized(product.category.name) }}
           </NuxtLink>
         </li>
