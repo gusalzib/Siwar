@@ -44,6 +44,16 @@ const form = ref({
   countryOfOrigin: '',
   barcode: '',
   allergens: [] as string[],
+  nutritionTable: {
+    energyKj: '',
+    energyKcal: '',
+    fat: '',
+    saturatedFat: '',
+    carbohydrates: '',
+    sugars: '',
+    protein: '',
+    salt: '',
+  },
   images: [] as Array<{ url: string; altText: string; isPrimary: boolean }>,
   isActive: true,
 })
@@ -137,6 +147,13 @@ async function handleSubmit() {
   isSubmitting.value = true
 
   try {
+    // Helper to safely parse optional numeric entries
+    const parseNum = (v: string | number) => (v !== '' && v !== null && !isNaN(Number(v)) ? Number(v) : undefined)
+
+    const hasNutritionData = Object.values(form.value.nutritionTable).some(
+      (val) => val !== '' && val !== null && val !== undefined
+    )
+
     const payload = {
       name: form.value.name,
       description: form.value.description,
@@ -160,6 +177,18 @@ async function handleSubmit() {
       countryOfOrigin: form.value.countryOfOrigin,
       barcode: form.value.barcode || undefined,
       allergens: form.value.allergens,
+      nutritionTable: hasNutritionData
+        ? {
+            energyKj: parseNum(form.value.nutritionTable.energyKj),
+            energyKcal: parseNum(form.value.nutritionTable.energyKcal),
+            fat: parseNum(form.value.nutritionTable.fat),
+            saturatedFat: parseNum(form.value.nutritionTable.saturatedFat),
+            carbohydrates: parseNum(form.value.nutritionTable.carbohydrates),
+            sugars: parseNum(form.value.nutritionTable.sugars),
+            protein: parseNum(form.value.nutritionTable.protein),
+            salt: parseNum(form.value.nutritionTable.salt),
+          }
+        : undefined,
       images: form.value.images.filter((img) => img.url.trim() !== ''),
       isActive: form.value.isActive,
     }
@@ -574,6 +603,167 @@ async function handleSubmit() {
           </div>
         </div>
 
+        <!-- 4.5 Nutritional Table per 100g/ml (Optional) -->
+        <div class="card bg-base-100 border border-base-200 shadow-sm">
+          <div class="card-body space-y-4">
+            <div class="flex items-center justify-between border-b border-base-200 pb-3">
+              <div>
+                <h2 class="card-title text-base font-semibold">
+                  {{ t('admin.productForm.sections.nutrition', 'Näringsdeklaration per 100g / 100ml (Valfritt)') }}
+                </h2>
+                <p class="text-xs text-base-content/60 mt-0.5">
+                  {{ t('admin.productForm.fields.nutritionHelp', 'Fylls i för livsmedel. Lämna tomt om näringsvärden visas direkt på förpackningsbilden.') }}
+                </p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- Energy kJ -->
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium text-xs">{{ t( 'admin.products.nutrition.energyKj', 'Energi (kJ)') }}</span>
+                </label>
+                <div class="relative">
+                  <input
+                    v-model="form.nutritionTable.energyKj"
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="1850"
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-10 font-mono text-sm"
+                  />
+                  <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-semibold text-base-content/40">kJ</span>
+                </div>
+              </div>
+
+              <!-- Energy kcal -->
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium text-xs">{{ t( 'admin.products.nutrition.energyKcal', 'Energi (kcal)') }}</span>
+                </label>
+                <div class="relative">
+                  <input
+                    v-model="form.nutritionTable.energyKcal"
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="440"
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-12 font-mono text-sm"
+                  />
+                  <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-semibold text-base-content/40">kcal</span>
+                </div>
+              </div>
+
+              <!-- Fat -->
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium text-xs">{{ t( 'admin.products.nutrition.fat', 'Fett') }}</span>
+                </label>
+                <div class="relative">
+                  <input
+                    v-model="form.nutritionTable.fat"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="18.5"
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-8 font-mono text-sm"
+                  />
+                  <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-semibold text-base-content/40">g</span>
+                </div>
+              </div>
+
+              <!-- Saturated Fat -->
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium text-xs">{{ t( 'admin.products.nutrition.saturatedFat', 'varav mättat fett') }}</span>
+                </label>
+                <div class="relative">
+                  <input
+                    v-model="form.nutritionTable.saturatedFat"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="2.1"
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-8 font-mono text-sm"
+                  />
+                  <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-semibold text-base-content/40">g</span>
+                </div>
+              </div>
+
+              <!-- Carbohydrates -->
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium text-xs">{{ t( 'admin.products.nutrition.carbohydrates', 'Kolhydrater') }}</span>
+                </label>
+                <div class="relative">
+                  <input
+                    v-model="form.nutritionTable.carbohydrates"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="58.0"
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-8 font-mono text-sm"
+                  />
+                  <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-semibold text-base-content/40">g</span>
+                </div>
+              </div>
+
+              <!-- Sugars -->
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium text-xs">{{ t( 'admin.products.nutrition.sugars', 'varav sockerarter') }}</span>
+                </label>
+                <div class="relative">
+                  <input
+                    v-model="form.nutritionTable.sugars"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="32.0"
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-8 font-mono text-sm"
+                  />
+                  <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-semibold text-base-content/40">g</span>
+                </div>
+              </div>
+
+              <!-- Protein -->
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium text-xs">{{ t( 'admin.products.nutrition.protein', 'Protein') }}</span>
+                </label>
+                <div class="relative">
+                  <input
+                    v-model="form.nutritionTable.protein"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="8.5"
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-8 font-mono text-sm"
+                  />
+                  <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-semibold text-base-content/40">g</span>
+                </div>
+              </div>
+
+              <!-- Salt -->
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium text-xs">{{ t( 'admin.products.nutrition.salt', 'Salt') }}</span>
+                </label>
+                <div class="relative">
+                  <input
+                    v-model="form.nutritionTable.salt"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.05"
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full pr-8 font-mono text-sm"
+                  />
+                  <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-semibold text-base-content/40">g</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- 6. Product Photography (Direct R2 Upload Pipeline) -->
         <div class="card bg-base-100 border border-base-200 shadow-sm">
           <div class="card-body space-y-4">

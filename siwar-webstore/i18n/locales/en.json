@@ -130,7 +130,8 @@
         "specs": "Specifications & Tax",
         "allergens": "Allergen Declarations",
         "images": "Product Photography",
-        "status": "Publication Status"
+        "status": "Publication Status",
+        "nutrition": "Nutrition facts per 100g / 100ml (Optional)"
       },
       "fields": {
         "name": "Product Name",
@@ -169,7 +170,8 @@
         "imagePrimary": "Primary Thumbnail",
         "addImage": "Add Image",
         "removeImage": "Remove",
-        "noImagesAdded": "No images added yet. Click on \"Add Image\"."
+        "noImagesAdded": "No images added yet. Click on \"Add Image\".",
+        "nutritionHelp": "Filled in for food products. Leave blank if nutritional values are visible directly on the packaging image."
       },
       "actions": {
         "submit": "Save Product",

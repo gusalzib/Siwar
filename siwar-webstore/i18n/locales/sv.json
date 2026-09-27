@@ -133,7 +133,8 @@
         "specs": "Specifikationer och moms",
         "allergens": "Allergendeklarationer",
         "images": "Produktbilder",
-        "status": "Publiceringsstatus"
+        "status": "Publiceringsstatus",
+        "nutrition": "Näringsdeklaration per 100g / 100ml (Valfritt)"
       },
       "fields": {
         "name": "Produktnamn",
@@ -172,7 +173,8 @@
         "imagePrimary": "Primär bild",
         "addImage": "Lägg till bild",
         "removeImage": "Ta bort",
-        "noImagesAdded": "Inga bilder tillagda ännu. Klicka på \"Lägg till bild\"."
+        "noImagesAdded": "Inga bilder tillagda ännu. Klicka på \"Lägg till bild\".",
+        "nutritionHelp": "Fylls i för livsmedel. Lämna tomt om näringsvärden visas direkt på förpackningsbilden."
       },
       "actions": {
         "submit": "Spara produkt",

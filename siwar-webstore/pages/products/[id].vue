@@ -277,33 +277,33 @@ const localePath = useLocalePath()
                 </thead>
                 <tbody>
                   <tr v-if="product.nutritionTable.energyKj != null || product.nutritionTable.energyKcal != null">
-                    <td>{{ t('nutrition.energy') }}</td>
+                    <td>{{ t('admin.products.nutrition.energy') }}</td>
                     <td class="text-end font-mono">
                       {{ product.nutritionTable.energyKj ?? '-' }} kJ / {{ product.nutritionTable.energyKcal ?? '-' }} kcal
                     </td>
                   </tr>
                   <tr v-if="product.nutritionTable.fat != null">
-                    <td>{{ t('nutrition.fat') }}</td>
+                    <td>{{ t('admin.products.nutrition.fat') }}</td>
                     <td class="text-end font-mono">{{ product.nutritionTable.fat }} g</td>
                   </tr>
                   <tr v-if="product.nutritionTable.saturatedFat != null" class="text-base-content/70">
-                    <td class="ps-6">↳ {{ t('nutrition.saturatedFat') }}</td>
+                    <td class="ps-6">↳ {{ t('admin.products.nutrition.saturatedFat') }}</td>
                     <td class="text-end font-mono">{{ product.nutritionTable.saturatedFat }} g</td>
                   </tr>
                   <tr v-if="product.nutritionTable.carbohydrates != null">
-                    <td>{{ t('nutrition.carbohydrates') }}</td>
+                    <td>{{ t('admin.products.nutrition.carbohydrates') }}</td>
                     <td class="text-end font-mono">{{ product.nutritionTable.carbohydrates }} g</td>
                   </tr>
                   <tr v-if="product.nutritionTable.sugars != null" class="text-base-content/70">
-                    <td class="ps-6">↳ {{ t('nutrition.sugars') }}</td>
+                    <td class="ps-6">↳ {{ t('admin.products.nutrition.sugars') }}</td>
                     <td class="text-end font-mono">{{ product.nutritionTable.sugars }} g</td>
                   </tr>
                   <tr v-if="product.nutritionTable.protein != null">
-                    <td>{{ t('nutrition.protein') }}</td>
+                    <td>{{ t('admin.products.nutrition.protein') }}</td>
                     <td class="text-end font-mono">{{ product.nutritionTable.protein }} g</td>
                   </tr>
                   <tr v-if="product.nutritionTable.salt != null">
-                    <td>{{ t('nutrition.salt') }}</td>
+                    <td>{{ t('admin.products.nutrition.salt') }}</td>
                     <td class="text-end font-mono">{{ product.nutritionTable.salt }} g</td>
                   </tr>
                 </tbody>
