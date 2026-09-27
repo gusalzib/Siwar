@@ -109,16 +109,32 @@ const localePath = useLocalePath()
 <template>
   <div v-if="product" class="container mx-auto px-4 py-8">
     <!-- Breadcrumb Navigation -->
-    <nav class="text-sm breadcrumbs mb-6 text-base-content/60">
-      <ul>
-        <li><NuxtLink :to="localePath('/')">{{ t('nav.home') }}</NuxtLink></li>
-        <li><NuxtLink :to="localePath('/catalog')">{{ t('nav.catalog') }}</NuxtLink></li>
-        <li v-if="product.category">
-          <NuxtLink :to="localePath(`/catalog?category=${getLocalized(product.category.slug)}`)">
-            {{ getLocalized(product.category.name) }}
+    <nav class="text-sm breadcrumbs mb-8 mt-2 overflow-visible">
+      <ul class="!flex flex-col sm:!flex-row flex-wrap gap-2 w-full">
+        <li class="w-full sm:w-auto">
+          <NuxtLink :to="localePath('/')" class="inline-flex w-full sm:w-auto items-center gap-1.5 px-3 py-1.5 bg-base-100 hover:bg-primary/10 text-base-content/70 hover:text-primary rounded-lg border border-base-300 hover:border-primary/30 shadow-sm transition-all hover:-translate-y-0.5 font-medium">
+            <Icon name="lucide:home" class="size-4 shrink-0" />
+            <span class="whitespace-nowrap">{{ t('nav.home') }}</span>
           </NuxtLink>
         </li>
-        <li class="font-bold text-base-content">{{ productName }}</li>
+        <li class="w-full sm:w-auto">
+          <NuxtLink :to="localePath('/catalog')" class="inline-flex w-full sm:w-auto items-center gap-1.5 px-3 py-1.5 bg-base-100 hover:bg-primary/10 text-base-content/70 hover:text-primary rounded-lg border border-base-300 hover:border-primary/30 shadow-sm transition-all hover:-translate-y-0.5 font-medium">
+            <Icon name="lucide:shopping-bag" class="size-4 shrink-0" />
+            <span class="whitespace-nowrap">{{ t('nav.catalog') }}</span>
+          </NuxtLink>
+        </li>
+        <li v-if="product.category" class="w-full sm:w-auto">
+          <NuxtLink :to="localePath(`/catalog?category=${getLocalized(product.category.slug)}`)" class="inline-flex w-full sm:w-auto items-center gap-1.5 px-3 py-1.5 bg-base-100 hover:bg-primary/10 text-base-content/70 hover:text-primary rounded-lg border border-base-300 hover:border-primary/30 shadow-sm transition-all hover:-translate-y-0.5 font-medium">
+            <Icon name="lucide:tag" class="size-4 shrink-0" />
+            <span class="whitespace-nowrap">{{ getLocalized(product.category.name) }}</span>
+          </NuxtLink>
+        </li>
+        <li class="w-full sm:w-auto">
+          <div class="inline-flex w-full sm:w-auto items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-lg border border-primary/20 shadow-sm font-bold">
+            <Icon name="lucide:package" class="size-4 shrink-0" />
+            <span class="whitespace-nowrap">{{ productName }}</span>
+          </div>
+        </li>
       </ul>
     </nav>
 
