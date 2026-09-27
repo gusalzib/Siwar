@@ -26,8 +26,20 @@ export interface IProductImage {
   isPrimary?: boolean // Marks the main thumbnail photo
 }
 
+// Structure for nutritional information
+export interface INutritionTable {
+  energyKj?: number
+  energyKcal?: number
+  fat?: number
+  saturatedFat?: number
+  carbohydrates?: number
+  sugars?: number
+  protein?: number
+  salt?: number
+}
+
 // Main Product Document interface
-export interface IProduct extends Document {
+export interface IProduct {
   // Multilingual display name across all supported languages
   name: {
     ar: string // Arabic (primary)
@@ -53,7 +65,7 @@ export interface IProduct extends Document {
   brand: string
 
   // Reference linking this item to its Category document
-  category: Types.ObjectId
+  category: Types.ObjectId | { _id: Types.ObjectId | string, name: { ar: string, sv: string, en: string }, slug: string } | any
 
   // Gallery of photos stored on Cloudflare R2
   images: IProductImage[]
@@ -88,6 +100,9 @@ export interface IProduct extends Document {
 
   // EAN/GTIN barcode for fulfillment scanning and future physical POS sync
   barcode?: string
+
+  // Nutritional information
+  nutritionTable?: INutritionTable
 
   // Visibility toggle to draft or archive products without deleting them
   isActive: boolean
@@ -196,6 +211,16 @@ const ProductSchema = new Schema<IProduct>(
       trim: true,
       sparse: true, // Allows null/empty values without violating unique constraints
       index: true,  // Speeds up barcode lookups during packing
+    },
+    nutritionTable: {
+      energyKj: { type: Number, min: 0 },
+      energyKcal: { type: Number, min: 0 },
+      fat: { type: Number, min: 0 },
+      saturatedFat: { type: Number, min: 0 },
+      carbohydrates: { type: Number, min: 0 },
+      sugars: { type: Number, min: 0 },
+      protein: { type: Number, min: 0 },
+      salt: { type: Number, min: 0 },
     },
     isActive: {
       type: Boolean,
