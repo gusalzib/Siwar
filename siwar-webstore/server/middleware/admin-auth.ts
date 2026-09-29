@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   const isAdminApiRoute = pathname.startsWith('/api/admin')
 
   // 2. Whitelist unauthenticated auth entry points (such as the login endpoint)
-  const isPublicAuthRoute = pathname.startsWith('/api/admin/auth/login')
+  const isPublicAuthRoute = pathname.startsWith('/api/admin/auth')
 
   if (isAdminApiRoute && !isPublicAuthRoute) {
     // 3. Inspect the session cookie

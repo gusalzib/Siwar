@@ -4,29 +4,28 @@
  * Validates the caller's session cookie and returns the authenticated
  * administrator's identity profile. Throws HTTP 401 if unauthenticated.
  */
-import { requireAdminSession } from '../../../../utils/admin-session'
+import { getAdminSession } from '../../../../utils/admin-session'
 
-interface AdminProfileResponse {
-  statusCode: number
-  id: string
-  email: string
-  role: 'admin' | 'staff'
-  authenticatedAt?: number
-}
+export default defineEventHandler(async (event) => {
+  const session = await getAdminSession(event)
 
-export default defineEventHandler(async (event): Promise<AdminProfileResponse> => {
-  // 1. Guard check: extracts session or throws 401 Unauthorized
-  const sessionData = await requireAdminSession(event)
+  // If no active admin session, return clean 200 with authenticated: false
+  if (!session.data?.adminId) {
+    return {
+      statusCode: 200,
+      authenticated: false,
+      user: null,
+    }
+  }
 
-  // 2. Set explicit HTTP 200 status header
-  setResponseStatus(event, 200)
-
-  // 3. Return sanitized profile data
   return {
     statusCode: 200,
-    id: sessionData.adminId,
-    email: sessionData.email,
-    role: sessionData.role,
-    authenticatedAt: sessionData.authenticatedAt,
+    authenticated: true,
+    user: {
+      id: session.data.adminId,
+      email: session.data.email,
+      role: session.data.role,
+      authenticatedAt: session.data.authenticatedAt,
+    },
   }
 })
