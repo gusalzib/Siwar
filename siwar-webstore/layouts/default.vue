@@ -21,17 +21,14 @@ const currentLocaleName = computed(() => {
   return found?.name || locale.value
 })
 
-// Theme toggle logic
-const isDark = ref(false)
-
 // Client-side hydration on initial application mount (AC-3)
 onMounted(() => {
-  cartStore.hydrateCart()
+  cartStore.hydrateCart();
 })
 
 useHead(() => ({
   htmlAttrs: {
-    'data-theme': isDark.value ? 'dark' : 'light',
+    'data-theme': preferences.theme,
   },
 }))
 
@@ -122,7 +119,12 @@ const logout = async () => {
       <div class="flex-none flex items-center gap-2">
         <!-- Theme Toggler -->
         <label class="swap swap-rotate btn btn-ghost btn-circle">
-          <input type="checkbox" v-model="isDark" />
+          <!-- <input type="checkbox" v-model="isDark" />  --> <!--Commented out because it is supposed to get it from preference store now-->
+          <input
+            type="checkbox"
+            :checked="preferences.theme === 'dark'"
+            @change="preferences.toggleTheme()"
+          />
           <Icon name="lucide:sun" class="swap-off h-5 w-5" />
           <Icon name="lucide:moon" class="swap-on h-5 w-5" />
         </label>

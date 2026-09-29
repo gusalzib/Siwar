@@ -2,15 +2,17 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useCartStore } from '~/stores/cart'
+import { usePreferencesStore } from '~/stores/preferences'
 
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
 const localePath = useLocalePath() 
 const cartStore = useCartStore()
+const preferences = usePreferencesStore()
 
 // Active Store Currency
-const activeCurrency = useState<'SEK' | 'EUR' | 'USD'>('activeCurrency', () => 'SEK')
+const activeCurrency = computed(() => preferences.currency || 'SEK')
 
 // 1. Reactive filter state derived from URL Query Parameters
 const searchQuery = ref(String(route.query.q || route.query.search || ''))
