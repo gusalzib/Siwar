@@ -28,6 +28,7 @@ export interface StorefrontProduct {
   ingredients?: LocalizedString
   brand: string
   category?: PopulatedCategory
+  grossWeight?: number
   images: Array<{
     url: string
     altText?: string

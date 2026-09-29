@@ -2,10 +2,12 @@
 <script setup lang="ts">
 import { calculateJamforpris, type SupportedUnit } from '~/server/services/pricing.service'
 import type { StorefrontProduct } from '~/types/product'
+import { useCartStore } from '~/stores/cart'
 
 const route = useRoute()
 const { t, locale } = useI18n()
 const preferences = usePreferencesStore()
+const cartStore = useCartStore()
 
 const productId = route.params.id as string
 
@@ -99,10 +101,28 @@ useSeoMeta({
 
 // Add to Cart Action
 function addToCart() {
-  if (!product.value?.availability?.canAddToCart) return
-  // Dispatches to Pinia cart store
-}
+  if (!product.value || !product.value.availability?.canAddToCart) return
 
+  // 3. Dispatch to Pinia cart store
+  const primaryImg = product.value.images?.find((img: any) => img.isPrimary) || product.value.images?.[0]
+
+  const status = cartStore.addItem(
+    {
+      productId: product.value.id || (product.value as any)._id,
+      name: product.value.name,
+      thumbnailUrl: primaryImg?.url || '',
+      price: product.value.price,
+      momsRate: product.value.momsRate,
+      grossWeight: product.value.grossWeight || 0,
+      availableStock: product.value.availability.availableStock,
+    },
+    selectedQuantity.value
+  )
+
+  // 4. Open the sliding drawer so the customer can review their cart
+  // cartStore.toggleDrawer(true)
+  // commented out because I do not want the cart to open every time a customer adds something to it. 
+}
 const localePath = useLocalePath()
 </script>
 

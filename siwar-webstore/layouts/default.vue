@@ -1,11 +1,14 @@
 <!-- layouts/default.vue -->
 <script setup lang="ts">
 import { usePreferencesStore, type CurrencyCode } from '~/stores/preferences'
+import { useCartStore, type CartItem } from '~/stores/cart'
+import CartDrawer from '~/components/CartDrawer.vue'
 
 const { locale, locales, t } = useI18n()
 const localePath = useLocalePath()
 const switchLocalePath = useSwitchLocalePath()
 const preferences = usePreferencesStore()
+const cartStore = useCartStore()
 
 // Supported store currencies for AC-1 switching
 const availableCurrencies: CurrencyCode[] = ['SEK', 'EUR', 'USD']
@@ -18,12 +21,14 @@ const currentLocaleName = computed(() => {
   return found?.name || locale.value
 })
 
-// Theme toggle logic
-const isDark = ref(false)
+// Client-side hydration on initial application mount (AC-3)
+onMounted(() => {
+  cartStore.hydrateCart();
+})
 
 useHead(() => ({
   htmlAttrs: {
-    'data-theme': isDark.value ? 'dark' : 'light',
+    'data-theme': preferences.theme,
   },
 }))
 
@@ -33,7 +38,9 @@ const { data: adminSession, refresh: refreshAdminSession } = await useFetch(
   '/api/admin/auth/me',
   { headers }
 )
-const isAdmin = computed(() => adminSession.value?.statusCode === 200)
+
+// const isAdmin = computed(() => adminSession.value?.statusCode === 200)
+const isAdmin = computed(() => adminSession.value?.authenticated === true)
 
 const logout = async () => {
   try {
@@ -50,13 +57,7 @@ const logout = async () => {
   <div class="min-h-screen bg-base-200 text-base-content transition-all duration-150">
     <!-- DaisyUI Navbar -->
     <header class="navbar bg-base-100 shadow-sm sticky top-0 z-50">
-      <!-- Brand Logo / Home Link (Locale-Preserving) -->
-      <!-- <div class="flex-1">
-        <NuxtLink :to="localePath('/')" class="btn btn-ghost text-xl font-bold cursor-pointer">
-          <Icon name="lucide:shopping-bag" class="h-6 w-6 text-primary" />
-          <span class="hidden md:inline-block">{{ t('storeName', 'Siwar') }}</span>
-        </NuxtLink>
-      </div> -->
+
       <!-- Brand Logo & Mobile Navigation Trigger -->
       <div class="flex-1 flex items-center gap-1">
         <!-- Mobile Hamburger Menu (Only visible on screens < 1024px) -->
@@ -118,7 +119,12 @@ const logout = async () => {
       <div class="flex-none flex items-center gap-2">
         <!-- Theme Toggler -->
         <label class="swap swap-rotate btn btn-ghost btn-circle">
-          <input type="checkbox" v-model="isDark" />
+          <!-- <input type="checkbox" v-model="isDark" />  --> <!--Commented out because it is supposed to get it from preference store now-->
+          <input
+            type="checkbox"
+            :checked="preferences.theme === 'dark'"
+            @change="preferences.toggleTheme()"
+          />
           <Icon name="lucide:sun" class="swap-off h-5 w-5" />
           <Icon name="lucide:moon" class="swap-on h-5 w-5" />
         </label>
@@ -146,21 +152,7 @@ const logout = async () => {
           </ul>
         </div>
 
-        <!-- Admin Management Links (Locale-Preserving) -->
-        <!-- <div class="hidden lg:flex items-center gap-1" v-if="isAdmin">
-          <NuxtLink :to="localePath('/admin/products')" class="btn btn-ghost btn-sm font-semibold text-primary gap-1">
-            <Icon name="lucide:package" class="h-4 w-4" />
-            {{ t('admin.nav.products', 'Produkter') }}
-          </NuxtLink>
-          <NuxtLink :to="localePath('/admin/allergens')" class="btn btn-ghost btn-sm font-semibold text-primary gap-1">
-            <Icon name="lucide:shield-alert" class="h-4 w-4" />
-            {{ t('admin.nav.allergens', 'Allergener') }}
-          </NuxtLink>
-          <NuxtLink :to="localePath('/admin/categories')" class="btn btn-ghost btn-sm font-semibold text-primary gap-1">
-            <Icon name="lucide:folder-tree" class="h-4 w-4" />
-            {{ t('admin.nav.categories', 'Kategorier') }}
-          </NuxtLink>
-        </div> -->
+
         <!-- Desktop Navigation Links (Visible on screens >= 1024px) -->
         <div class="hidden lg:flex items-center gap-1">
           <NuxtLink :to="localePath('/catalog')" class="btn btn-ghost btn-sm font-semibold gap-1">
@@ -208,15 +200,30 @@ const logout = async () => {
         </div>
 
         <!-- Cart Button -->
-        <div class="dropdown dropdown-end">
+        <!-- <div class="dropdown dropdown-end">
           <NuxtLink :to="localePath('/cart')" class="btn btn-ghost btn-circle">
             <div class="indicator">
               <Icon name="lucide:shopping-cart" class="h-5 w-5" />
               <span class="badge badge-sm badge-primary indicator-item">0</span>
             </div>
           </NuxtLink>
+        </div> -->
+        <!-- Header Cart Trigger Button -->
+      <button
+        type="button"
+        class="btn btn-ghost btn-circle"
+        @click="cartStore.toggleDrawer()"
+      >
+        <div class="indicator">
+          <Icon name="lucide:shopping-cart" class="size-5" />
+          <span
+            v-if="cartStore.totalItemCount > 0"
+            class="badge badge-sm badge-primary indicator-item"
+          >
+            {{ cartStore.totalItemCount }}
+          </span>
         </div>
-
+      </button>
         <!-- Account / Profile Dropdown -->
         <div class="dropdown dropdown-end">
           <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
@@ -256,5 +263,6 @@ const logout = async () => {
     <main class="container mx-auto p-4 sm:p-6 lg:p-8">
       <slot />
     </main>
+    <CartDrawer />
   </div>
 </template>

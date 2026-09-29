@@ -17,8 +17,8 @@ const errorMessage = ref('')
 // Check if an active session already exists; if so, navigate to admin catalog
 onMounted(async () => {
   try {
-    const session = await $fetch<{ statusCode: number }>('/api/admin/auth/me')
-    if (session?.statusCode === 200) {
+    const session = await $fetch<{ statusCode: number, authenticated: boolean }>('/api/admin/auth/me')
+    if (session?.authenticated === true) {
       await navigateTo('/admin/products')
     }
   } catch {

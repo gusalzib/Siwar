@@ -1,13 +1,18 @@
 <!-- pages/catalog/index.vue -->
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useCartStore } from '~/stores/cart'
+import { usePreferencesStore } from '~/stores/preferences'
 
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
 const localePath = useLocalePath() 
+const cartStore = useCartStore()
+const preferences = usePreferencesStore()
+
 // Active Store Currency
-const activeCurrency = useState<'SEK' | 'EUR' | 'USD'>('activeCurrency', () => 'SEK')
+const activeCurrency = computed(() => preferences.currency || 'SEK')
 
 // 1. Reactive filter state derived from URL Query Parameters
 const searchQuery = ref(String(route.query.q || route.query.search || ''))
@@ -55,6 +60,29 @@ const { data: catalogData, pending: isLoading } = await useAsyncData(
     watch: [() => route.query],
   }
 )
+
+function handleAddToCart(product: any) {
+  if (!product.canAddToCart) return
+
+  const primaryImg = product.primaryImage?.url || product.images?.[0]?.url || ''
+
+  cartStore.addItem(
+    {
+      productId: product.id || product._id,
+      name: product.name,
+      thumbnailUrl: primaryImg,
+      price: product.price,
+      momsRate: product.momsRate || 12,
+      grossWeight: product.grossWeight || 0,
+      availableStock: product.availableStock,
+    },
+    1 // Add single quantity from catalog view
+  )
+
+  // Open the drawer immediately
+  // cartStore.toggleDrawer(true)
+  // commented out because I do not want the cart to open every time a customer adds something to it. 
+}
 
 // 4. Clean URL Sync for Deep-Linking
 function applyFiltersToUrl(overrides: Record<string, any> = {}) {
@@ -204,7 +232,7 @@ function getLocalized(obj?: Record<string, string>): string {
           <!-- Mobile Filter Toggle -->
           <button
             type="button"
-            class="btn btn-outline btn-sm md:hidden gap-2 !border-emerald-300 !text-base-content dark:!text-emerald-200"
+            class="btn btn-outline btn-sm lg:hidden gap-2 !border-emerald-300 !text-base-content dark:!text-emerald-200"
             @click="isMobileDrawerOpen = !isMobileDrawerOpen"
           >
             <Icon name="lucide:sliders-horizontal" class="size-4" />
@@ -461,11 +489,12 @@ function getLocalized(obj?: Record<string, string>): string {
                     <button
                         type="button"
                         :disabled="!product.canAddToCart"
-                        class="btn btn-sm !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none gap-1.5 h-auto min-h-8 py-1.5 px-1 leading-tight font-bold hover:scale-[1.02] transition-all shadow-sm disabled:opacity-50 disabled:hover:scale-100"
-                    >
-                    <Icon name="lucide:shopping-cart" class="size-4" />
-                    <span>{{ t('cart.add') }}</span>
-                    </button>
+                        @click.stop="handleAddToCart(product)"
+                        class="btn btn-sm h-auto min-h-8 py-1.5 leading-tight !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none gap-1.5 font-bold hover:scale-[1.02] transition-all shadow-sm disabled:opacity-50 disabled:hover:scale-100 text-center"
+                      >
+                        <Icon name="lucide:shopping-cart" class="size-4 shrink-0" />
+                        <span>{{ t('cart.add') }}</span>
+                      </button>
                 </div>
             </div>
         </article>
