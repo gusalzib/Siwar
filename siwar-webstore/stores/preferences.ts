@@ -1,6 +1,7 @@
 // stores/preferences.ts
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useCookie } from 'nuxt/app'
 
 export type CurrencyCode = 'SEK' | 'EUR' | 'USD'
 export type ThemeMode = 'light' | 'dark'

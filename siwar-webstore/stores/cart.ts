@@ -43,6 +43,11 @@ export interface MomsSummary {
 
 const STORAGE_KEY = 'siwar_cart'
 
+// Helper that safely detects client runtime in both Nuxt SSR and Vitest
+const isClient = () =>
+  (typeof import.meta !== 'undefined' && Boolean(import.meta.client)) ||
+  (typeof globalThis !== 'undefined' && Boolean((globalThis as any).window))
+
 export const useCartStore = defineStore('cart', () => {
   const preferences = usePreferencesStore()
   
@@ -55,7 +60,7 @@ export const useCartStore = defineStore('cart', () => {
   // Session Persistence (AC-3)
   // ---------------------------------------------------------------------------
   function hydrateCart(): void {
-    if (import.meta.client && !isHydrated.value) {
+    if (isClient() && !isHydrated.value) {
       try {
         const stored = localStorage.getItem(STORAGE_KEY)
         if (stored) {
@@ -73,7 +78,7 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   // Sync state mutations to localStorage strictly on client
-  if (import.meta.client) {
+  if (isClient()) {
     watch(
       items,
       (newItems) => {
@@ -81,7 +86,7 @@ export const useCartStore = defineStore('cart', () => {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(newItems))
         }
       },
-      { deep: true }
+      { deep: true, flush: 'sync' }
     )
   }
 
@@ -145,41 +150,35 @@ export const useCartStore = defineStore('cart', () => {
   // Shipping Calculations (Tiered by weight & SEK subtotal)
   // ---------------------------------------------------------------------------
   const shippingFeeMinor = computed<number>(() => {
-    if (items.value.length === 0) return 0
-
-    // SEK Subtotal is evaluated for the free shipping threshold (> 899 SEK)
-    const subtotalSEK = items.value.reduce(
-      (sum, item) => sum + (item.price.SEK ?? 0) * item.quantity,
-      0
-    )
-
-    if (subtotalSEK >= DEFAULT_SHIPPING_CONFIG.freeShippingThresholdMinorSEK) {
+    if (items.value.length === 0 || isFreeShippingQualified.value) {
       return 0
     }
 
+    const curr = activeCurrency.value
     const weightGrams = totalGrossWeightGrams.value
     const matchedTier = DEFAULT_SHIPPING_CONFIG.tiers.find(
       (tier) => weightGrams <= tier.maxWeightGrams
     )
 
-    return matchedTier ? matchedTier.feeMinorSEK : 10900
+    const fallbackTier = DEFAULT_SHIPPING_CONFIG.tiers[DEFAULT_SHIPPING_CONFIG.tiers.length - 1]
+    const targetTier = matchedTier || fallbackTier
+
+    return targetTier?.price[curr] ?? targetTier?.price.SEK ?? 10900
   })
 
+  // 1. Evaluate if free shipping threshold is met in the current currency
   const isFreeShippingQualified = computed<boolean>(() => {
     if (items.value.length === 0) return false
-    const subtotalSEK = items.value.reduce(
-      (sum, item) => sum + (item.price.SEK ?? 0) * item.quantity,
-      0
-    )
-    return subtotalSEK >= DEFAULT_SHIPPING_CONFIG.freeShippingThresholdMinorSEK
+    const curr = activeCurrency.value
+    const threshold = DEFAULT_SHIPPING_CONFIG.freeShippingThreshold[curr] ?? DEFAULT_SHIPPING_CONFIG.freeShippingThreshold.SEK
+    return cartSubtotalMinor.value >= threshold
   })
 
+  // 2. Remaining amount needed for free shipping in active currency
   const remainingForFreeShippingMinor = computed<number>(() => {
-    const subtotalSEK = items.value.reduce(
-      (sum, item) => sum + (item.price.SEK ?? 0) * item.quantity,
-      0
-    )
-    return Math.max(0, DEFAULT_SHIPPING_CONFIG.freeShippingThresholdMinorSEK - subtotalSEK)
+    const curr = activeCurrency.value
+    const threshold = DEFAULT_SHIPPING_CONFIG.freeShippingThreshold[curr] ?? DEFAULT_SHIPPING_CONFIG.freeShippingThreshold.SEK
+    return Math.max(0, threshold - cartSubtotalMinor.value)
   })
 
   /**
