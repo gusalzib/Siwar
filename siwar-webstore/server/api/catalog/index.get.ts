@@ -132,6 +132,7 @@ export default defineEventHandler(async (event) => {
       price: p.price,
       discount: p.discount || 0,
       netQuantity: p.netQuantity,
+      grossWeight: p.grossWeight ?? (p.netQuantity?.unit === 'g' ? p.netQuantity.value : 0), // Pass grossWeight with fallback to netQuantity if unit is in grams
       momsRate: p.momsRate,
       stockQuantity: p.stockQuantity,
       availableStock,
