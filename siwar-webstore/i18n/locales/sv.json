@@ -400,5 +400,11 @@
       "consentRequired": "Du måste godkänna köpvillkoren och undantaget för ångerrätt för att kunna slutföra köpet."
     },
     "continueShopping": "Fortsätt handla"
+  },
+
+  "order": {
+    "confirmedTitle": "Tack för din beställning!",
+    "holdNotice": "Ditt belopp har reserverats och dras när ordern packas.",
+    "backToHome": "Tillbaka till butiken"
   }
 }

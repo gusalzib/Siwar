@@ -397,5 +397,11 @@
       "consentRequired": "You must accept the terms of purchase and withdrawal exemption to proceed."
     },
     "continueShopping": "Continue Shopping"
+  },
+
+  "order": {
+    "confirmedTitle": "Thank you for your order!",
+    "holdNotice": "Your amount has been reserved and will be charged when the order is packed.",
+    "backToHome": "Back to shop"
   }
 }
