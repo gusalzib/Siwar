@@ -40,6 +40,9 @@ export interface CreatePaymentSessionParams {
   }
   /** Additional provider metadata or custom tracking key-value pairs */
   metadata?: Record<string, string>
+
+  /** Unique idempotency key to prevent duplicate charges or sessions on retries */
+  idempotencyKey?: string
 }
 
 /**

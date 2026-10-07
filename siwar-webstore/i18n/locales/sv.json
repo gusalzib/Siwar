@@ -399,7 +399,16 @@
       "cityRequired": "Vänligen ange ort.",
       "consentRequired": "Du måste godkänna köpvillkoren och undantaget för ångerrätt för att kunna slutföra köpet."
     },
-    "continueShopping": "Fortsätt handla"
+    "continueShopping": "Fortsätt handla",
+    "confirmCancel": "Är du säker på att du vill avbryta köpet?",
+    "cancelOrder": "Avbryt beställning",
+    "authorizePayment": "Godkänn betalning",
+    "changeMethod": "Ändra leveranssätt",
+    "initializing": "Initierar betalning...",
+    "scanSwishQR": "Skanna Swish QR-kod",
+    "openSwishApp": "Öppna Swish",
+    "cardPayment": "Kortbetalning",
+    "stripeTimeoutError": "Betalningsportalen timeout"
   },
 
   "order": {

@@ -5,6 +5,12 @@ import { setActivePinia, createPinia } from 'pinia'
 import { useCartStore, type CartItem } from '~/stores/cart'
 import { usePreferencesStore } from '~/stores/preferences'
 
+vi.mock('nuxt/app', () => ({
+  useCookie: (name: string, options: any) => {
+    return { value: options?.default ? options.default() : null }
+  }
+}))
+
 describe('Issue #8: Pinia Cart Store Suite', () => {
   let cartStore: ReturnType<typeof useCartStore>
   let preferencesStore: ReturnType<typeof usePreferencesStore>
@@ -54,10 +60,7 @@ describe('Issue #8: Pinia Cart Store Suite', () => {
     vi.stubGlobal('localStorage', mockLocalStorage)
     vi.stubGlobal('window', {})
     
-    // 4. Mock Nuxt composables like useCookie
-    vi.stubGlobal('useCookie', (name: string, options: any) => {
-      return { value: options?.default ? options.default() : null }
-    })
+
 
     cartStore = useCartStore()
     preferencesStore = usePreferencesStore()

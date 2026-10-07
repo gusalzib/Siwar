@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '~/stores/cart'
 import { usePreferencesStore } from '~/stores/preferences'
+import type { PaymentProviderType } from '~/types/payment'
 
 // Nuxt / Routing setup
 const router = useRouter()
@@ -131,6 +132,39 @@ const isCityValid = computed(() => {
   return form.value.city.trim().length >= 2
 })
 
+
+/**
+ * Choice of payment method
+ */
+
+// 1. Reactive state for payment method
+const selectedPaymentMethod = ref<PaymentProviderType>('STRIPE')
+
+// 2. AC-1: Swish is restricted exclusively to SEK
+const isSwishAllowed = computed(() => preferences.currency === 'SEK')
+
+// Auto-switch to STRIPE if user changes site currency to EUR or USD
+watch(
+  () => preferences.currency,
+  (newCurrency) => {
+    if (newCurrency !== 'SEK' && selectedPaymentMethod.value === 'SWISH') {
+      selectedPaymentMethod.value = 'STRIPE'
+    }
+  }
+)
+
+// 3. Include paymentMethod in the stored session payload before routing
+function proceedToPayment() {
+  const payload = {
+    customer: { ...form.value, fulfillmentMethod: fulfillmentMethod.value },
+    shippingFeeMinor: effectiveShippingFeeMinor.value,
+    paymentMethod: selectedPaymentMethod.value, // <-- Persist selected method
+  }
+
+  sessionStorage.setItem('siwar_checkout_payload', JSON.stringify(payload))
+  router.push(localePath('/checkout/payment'))
+}
+
 /**
  * Form validity check:
  * Enforces recipient details + legal consent checkbox (AC-3) + conditional address (AC-1)
@@ -210,6 +244,8 @@ async function handleProceedToPayment() {
       return
     }
 
+    sessionStorage.removeItem('siwar_active_payment_session') // Invalidate previous payment session
+
     // 2. Ready to pass payload to payment gateway initialization (Issue #10)
     // Save draft checkout order details into session or state
     sessionStorage.setItem(
@@ -230,11 +266,12 @@ async function handleProceedToPayment() {
               : null,
         },
         shippingFeeMinor: effectiveShippingFeeMinor.value,
+        paymentMethod: selectedPaymentMethod.value,
       })
     )
 
     // Route to payment selection or trigger payment modal
-    await router.push('/checkout/payment')
+    await router.push(localePath('/checkout/payment'))
   } catch (error: any) {
     stockErrorMessage.value =
       error?.statusMessage ||
@@ -520,6 +557,75 @@ async function handleProceedToPayment() {
               </div>
             </div>
           </Transition>
+
+          <!-- Payment Method Selection -->
+          <div class="card bg-base-100 border border-base-200 p-5 shadow-sm space-y-4">
+            <h2 class="font-bold text-base text-base-content">{{ t('checkout.choosePayment', 'Välj betalsätt') }}</h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Card / Stripe -->
+              <label
+                class="card border-2 p-4 cursor-pointer flex flex-row items-center justify-between"
+                :class="selectedPaymentMethod === 'STRIPE' ? 'border-primary bg-primary/5' : 'border-base-200'"
+              >
+                <div class="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    value="STRIPE"
+                    v-model="selectedPaymentMethod"
+                    class="radio radio-primary radio-sm"
+                  />
+                  <div>
+                    <div class="font-bold text-sm">{{ t('checkout.cardPayment', 'Kortbetalning') }}</div>
+                    <div class="text-xs text-base-content/60">SEK, EUR, USD</div>
+                  </div>
+                </div>
+                <Icon name="lucide:credit-card" class="size-6 text-primary" />
+              </label>
+
+              <!-- Swish (AC-1 Gate) -->
+              <label
+                class="card border-2 p-4 flex flex-row items-center justify-between"
+                :class="[
+                  !isSwishAllowed ? 'opacity-40 cursor-not-allowed bg-base-200/50' : 'cursor-pointer',
+                  selectedPaymentMethod === 'SWISH' ? 'border-primary bg-primary/5' : 'border-base-200'
+                ]"
+              >
+                <div class="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    value="SWISH"
+                    v-model="selectedPaymentMethod"
+                    :disabled="!isSwishAllowed"
+                    class="radio radio-primary radio-sm"
+                  />
+                  <div>
+                    <div class="font-bold text-sm">Swish Handel</div>
+                    <div class="text-xs text-base-content/60">
+                      {{ isSwishAllowed ? t('checkout.swishAvailable', 'Endast i SEK') : t('checkout.swishSEKOnly', 'Endast tillgängligt i SEK') }}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5 font-black text-sm tracking-tight text-[#EC663C]">
+                  <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"
+                      fill="#EC663C"
+                      fill-opacity="0.1"
+                    />
+                    <path
+                      d="M7.5 13.5C7.5 11.57 9.07 10 11 10H16.5M16.5 10.5C16.5 12.43 14.93 14 13 14H7.5"
+                      stroke="#EC663C"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  <span class="text-xs uppercase font-extrabold text-base-content/80">Swish</span>
+              </div>
+              </label>
+            </div>
+          </div>
 
           <!-- 4. Legal Compliance & Terms Consent (AC-3 & FR-11) -->
           <div class="card bg-base-100 border border-base-200 shadow-sm p-5 sm:p-6">

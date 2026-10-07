@@ -398,7 +398,16 @@
       "cityRequired": "يرجى إدخال اسم المدينة.",
       "consentRequired": "يجب الموافقة على شروط الشراء واستثناء الأغذية لمتابعة الدفع."
     },
-    "continueShopping": "متابعة التسوق"
+    "continueShopping": "متابعة التسوق",
+    "confirmCancel": "هل أنت متأكد من رغبتك في إلغاء الطلب؟",
+    "cancelOrder": "إلغاء الطلب",
+    "authorizePayment": "دفع",
+    "changeMethod": "تغيير طريقة التوصيل",
+    "initializing": "جاري تهيئة الدفع...",
+    "scanSwishQR": "امسح رمز Swish",
+    "openSwishApp": "افتح تطبيق Swish",
+    "cardPayment": "الدفع بالبطاقة",
+    "stripeTimeoutError": "انتهت مهلة بوابة الدفع"
   },
 
   "order": {

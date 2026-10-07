@@ -14,6 +14,9 @@ export interface SwishPaymentInput {
   payeePaymentReference: string
   /** Optional customer-facing message displayed inside the Swish mobile app (max 50 chars) */
   message?: string
+
+  /** Optional 32-char uppercase hex UUID to enforce idempotency on Swish */
+  instructionUUID?: string
 }
 
 /**
@@ -87,8 +90,15 @@ export function createSwishPaymentRequest(input: SwishPaymentInput): Promise<Swi
     const config = useRuntimeConfig()
     const isTest = config.swishEnv === 'test'
 
-    // Swish specification strictly requires instruction UUIDs to be 32 uppercase hexadecimal characters without hyphens
-    const instructionUUID = randomUUID().replace(/-/g, '').toUpperCase()
+    // // Swish specification strictly requires instruction UUIDs to be 32 uppercase hexadecimal characters without hyphens
+    // const instructionUUID = randomUUID().replace(/-/g, '').toUpperCase()
+
+    // Swish requires 32 uppercase hexadecimal characters without hyphens
+    const rawUuid = input.instructionUUID?.replace(/-/g, '')
+    const instructionUUID =
+      rawUuid && /^[0-9A-F]{32}$/i.test(rawUuid)
+        ? rawUuid.toUpperCase()
+        : randomUUID().replace(/-/g, '').toUpperCase()
 
     // Swish expects major units (SEK) formatted with exactly two decimal places (e.g., "199.00")
     const amountStr = (input.amountMinorSEK / 100).toFixed(2)
