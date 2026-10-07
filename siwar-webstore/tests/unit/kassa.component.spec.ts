@@ -6,6 +6,12 @@ import KassaPage from '~/pages/kassa.vue'
 import { useCartStore } from '~/stores/cart'
 import { usePreferencesStore } from '~/stores/preferences'
 
+vi.mock('nuxt/app', () => ({
+  useCookie: (name: string, options: any) => {
+    return { value: options?.default ? options.default() : null }
+  }
+}))
+
 // Mock Nuxt composables and components
 vi.stubGlobal('useRouter', () => ({ replace: vi.fn(), push: vi.fn() }))
 vi.stubGlobal('useLocalePath', () => (path: string) => path)
@@ -24,9 +30,6 @@ describe('Rigorous Component Test: pages/kassa.vue', () => {
     setActivePinia(pinia)
 
     // Mock Nuxt composables like useCookie before instantiating stores
-    vi.stubGlobal('useCookie', (name: string, options: any) => {
-      return { value: options?.default ? options.default() : null }
-    })
 
     cartStore = useCartStore()
     preferences = usePreferencesStore()
