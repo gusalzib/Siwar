@@ -396,7 +396,16 @@
       "cityRequired": "Please enter your city.",
       "consentRequired": "You must accept the terms of purchase and withdrawal exemption to proceed."
     },
-    "continueShopping": "Continue Shopping"
+    "continueShopping": "Continue Shopping",
+    "confirmCancel": "Are you sure you want to cancel the order?",
+    "cancelOrder": "Cancel order",
+    "authorizePayment": "Authorize Payment",
+    "changeMethod": "Change Delivery Method",
+    "initializing": "Initializing payment...",
+    "scanSwishQR": "Scan Swish QR-code",
+    "openSwishApp": "Open Swish",
+    "cardPayment": "Card Payment",
+    "stripeTimeoutError": "Payment gateway timed out"
   },
 
   "order": {

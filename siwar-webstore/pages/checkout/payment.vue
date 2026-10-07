@@ -1,35 +1,33 @@
 <!-- pages/checkout/payment.vue -->
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { loadStripe, type Stripe, type StripeElements } from '@stripe/stripe-js'
-import { useCartStore } from '../../stores/cart'
-import { usePreferencesStore } from '../../stores/preferences'
-import type { PaymentProviderType } from '../../types/payment'
+import { useCartStore } from '~/stores/cart'
+import { usePreferencesStore } from '~/stores/preferences'
+import type { PaymentProviderType } from '~/types/payment'
 
 const cartStore = useCartStore()
 const preferences = usePreferencesStore()
 const config = useRuntimeConfig()
 const router = useRouter()
 const localePath = useLocalePath()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
-const selectedMethod = ref<PaymentProviderType>('STRIPE')
-const isInitializing = ref(false)
+const provider = ref<PaymentProviderType>('STRIPE')
+const activeOrderReference = ref<string | null>(null)
+const isInitializing = ref(true)
 const isProcessing = ref(false)
 const errorMessage = ref<string | null>(null)
+const isCancelling = ref(false)
 
-// Swish session state (AC-3)
+// Swish artifacts
 const swishQrUrl = ref<string | null>(null)
 const swishToken = ref<string | null>(null)
 
-// Stripe session state
+// Stripe instances
 let stripe: Stripe | null = null
 let elements: StripeElements | null = null
-const stripeClientSecret = ref<string | null>(null)
-
-// AC-1: Swish strictly available in SEK
-const isSwishAllowed = computed(() => preferences.currency === 'SEK')
 
 onMounted(async () => {
   cartStore.hydrateCart()
@@ -37,42 +35,99 @@ onMounted(async () => {
     return router.replace(localePath('/catalog'))
   }
 
-  if (!isSwishAllowed.value) {
-    selectedMethod.value = 'STRIPE'
+  const rawDraft = sessionStorage.getItem('siwar_checkout_payload')
+  if (!rawDraft) {
+    return router.replace(localePath('/kassa'))
   }
 
-  await initializeSession()
+  const draft = JSON.parse(rawDraft)
+  provider.value = draft.paymentMethod || 'STRIPE'
+
+  await initializeSession(draft)
 })
 
-async function initializeSession() {
+async function initializeSession(draft: any) {
   isInitializing.value = true
   errorMessage.value = null
-  swishQrUrl.value = null
+
+
+  // Safety timer: Don't leave user stuck on spinner if browser network hangs
+  const mountTimer = setTimeout(() => {
+    if (isInitializing.value) {
+      isInitializing.value = false
+      errorMessage.value = t(
+        'checkout.mountFailed',
+        'Kunde inte ansluta till betaltjänsten. Kontrollera din anslutning och försök igen.'
+      )
+    }
+  }, 8000)
 
   try {
-    const rawDraft = sessionStorage.getItem('siwar_checkout_payload')
-    const draft = rawDraft ? JSON.parse(rawDraft) : { customer: {}, shippingFeeMinor: 0 }
+    const activeCurrency = preferences.currency || 'SEK'
 
-    const response = await $fetch<any>('/api/checkout/create-session', {
-      method: 'POST',
-      body: {
-        provider: selectedMethod.value,
-        currency: preferences.currency || 'SEK',
-        items: cartStore.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
-        shippingFeeMinor: draft.shippingFeeMinor || 0,
-        customer: draft.customer,
-      },
-    })
+    // 1. Check for an active session to prevent re-creating intents on language toggles
+    /**
+     * Before adding this check, we had an issue where if a user switches languages multiple times
+     * while on the payment page, a new payment intent was created for each language switch.
+     * This resulted in a lot of "failed" payment attempts in the Stripe dashboard.
+     * 
+     * By checking for an existing session, we can restore the state and prevent this issue.
+     * 
+     * Note: We intentionally do not save the order in the draft to avoid this issue,
+     * and also because we want to use the session data from the session creation API,
+     * which includes the correct locale.
+     */
+    const rawCachedSession = sessionStorage.getItem('siwar_active_payment_session')
+    let sessionData: any = null
 
-    if (selectedMethod.value === 'SWISH') {
-      swishQrUrl.value = response.qrSvgUrl
-      swishToken.value = response.swishToken
-    } else if (selectedMethod.value === 'STRIPE') {
-      stripeClientSecret.value = response.clientSecret
+    if (rawCachedSession) {
+      const cached = JSON.parse(rawCachedSession)
+      // Reuse if same provider and currency
+      if (cached.provider === provider.value && cached.currency === activeCurrency) {
+        sessionData = cached
+      }
+    }
+
+    // 2. Only call backend if no valid cached session exists
+    if (!sessionData) {
+      sessionData = await $fetch<any>('/api/checkout/create-session', {
+        method: 'POST',
+        body: {
+          provider: provider.value,
+          currency: activeCurrency,
+          items: cartStore.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+          shippingFeeMinor: draft.shippingFeeMinor || 0,
+          customer: draft.customer,
+        },
+      })
+      // Cache session details
+      sessionStorage.setItem('siwar_active_payment_session', JSON.stringify(sessionData))
+    }
+
+    activeOrderReference.value = sessionData.orderReference
+
+    // 3. Mount UI artifacts
+    if (provider.value === 'SWISH') {
+      swishQrUrl.value = sessionData.qrSvgUrl
+      swishToken.value = sessionData.swishToken
+    } else if (provider.value === 'STRIPE') {
       stripe = await loadStripe(config.public.stripePublishableKey)
-      if (stripe && stripeClientSecret.value) {
-        elements = stripe.elements({ clientSecret: stripeClientSecret.value })
+      if (stripe && sessionData.clientSecret) {
+        // Pass active locale to render Elements in Arabic, Swedish, or English
+        const stripeLocale = locale.value === 'ar' ? 'ar' : locale.value === 'sv' ? 'sv' : 'en'
+        elements = stripe.elements({
+          clientSecret: sessionData.clientSecret,
+          locale: stripeLocale,
+        })
         const paymentElement = elements.create('payment')
+
+        // Listen for mount errors from Stripe's iframe
+        paymentElement.on('loaderror', (event) => {
+          clearTimeout(mountTimer)
+          isInitializing.value = false
+          errorMessage.value = event.error.message || t('checkout.stripeTimeoutError', 'Kunde inte starta betalning.')
+        })
+
         paymentElement.mount('#stripe-element-mount')
       }
     }
@@ -80,6 +135,18 @@ async function initializeSession() {
     errorMessage.value = err.statusMessage || t('checkout.genericError', 'Kunde inte starta betalning.')
   } finally {
     isInitializing.value = false
+  }
+}
+
+
+// Retrying just re-runs initializeSession with the SAME draft payload
+// It will find the existing session in sessionStorage and simply re-attempt the mount
+function retryMount() {
+  const rawDraft = sessionStorage.getItem('siwar_checkout_payload')
+  if (rawDraft) {
+    initializeSession(JSON.parse(rawDraft))
+  } else {
+    router.replace(localePath('/kassa'))
   }
 }
 
@@ -100,100 +167,64 @@ async function handleConfirmCardPayment() {
     errorMessage.value = error.message || t('checkout.cardFailed', 'Kortbetalningen nekades.')
     isProcessing.value = false
   } else if (paymentIntent && paymentIntent.status === 'requires_capture') {
-    // AC-2: Funds successfully held
     cartStore.clearCart()
     sessionStorage.removeItem('siwar_checkout_payload')
+    sessionStorage.removeItem('siwar_active_payment_session') // Purge session cache
     await router.push(localePath(`/order/confirmation?intent_id=${paymentIntent.id}`))
+  }
+}
+
+
+async function handleCancelOrder() {
+  if (!confirm(t('checkout.confirmCancel', 'Är du säker på att du vill avbryta köpet?'))) {
+    return
+  }
+
+  isCancelling.value = true
+  try {
+    if (activeOrderReference.value) {
+      await $fetch('/api/checkout/cancel-session', {
+        method: 'POST',
+        body: { orderReference: activeOrderReference.value },
+      })
+    }
+  } catch (err) {
+    console.error('Error cancelling order:', err)
+  } finally {
+    sessionStorage.removeItem('siwar_checkout_payload')
+    sessionStorage.removeItem('siwar_active_payment_session') // Purge session cache
+    isCancelling.value = false
+    await router.push(localePath('/catalog'))
   }
 }
 </script>
 
 <template>
   <div class="min-h-screen bg-base-100 py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-2xl mx-auto space-y-6">
-      <h1 class="text-2xl font-black text-base-content">{{ t('checkout.choosePayment', 'Välj betalsätt') }}</h1>
-
-      <!-- Method Toggles -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <!-- Stripe Option -->
-        <label
-          class="card border-2 p-4 cursor-pointer flex flex-row items-center justify-between"
-          :class="selectedMethod === 'STRIPE' ? 'border-primary bg-primary/5' : 'border-base-200'"
-        >
-          <div class="flex items-center gap-3">
-            <input
-              type="radio"
-              value="STRIPE"
-              v-model="selectedMethod"
-              @change="initializeSession"
-              class="radio radio-primary radio-sm"
-            />
-            <div>
-              <div class="font-bold text-sm">{{ t('checkout.cardPayment', 'Kortbetalning') }}</div>
-              <div class="text-xs text-base-content/60">SEK, EUR, USD</div>
-            </div>
-          </div>
-          <Icon name="lucide:credit-card" class="size-6 text-primary" />
-        </label>
-
-        <!-- Swish Option (AC-1) -->
-        <label
-          class="card border-2 p-4 flex flex-row items-center justify-between"
-          :class="[
-            !isSwishAllowed ? 'opacity-40 cursor-not-allowed bg-base-200/50' : 'cursor-pointer',
-            selectedMethod === 'SWISH' ? 'border-primary bg-primary/5' : 'border-base-200'
-          ]"
-        >
-          <div class="flex items-center gap-3">
-            <input
-              type="radio"
-              value="SWISH"
-              v-model="selectedMethod"
-              :disabled="!isSwishAllowed"
-              @change="initializeSession"
-              class="radio radio-primary radio-sm"
-            />
-            <div>
-              <div class="font-bold text-sm">Swish Handel</div>
-              <div class="text-xs text-base-content/60">
-                {{ isSwishAllowed ? t('checkout.swishAvailable', 'Endast i SEK') : t('checkout.swishSEKOnly', 'Endast tillgängligt i SEK') }}
-              </div>
-            </div>
-          </div>
-          <!-- <img src="/icons/swish-logo.svg" alt="Swish" class="h-6 w-auto" /> -->
-           <div class="flex items-center gap-1.5 font-black text-sm tracking-tight text-[#EC663C]">
-                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"
-                        fill="#EC663C"
-                        fill-opacity="0.1"
-                    />
-                    <path
-                        d="M7.5 13.5C7.5 11.57 9.07 10 11 10H16.5M16.5 10.5C16.5 12.43 14.93 14 13 14H7.5"
-                        stroke="#EC663C"
-                        stroke-width="2.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    />
-                </svg>
-                <span class="text-xs uppercase font-extrabold text-base-content/80">Swish</span>
-            </div>
-        </label>
+    <div class="max-w-xl mx-auto space-y-6">
+      <!-- Header with back navigation -->
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-black text-base-content">
+          {{ provider === 'SWISH' ? 'Swish Handel' : t('checkout.cardPayment', 'Kortbetalning') }}
+        </h1>
+        <NuxtLink :to="localePath('/kassa')" class="btn btn-ghost btn-sm text-base-content/80 hover:bg-base-200 hover:text-base-content transition-colors">
+          {{ t('checkout.changeMethod', '← Ändra betalsätt') }}
+        </NuxtLink>
       </div>
 
-      <!-- Payment Containers -->
+      <!-- Payment Form Container -->
       <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
         <div v-if="isInitializing" class="flex flex-col items-center justify-center py-10 space-y-2">
           <span class="loading loading-spinner loading-md text-primary"></span>
           <span class="text-xs text-base-content/60">{{ t('checkout.initializing', 'Initierar betalning...') }}</span>
         </div>
 
-        <!-- Stripe Element (AC-2 & SAQ A) -->
-        <div v-show="selectedMethod === 'STRIPE' && !isInitializing" class="space-y-4">
+        <!-- Stripe Element Container -->
+        <div v-show="provider === 'STRIPE' && !isInitializing" class="space-y-4">
           <div id="stripe-element-mount"></div>
           <button
             type="button"
-            class="btn btn-primary w-full text-white font-bold"
+            class="btn btn-md w-full !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:transform-none disabled:shadow-none"
             :disabled="isProcessing"
             @click="handleConfirmCardPayment"
           >
@@ -202,9 +233,11 @@ async function handleConfirmCardPayment() {
           </button>
         </div>
 
-        <!-- Swish QR Code Container (AC-3) -->
-        <div v-if="selectedMethod === 'SWISH' && !isInitializing" class="flex flex-col items-center text-center py-4 space-y-4">
-          <div class="text-sm font-semibold text-base-content">{{ t('checkout.scanSwishQR', 'Skanna QR-koden med Swish-appen') }}</div>
+        <!-- Swish QR Code Container -->
+        <div v-if="provider === 'SWISH' && !isInitializing" class="flex flex-col items-center text-center py-4 space-y-4">
+          <div class="text-sm font-semibold text-base-content">
+            {{ t('checkout.scanSwishQR', 'Skanna QR-koden med Swish-appen') }}
+          </div>
           <div v-if="swishQrUrl" class="p-3 bg-white border border-base-300 rounded-xl shadow-sm">
             <img :src="swishQrUrl" alt="Swish BankID QR" class="size-60" />
           </div>
@@ -217,9 +250,28 @@ async function handleConfirmCardPayment() {
           </a>
         </div>
 
-        <!-- Error Banner -->
-        <div v-if="errorMessage" class="alert alert-error text-xs mt-4">
+        <!-- Secondary Cancel Action -->
+        <div class="pt-2">
+          <button
+            type="button"
+            class="btn btn-ghost w-full text-base-content/60 hover:bg-error hover:text-error-content transition-colors"
+            :disabled="isProcessing || isCancelling"
+            @click="handleCancelOrder"
+          >
+            <span v-if="isCancelling" class="loading loading-spinner loading-xs"></span>
+            <span v-else>{{ t('checkout.cancelOrder', 'Avbryt beställning och återgå till butiken') }}</span>
+          </button>
+        </div>
+        <!-- Error message with retry -->
+        <div v-if="errorMessage" class="alert alert-error text-xs mt-4 flex items-center justify-between">
           <span>{{ errorMessage }}</span>
+          <button
+            type="button"
+            class="btn btn-xs btn-outline border-error-content/40 hover:bg-error-content/10 shrink-0 ml-2"
+            @click="retryMount"
+          >
+            {{ t('checkout.retry', 'Försök igen') }}
+          </button>
         </div>
       </div>
     </div>
