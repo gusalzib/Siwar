@@ -46,6 +46,7 @@ export class SwishGatewayAdapter implements PaymentGatewayAdapter {
       amountMinorSEK: params.amountMinor,
       payeePaymentReference: params.orderReference,
       message: `Order ${params.orderReference}`,
+      instructionUUID: params.idempotencyKey,
     })
 
     return {

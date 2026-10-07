@@ -61,7 +61,9 @@ export class StripeGatewayAdapter implements PaymentGatewayAdapter {
         customerPhone: params.customer.phone,
         ...params.metadata,
       },
-    })
+    }, 
+      params.idempotencyKey ? { idempotencyKey: params.idempotencyKey } : undefined  
+    )
 
     return {
       provider: this.provider,
