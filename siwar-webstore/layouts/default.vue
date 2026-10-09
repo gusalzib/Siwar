@@ -174,6 +174,10 @@ const logout = async () => {
               <Icon name="lucide:folder-tree" class="h-4 w-4" />
               {{ t('admin.nav.categories', 'Kategorier') }}
             </NuxtLink>
+            <NuxtLink :to="localePath('/admin/orders')" class="btn btn-ghost btn-sm font-semibold text-primary gap-1">
+              <Icon name="lucide:clipboard-list" class="h-4 w-4" />
+              {{ t('admin.nav.orders', 'Beställningar') }}
+            </NuxtLink>
           </template>
         </div>
         <!-- Language Dropdown (Fixes the Arabic Reset Glitch) -->
