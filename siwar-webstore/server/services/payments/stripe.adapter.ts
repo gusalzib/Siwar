@@ -81,10 +81,15 @@ export class StripeGatewayAdapter implements PaymentGatewayAdapter {
    * @param amountMinor - The amount to capture in minor currency units (cents, ören).
    * @returns True if the capture succeeded and status is 'succeeded', false otherwise.
    */
-  async captureFunds(paymentId: string, amountMinor: number): Promise<boolean> {
-    const intent = await this.stripe.paymentIntents.capture(paymentId, {
-      amount_to_capture: amountMinor,
-    })
+  // async captureFunds(paymentId: string, amountMinor: number): Promise<boolean> {
+  //   const intent = await this.stripe.paymentIntents.capture(paymentId, {
+  //     amount_to_capture: amountMinor,
+  //   })
+  //   return intent.status === 'succeeded'
+  // }
+  async captureFunds(paymentId: string, fulfilledTotalMinor: number): Promise<boolean> {
+    const intent = await this.stripe.paymentIntents.capture(paymentId, { amount_to_capture: fulfilledTotalMinor })
+
     return intent.status === 'succeeded'
   }
 
