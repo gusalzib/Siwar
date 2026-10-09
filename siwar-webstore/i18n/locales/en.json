@@ -47,7 +47,8 @@
       "products": "Manage Products",
       "logout": "Log Out",
       "categories": "Categories",
-      "allergens": "Allergens"
+      "allergens": "Allergens",
+      "orders": "Orders"
     },
     "login": {
       "adminLogin": "Admin Login",
@@ -248,6 +249,123 @@
       "empty": "No allergens found",
       "cancel": "Cancel",
       "save": "Save Allergen"
+    },
+    "orders": {
+      "title": "Order Management",
+      "subtitle": "Pack orders, manage shortages, and review payments",
+      "stats": {
+        "pendingPacking": "To Pack",
+        "dispatched": "Dispatched"
+      },
+      "filters": {
+        "searchPlaceholder": "Search order no, customer, phone...",
+        "allFulfillmentStatuses": "All packing statuses",
+        "pendingPacking": "To Pack (Pending Packing)",
+        "packed": "Packed",
+        "dispatched": "Dispatched",
+        "cancelled": "Cancelled",
+        "allPaymentStatuses": "All payment statuses",
+        "authorized": "Authorized",
+        "captured": "Captured",
+        "partiallyCaptured": "Partially Captured",
+        "paid": "Paid",
+        "resetFilters": "Reset filters"
+      },
+      "table": {
+        "reference": "Reference",
+        "customer": "Customer & Delivery",
+        "items": "Items",
+        "fulfillmentStatus": "Packing Status",
+        "payment": "Payment",
+        "amount": "Amount",
+        "date": "Date",
+        "action": "Action"
+      },
+      "emptyState": "No orders matched your filters.",
+      "badges": {
+        "hasShortages": "Has registered shortages",
+        "shortage": "Shortage",
+        "pieces": "pcs"
+      },
+      "actions": {
+        "view": "View",
+        "pack": "Pack"
+      },
+      "pack": {
+        "errors": {
+          "loadFailed": "Could not load the order."
+        },
+        "actions": {
+          "savePacked": "Save packing status (Packed)",
+          "dispatch": "Complete and Dispatch (Capture)",
+          "shortage": "Shortage",
+          "resetLineTooltip": "Reset line",
+          "resetLine": "Reset",
+          "markAllPacked": "Mark all as packed",
+          "copyAddress": "Copy address",
+          "copyCustomer": "Copy customer details",
+          "copied": "Copied!"
+        },
+        "table": {
+          "product": "Product",
+          "ordered": "Ordered",
+          "packed": "Packed",
+          "unitPrice": "Unit Price",
+          "rowTotal": "Row Total",
+          "action": "Action"
+        },
+        "badges": {
+          "reduced": "Reduced",
+          "outOfStock": "Out of stock",
+          "substituted": "Substituted"
+        },
+        "history": {
+          "title": "Previously registered shortages",
+          "origin": "Origin",
+          "adjusted": "Adjusted"
+        },
+        "summary": {
+          "createdAt": "Created:",
+          "title": "Payment and Capture",
+          "authorized": "Reserved amount",
+          "fulfilledItems": "Fulfilled items",
+          "shippingFee": "Shipping fee",
+          "actualAmount": "Actual amount to capture",
+          "releaseAmount": "Amount to release / refund:",
+          "stripeNote": "The card reservation is reduced automatically; the remaining reservation is released immediately without charge.",
+          "swishNote": "The Swish payment is adjusted via direct Swish refund to the customer's bank account.",
+          "momsCalc": "VAT Calculation:",
+          "moms12": "VAT 12% (Food):",
+          "moms25": "VAT 25% (Shipping & Other):",
+          "totalMoms": "Total VAT:"
+        },
+        "customer": {
+          "title": "Customer Details"
+        },
+        "shipping": {
+          "delivery": "Delivery Address",
+          "pickup": "In-Store Pickup",
+          "deliveryBadge": "Parcel (Delivery)",
+          "pickupBadge": "In-store (Pickup)",
+          "pickupNotice1": "The customer will pick up the items in the physical store.",
+          "pickupNotice2": "No shipping label required."
+        },
+        "modal": {
+          "title": "Manage Shortage (Out of stock)",
+          "actionLabel": "Action",
+          "reduceQty": "Reduce quantity",
+          "removeLine": "Remove line",
+          "substituteItem": "Substitute item",
+          "newQty": "New quantity to pack",
+          "searchSubstitute": "Search substitute article in catalog",
+          "searchPlaceholder": "Search name or SKU...",
+          "substituteQty": "Number of substitute units",
+          "noteLabel": "Internal note (optional)",
+          "notePlaceholder": "e.g. Out of stock at supplier, replaced with equivalent brand",
+          "cancel": "Cancel",
+          "apply": "Apply change"
+        }
+      }
     }
   },
 

@@ -48,7 +48,8 @@
       "logout": "تسجيل الخروج",
       "categories": "إدارة الأقسام",
       "allergens": "إدارة مسببات الحساسية",
-      "management": "إدارة"
+      "management": "إدارة",
+      "orders": "الطلبات"
     },
     "login": {
       "adminLogin": "تسجيل دخول المشرف",
@@ -249,6 +250,123 @@
       "empty": "لم يتم العثور على مسببات حساسية",
       "cancel": "إلغاء",
       "save": "حفظ مسبب الحساسية"
+    },
+    "orders": {
+      "title": "إدارة الطلبات",
+      "subtitle": "تجهيز الطلبات، وإدارة النواقص، ومراجعة المدفوعات",
+      "stats": {
+        "pendingPacking": "قيد التجهيز",
+        "dispatched": "تم الإرسال"
+      },
+      "filters": {
+        "searchPlaceholder": "ابحث برقم الطلب، العميل، الهاتف...",
+        "allFulfillmentStatuses": "جميع حالات التجهيز",
+        "pendingPacking": "قيد التجهيز (Pending Packing)",
+        "packed": "مجهز (Packed)",
+        "dispatched": "تم الإرسال (Dispatched)",
+        "cancelled": "ملغى (Cancelled)",
+        "allPaymentStatuses": "جميع حالات الدفع",
+        "authorized": "محجوز (Authorized)",
+        "captured": "مسحوب (Captured)",
+        "partiallyCaptured": "مسحوب جزئياً (Partially Captured)",
+        "paid": "مدفوع (Paid)",
+        "resetFilters": "إعادة ضبط الفلاتر"
+      },
+      "table": {
+        "reference": "المرجع",
+        "customer": "العميل والتوصيل",
+        "items": "المنتجات",
+        "fulfillmentStatus": "حالة التجهيز",
+        "payment": "الدفع",
+        "amount": "المبلغ",
+        "date": "التاريخ",
+        "action": "الإجراء"
+      },
+      "emptyState": "لا توجد طلبات تطابق الفلاتر.",
+      "badges": {
+        "hasShortages": "يحتوي على نواقص مسجلة",
+        "shortage": "نقص",
+        "pieces": "قطعة"
+      },
+      "actions": {
+        "view": "عرض",
+        "pack": "تجهيز"
+      },
+      "pack": {
+        "errors": {
+          "loadFailed": "تعذر تحميل الطلب."
+        },
+        "actions": {
+          "savePacked": "حفظ حالة التجهيز (Packed)",
+          "dispatch": "إكمال الطلب وإرساله (Capture)",
+          "shortage": "نقص بالمخزون",
+          "resetLineTooltip": "إعادة ضبط السطر",
+          "resetLine": "إعادة ضبط",
+          "markAllPacked": "تحديد الكل كمجهز",
+          "copyAddress": "نسخ العنوان",
+          "copyCustomer": "نسخ بيانات العميل",
+          "copied": "تم النسخ!"
+        },
+        "table": {
+          "product": "المنتج",
+          "ordered": "مطلوب",
+          "packed": "مجهز",
+          "unitPrice": "سعر الوحدة",
+          "rowTotal": "إجمالي السطر",
+          "action": "الإجراء"
+        },
+        "badges": {
+          "reduced": "مخفض",
+          "outOfStock": "غير متوفر",
+          "substituted": "مستبدل"
+        },
+        "history": {
+          "title": "النواقص المسجلة مسبقاً",
+          "origin": "الأصل",
+          "adjusted": "المعدل"
+        },
+        "summary": {
+          "createdAt": "تم الإنشاء:",
+          "title": "الدفع والسحب",
+          "authorized": "المبلغ المحجوز",
+          "fulfilledItems": "المنتجات المجهزة",
+          "shippingFee": "رسوم الشحن",
+          "actualAmount": "المبلغ الفعلي للسحب",
+          "releaseAmount": "المبلغ المراد تحريره / إرجاعه:",
+          "stripeNote": "يتم تخفيض حجز البطاقة تلقائياً؛ يتم تحرير الحجز المتبقي فوراً بدون رسوم.",
+          "swishNote": "يتم تعديل مدفوعات Swish عبر استرداد مباشر إلى حساب العميل المصرفي.",
+          "momsCalc": "حساب الضريبة (Moms):",
+          "moms12": "ضريبة 12% (مواد غذائية):",
+          "moms25": "ضريبة 25% (شحن وغيرها):",
+          "totalMoms": "إجمالي الضريبة:"
+        },
+        "customer": {
+          "title": "بيانات العميل"
+        },
+        "shipping": {
+          "delivery": "عنوان التوصيل",
+          "pickup": "استلام من المتجر",
+          "deliveryBadge": "طرد (توصيل)",
+          "pickupBadge": "استلام من المتجر (Pickup)",
+          "pickupNotice1": "سيستلم العميل المنتجات من المتجر الفعلي.",
+          "pickupNotice2": "لا حاجة لملصق شحن."
+        },
+        "modal": {
+          "title": "إدارة النواقص (غير متوفر بالمخزون)",
+          "actionLabel": "الإجراء",
+          "reduceQty": "تقليل الكمية",
+          "removeLine": "إزالة السطر",
+          "substituteItem": "استبدال المنتج",
+          "newQty": "الكمية الجديدة للتجهيز",
+          "searchSubstitute": "ابحث عن منتج بديل في الكتالوج",
+          "searchPlaceholder": "ابحث بالاسم أو SKU...",
+          "substituteQty": "عدد الوحدات البديلة",
+          "noteLabel": "ملاحظة داخلية (اختياري)",
+          "notePlaceholder": "مثال: نفد من المورد، تم استبداله بماركة مشابهة",
+          "cancel": "إلغاء",
+          "apply": "تطبيق التغيير"
+        }
+      }
     }
   },
 

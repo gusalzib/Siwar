@@ -48,7 +48,8 @@
       "products": "Hantera produkter",
       "logout": "Logga ut",
       "categories": "Kategorier",
-      "allergens": "Allergener"
+      "allergens": "Allergener",
+      "orders": "Beställningar"
     },
     "login": {
       "adminLogin": "Admininloggning",
@@ -252,6 +253,123 @@
       "empty": "Inga allergener hittades",
       "cancel": "Avbryt",
       "save": "Spara allergen"
+    },
+    "orders": {
+      "title": "Orderhantering",
+      "subtitle": "Packa ordrar, hantera varubrist och granska betalningar",
+      "stats": {
+        "pendingPacking": "Att packa",
+        "dispatched": "Skickade"
+      },
+      "filters": {
+        "searchPlaceholder": "Sök ordernr, kund, telefon...",
+        "allFulfillmentStatuses": "Alla packstatusar",
+        "pendingPacking": "Att packa (Pending Packing)",
+        "packed": "Packad (Packed)",
+        "dispatched": "Skickad (Dispatched)",
+        "cancelled": "Avbruten (Cancelled)",
+        "allPaymentStatuses": "Alla betalningsstatusar",
+        "authorized": "Reserverad (Authorized)",
+        "captured": "Dragen (Captured)",
+        "partiallyCaptured": "Delvis dragen (Partially Captured)",
+        "paid": "Betald (Paid)",
+        "resetFilters": "Återställ filter"
+      },
+      "table": {
+        "reference": "Referens",
+        "customer": "Kund & Leverans",
+        "items": "Artiklar",
+        "fulfillmentStatus": "Packstatus",
+        "payment": "Betalning",
+        "amount": "Belopp",
+        "date": "Datum",
+        "action": "Åtgärd"
+      },
+      "emptyState": "Inga ordrar matchade dina filter.",
+      "badges": {
+        "hasShortages": "Har registrerade varubrister",
+        "shortage": "Brist",
+        "pieces": "st"
+      },
+      "actions": {
+        "view": "Visa",
+        "pack": "Packa"
+      },
+      "pack": {
+        "errors": {
+          "loadFailed": "Kunde inte läsa in ordern."
+        },
+        "actions": {
+          "savePacked": "Spara packstatus (Packed)",
+          "dispatch": "Slutför och Skicka (Dispatch & Capture)",
+          "shortage": "Varubrist",
+          "resetLineTooltip": "Återställ rad",
+          "resetLine": "Återställ",
+          "markAllPacked": "Markera alla som packade",
+          "copyAddress": "Kopiera adress",
+          "copyCustomer": "Kopiera kunduppgifter",
+          "copied": "Kopierad!"
+        },
+        "table": {
+          "product": "Produkt",
+          "ordered": "Beställt",
+          "packed": "Packat",
+          "unitPrice": "A-pris",
+          "rowTotal": "Radtotal",
+          "action": "Åtgärd"
+        },
+        "badges": {
+          "reduced": "Minskad",
+          "outOfStock": "Ej i lager",
+          "substituted": "Ersatt"
+        },
+        "history": {
+          "title": "Tidigare registrerade brister",
+          "origin": "Ursprung",
+          "adjusted": "Justerat"
+        },
+        "summary": {
+          "createdAt": "Skapad:",
+          "title": "Betalning och Dragning",
+          "authorized": "Reserverat belopp",
+          "fulfilledItems": "Uppfyllda artiklar",
+          "shippingFee": "Fraktavgift",
+          "actualAmount": "Faktiskt belopp att dra",
+          "releaseAmount": "Belopp att släppa / återbetala:",
+          "stripeNote": "Kortreservationen minskas automatiskt; återstående reservation släpps omedelbart utan avgift.",
+          "swishNote": "Swish-betalningen justeras via direkt Swish-återbetalning till kundens bankkonto.",
+          "momsCalc": "Momsberäkning:",
+          "moms12": "Moms 12% (Livsmedel):",
+          "moms25": "Moms 25% (Frakt & Övrigt):",
+          "totalMoms": "Total Moms:"
+        },
+        "customer": {
+          "title": "Kunduppgifter"
+        },
+        "shipping": {
+          "delivery": "Leveransadress",
+          "pickup": "Utlämning i butik",
+          "deliveryBadge": "Postpaket (Delivery)",
+          "pickupBadge": "Hämta i butik (Pickup)",
+          "pickupNotice1": "Kunden hämtar varorna i den fysiska butiken.",
+          "pickupNotice2": "Ingen fraktsedel behövs."
+        },
+        "modal": {
+          "title": "Hantera Varubrist (Ej i lager)",
+          "actionLabel": "Åtgärd",
+          "reduceQty": "Minska antal",
+          "removeLine": "Ta bort rad",
+          "substituteItem": "Ersättningsvara",
+          "newQty": "Nytt antal som packas",
+          "searchSubstitute": "Sök ersättningsartikel i sortimentet",
+          "searchPlaceholder": "Sök namn eller SKU...",
+          "substituteQty": "Antal ersättningsenheter",
+          "noteLabel": "Intern notering (valfritt)",
+          "notePlaceholder": "t.ex. Slut hos leverantör, ersatt med motsvarande märke",
+          "cancel": "Avbryt",
+          "apply": "Tillämpa ändring"
+        }
+      }
     }
   },
 
