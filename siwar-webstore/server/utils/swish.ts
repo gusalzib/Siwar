@@ -19,6 +19,18 @@ export interface SwishPaymentInput {
   instructionUUID?: string
 }
 
+
+export interface SwishRefundInput {
+  /** Original payment ID / instructionUUID returned when payment was created */
+  originalPaymentReference: string
+  /** Amount to refund in ören */
+  amountMinorSEK: number
+  /** Merchant order reference */
+  payerPaymentReference: string
+  /** Message visible on the customer's Swish transaction log (max 50 chars) */
+  message?: string
+}
+
 /**
  * Standardized response object returned after registering a Swish payment request.
  */
@@ -176,6 +188,79 @@ export function createSwishPaymentRequest(input: SwishPaymentInput): Promise<Swi
 
     req.on('error', (err) => {
       reject(new Error(`Swish mTLS handshake error: ${err.message}`))
+    })
+
+    req.write(payload)
+    req.end()
+  })
+}
+
+
+export function createSwishRefund(input: SwishRefundInput): Promise<{ refundUUID: string }> {
+  return new Promise((resolve, reject) => {
+    const config = useRuntimeConfig()
+    const isTest = config.swishEnv === 'test'
+
+    const refundUUID = randomUUID().replace(/-/g, '').toUpperCase()
+    const amountStr = (input.amountMinorSEK / 100).toFixed(2)
+
+    const payload = JSON.stringify({
+      originalPaymentReference: input.originalPaymentReference,
+      callbackUrl: config.swishCallbackUrl,
+      payerAlias: config.swishPayeeAlias,
+      payerPaymentReference: input.payerPaymentReference,
+      currency: 'SEK',
+      amount: amountStr,
+      message: (input.message || 'Prisjustering Siwar').substring(0, 50),
+    })
+
+    const targetUrl = new URL(
+      isTest
+        ? `https://mss.cpc.getswish.net/swish-cpcapi/api/v2/refunds/${refundUUID}`
+        : `https://cpc.getswish.net/swish-cpcapi/api/v2/refunds/${refundUUID}`
+    )
+
+    if (!fs.existsSync(config.swishCertPath) || !fs.existsSync(config.swishKeyPath)) {
+      return reject(
+        new Error(`Swish certificates missing at ${config.swishCertPath} or ${config.swishKeyPath}`)
+      )
+    }
+
+    const options: https.RequestOptions = {
+      hostname: targetUrl.hostname,
+      port: 443,
+      path: targetUrl.pathname,
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+      },
+      cert: fs.readFileSync(config.swishCertPath),
+      key: fs.readFileSync(config.swishKeyPath),
+      passphrase: 'swish',
+      ca: fs.existsSync(config.swishCaPath) ? fs.readFileSync(config.swishCaPath) : undefined,
+    }
+
+    const req = https.request(options, (res) => {
+      let data = ''
+      res.on('data', (chunk) => {
+        data += chunk
+      })
+
+      res.on('end', () => {
+        // Swish returns 201 Created on refund registration
+        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+          resolve({ refundUUID })
+        } else {
+          reject(
+            new Error(`Swish refund failed with status ${res.statusCode}: ${data || res.statusMessage}`)
+          )
+        }
+      })
+    })
+
+    req.on('error', (err) => {
+      reject(new Error(`Swish mTLS refund handshake error: ${err.message}`))
     })
 
     req.write(payload)
