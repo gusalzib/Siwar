@@ -4,8 +4,9 @@ import type {
   CreatePaymentSessionParams,
   PaymentSessionResult,
   WebhookVerificationResult,
+  RefundPaymentParams,
 } from '../../../types/payment'
-import { createSwishPaymentRequest } from '../../utils/swish'
+import { createSwishPaymentRequest, createSwishRefund } from '../../utils/swish'
 
 /**
  * Swish payment gateway adapter implementing the universal PaymentGatewayAdapter interface.
@@ -71,7 +72,7 @@ export class SwishGatewayAdapter implements PaymentGatewayAdapter {
    * @param amountMinor - The amount in ören to capture.
    * @returns True indicating the capture requirement is fulfilled.
    */
-  async captureFunds(paymentId: string, amountMinor: number): Promise<boolean> {
+  async captureFunds(paymentId: string, fulfilledTotalMinor: number): Promise<boolean> {
     return true
   }
 
@@ -89,6 +90,20 @@ export class SwishGatewayAdapter implements PaymentGatewayAdapter {
     return true
   }
 
+  /**
+   * Settles fulfillment shortages by returning unfulfilled funds directly to the customer's bank.
+   */
+  async refundPayment(params: RefundPaymentParams): Promise<boolean> {
+    await createSwishRefund({
+      originalPaymentReference: params.paymentId,
+      amountMinorSEK: params.amountMinor,
+      payerPaymentReference: params.orderReference,
+      message: params.reason || `Siwar Justering ${params.orderReference}`,
+    })
+    return true
+  }
+
+  
   /**
    * Validates and parses an incoming Swish callback (webhook) payload.
    *
