@@ -67,7 +67,7 @@ async function deleteProduct(productId: string) {
   isActionLoading.value = productId
   try {
     await $fetch(`/api/admin/products/${productId}`, {
-      method: 'DELETE',
+      method: 'DELETE' as any,
     })
     await refreshProducts()
   } catch (err: any) {
