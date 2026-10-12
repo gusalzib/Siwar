@@ -211,7 +211,7 @@ export function createSwishRefund(input: SwishRefundInput): Promise<{ refundUUID
       payerPaymentReference: input.payerPaymentReference,
       currency: 'SEK',
       amount: amountStr,
-      message: (input.message || 'Prisjustering Siwar').substring(0, 50),
+      message: sanitizeSwishMessage(input.message, 'Prisjustering Siwar'),
     })
 
     const targetUrl = new URL(
@@ -266,4 +266,13 @@ export function createSwishRefund(input: SwishRefundInput): Promise<{ refundUUID
     req.write(payload)
     req.end()
   })
+}
+
+export function sanitizeSwishMessage(msg?: string, fallback = 'Siwar Återbetalning'): string {
+  if (!msg) return fallback
+  // 1. Remove characters disallowed by Swish (keep alphanumeric, space, Swedish chars åäöÅÄÖ, hyphen)
+  const cleaned = msg.replace(/[^a-zA-Z0-9åäöÅÄÖ -]/g, '').trim()
+  // 2. Enforce strict 50 character limit
+  const truncated = cleaned.slice(0, 50).trim()
+  return truncated || fallback
 }

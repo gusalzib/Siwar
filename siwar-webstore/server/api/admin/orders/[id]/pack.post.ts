@@ -4,7 +4,18 @@ import { Product } from '~/server/models/Product'
 import { recalculateOrderShortage, type ShortageActionInput } from '~/server/services/fulfillment.service'
 import { getPaymentGateway } from '~/server/services/payments'
 
+interface PackItemInput {
+  productId: string
+  fulfilledQuantity: number
+  shortageStatus: 'NONE' | 'REDUCED' | 'REMOVED' | 'SUBSTITUTED'
+  sku?: string
+  name?: { ar: string; sv: string; en: string }
+  unitPriceMinor?: number
+  momsRate?: 12 | 25
+}
+
 interface PackOrderBody {
+  items?: PackItemInput[]
   actions: ShortageActionInput[]
   markDispatched?: boolean
 }
@@ -18,11 +29,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Order not found' })
   }
 
-  if (order.fulfillmentStatus === 'DISPATCHED') {
-    throw createError({ statusCode: 400, statusMessage: 'Order already dispatched' })
+  // 1. If explicit items are passed from the client, sync them to order.items
+  if (body.items && body.items.length > 0) {
+    for (const submittedItem of body.items) {
+      const match = order.items.find((i) => String(i.productId) === submittedItem.productId)
+      if (match) {
+        match.fulfilledQuantity = submittedItem.fulfilledQuantity
+        match.shortageStatus = submittedItem.shortageStatus
+        if (submittedItem.unitPriceMinor) match.unitPriceMinor = submittedItem.unitPriceMinor
+        if (submittedItem.momsRate) match.momsRate = submittedItem.momsRate
+        if (submittedItem.name) match.name = submittedItem.name
+        if (submittedItem.sku) match.sku = submittedItem.sku
+      }
+    }
   }
 
-  // 1. Recalculate fulfilled totals and tax split
+  // 2. Recalculate financial settlement and Moms
   const { updatedItems, shortageAdjustments, newPricing } = recalculateOrderShortage(
     order,
     body.actions || [],
@@ -32,9 +54,8 @@ export default defineEventHandler(async (event) => {
   const capturedTotal = newPricing.capturedTotalMinor ?? newPricing.grandTotalMinor
   const releasedAmount = newPricing.releasedOrRefundedMinor ?? 0
 
-  // 2. ONLY settle payment and adjust physical stock when DISPATCHING
+  // 3. Dispatch & Settlement handling
   if (body.markDispatched) {
-    // Check if the order was completely dropped (0 items fulfilled)
     if (capturedTotal === 0) {
       if (order.paymentId) {
         const gateway = getPaymentGateway(order.paymentProvider)
@@ -49,20 +70,16 @@ export default defineEventHandler(async (event) => {
           })
         }
       }
-
-      // Entire order dropped: Status must be CANCELLED, NOT DISPATCHED
       order.fulfillmentStatus = 'CANCELLED'
       order.paymentStatus = 'CANCELLED'
     } else {
-      // Normal capture workflow (fulfilledTotal > 0)
       const gateway = getPaymentGateway(order.paymentProvider)
-
       if (order.paymentProvider === 'STRIPE' && order.paymentStatus === 'AUTHORIZED') {
         const captureOk = await gateway.captureFunds(order.paymentId!, capturedTotal)
         if (!captureOk) {
           throw createError({
             statusCode: 502,
-            statusMessage: 'Kunde inte dra pengarna från Stripe. Ordern har inte markerats som skickad.',
+            statusMessage: `Stripe capture failed for ${order.orderReference}`,
           })
         }
       } else if (order.paymentProvider === 'SWISH' && releasedAmount > 0 && gateway.refundPayment) {
@@ -79,13 +96,13 @@ export default defineEventHandler(async (event) => {
       order.dispatchedAt = new Date()
     }
 
-    // Return dropped/reduced items back to physical inventory
+    // Rebalance inventory for removed/reduced items
     for (const action of body.actions || []) {
       if (action.action === 'REMOVE_LINE' || action.action === 'REDUCE_QUANTITY') {
-        const originalItem = order.items.find((i) => i.productId.toString() === action.productId)
+        const originalItem = order.items.find((i) => String(i.productId) === action.productId)
         if (originalItem) {
           const droppedQty =
-            originalItem.fulfilledQuantity - (action.action === 'REMOVE_LINE' ? 0 : action.adjustedQuantity)
+            originalItem.quantity - (action.action === 'REMOVE_LINE' ? 0 : action.adjustedQuantity)
           if (droppedQty > 0) {
             await Product.updateOne(
               { _id: action.productId },
@@ -96,11 +113,10 @@ export default defineEventHandler(async (event) => {
       }
     }
   } else {
-    // Only saving intermediate packing progress
     order.fulfillmentStatus = 'PACKED'
   }
 
-  // 3. Persist order state
+  // 4. Save order state
   order.items = updatedItems
   order.shortageAdjustments = shortageAdjustments
   order.pricing = newPricing
@@ -108,15 +124,6 @@ export default defineEventHandler(async (event) => {
 
   await order.save()
 
-
-  // 4. AC-3: Trigger Customer Shortage Notification Event
-  if (releasedAmount > 0 && body.actions && body.actions.length > 0) {
-    // Queues or logs notification event detailing item shortages and adjusted totals
-    console.info(
-      `[Shortage Notification Queued] Customer: ${order.customer.email} (${order.customer.phone}) | Order: ${order.orderReference} | Released/Refunded: ${releasedAmount / 100} ${order.currency}`
-    )
-  }
-  
   return {
     success: true,
     orderReference: order.orderReference,
