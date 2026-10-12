@@ -109,6 +109,7 @@ export interface IOrder extends Document {
   dispatchedAt?: Date
   createdAt: Date
   updatedAt: Date
+  cancelledAt?: Date
 }
 
 const OrderItemSchema = new Schema<IOrderItem>(
