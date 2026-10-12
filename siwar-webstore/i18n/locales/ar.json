@@ -294,7 +294,8 @@
       },
       "pack": {
         "errors": {
-          "loadFailed": "تعذر تحميل الطلب."
+          "loadFailed": "تعذر تحميل الطلب.",
+          "cancelFailed": "فشل في إلغاء الطلب."
         },
         "actions": {
           "savePacked": "حفظ حالة التجهيز (Packed)",
@@ -302,10 +303,12 @@
           "shortage": "نقص بالمخزون",
           "resetLineTooltip": "إعادة ضبط السطر",
           "resetLine": "إعادة ضبط",
+          "cancelEmptyOrder": "إلغاء الطلب (المنتجات غير متوفرة)",
           "markAllPacked": "تحديد الكل كمجهز",
           "copyAddress": "نسخ العنوان",
           "copyCustomer": "نسخ بيانات العميل",
-          "copied": "تم النسخ!"
+          "copied": "تم النسخ!",
+          "cancelOrder": "إلغاء الطلب"
         },
         "table": {
           "product": "المنتج",
@@ -364,7 +367,14 @@
           "noteLabel": "ملاحظة داخلية (اختياري)",
           "notePlaceholder": "مثال: نفد من المورد، تم استبداله بماركة مشابهة",
           "cancel": "إلغاء",
-          "apply": "تطبيق التغيير"
+          "apply": "تطبيق التغيير",
+          "cancelOrderTitle": "إلغاء الطلب",
+          "cancelOrderDesc": "هل أنت متأكد من رغبتك في إلغاء الطلب بالكامل؟ سيتم تحرير الدفع المحجوز، وستعود جميع العناصر المحجوزة تلقائيًا إلى المخزون.",
+          "cancelReasonLabel": "سبب الإلغاء",
+          "cancelReasonPlaceholder": "مثال: غير العميل رأيه، عنوان خاطئ...",
+          "doNotCancel": "لا تقم بالإلغاء",
+          "confirmCancel": "تأكيد وإلغاء الطلب",
+          "cancelDefaultReason": "تم الإلغاء بواسطة مسؤول المتجر"
         }
       }
     }

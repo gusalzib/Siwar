@@ -293,7 +293,8 @@
       },
       "pack": {
         "errors": {
-          "loadFailed": "Could not load the order."
+          "loadFailed": "Could not load the order.",
+          "cancelFailed": "Failed to cancel order."
         },
         "actions": {
           "savePacked": "Save packing status (Packed)",
@@ -301,10 +302,12 @@
           "shortage": "Shortage",
           "resetLineTooltip": "Reset line",
           "resetLine": "Reset",
+          "cancelEmptyOrder": "Cancel order (All items missing)",
           "markAllPacked": "Mark all as packed",
           "copyAddress": "Copy address",
           "copyCustomer": "Copy customer details",
-          "copied": "Copied!"
+          "copied": "Copied!",
+          "cancelOrder": "Cancel order"
         },
         "table": {
           "product": "Product",
@@ -363,7 +366,14 @@
           "noteLabel": "Internal note (optional)",
           "notePlaceholder": "e.g. Out of stock at supplier, replaced with equivalent brand",
           "cancel": "Cancel",
-          "apply": "Apply change"
+          "apply": "Apply change",
+          "cancelOrderTitle": "Cancel order",
+          "cancelOrderDesc": "Are you sure you want to cancel the entire order? The payment hold will be released, and all reserved items will automatically return to inventory.",
+          "cancelReasonLabel": "Reason for cancellation",
+          "cancelReasonPlaceholder": "e.g., Customer changed mind, incorrect address...",
+          "doNotCancel": "Do not cancel",
+          "confirmCancel": "Confirm and cancel order",
+          "cancelDefaultReason": "Cancelled by store administrator"
         }
       }
     }

@@ -297,7 +297,8 @@
       },
       "pack": {
         "errors": {
-          "loadFailed": "Kunde inte läsa in ordern."
+          "loadFailed": "Kunde inte läsa in ordern.",
+          "cancelFailed": "Kunde inte avbryta ordern."
         },
         "actions": {
           "savePacked": "Spara packstatus (Packed)",
@@ -305,10 +306,12 @@
           "shortage": "Varubrist",
           "resetLineTooltip": "Återställ rad",
           "resetLine": "Återställ",
+          "cancelEmptyOrder": "Avbryt order (Hela ordern saknas)",
           "markAllPacked": "Markera alla som packade",
           "copyAddress": "Kopiera adress",
           "copyCustomer": "Kopiera kunduppgifter",
-          "copied": "Kopierad!"
+          "copied": "Kopierad!",
+          "cancelOrder": "Avbryt order"
         },
         "table": {
           "product": "Produkt",
@@ -367,7 +370,14 @@
           "noteLabel": "Intern notering (valfritt)",
           "notePlaceholder": "t.ex. Slut hos leverantör, ersatt med motsvarande märke",
           "cancel": "Avbryt",
-          "apply": "Tillämpa ändring"
+          "apply": "Tillämpa ändring",
+          "cancelOrderTitle": "Avbryt order",
+          "cancelOrderDesc": "Är du säker på att du vill avbryta hela ordern? Reservationen släpps hos betalväxeln och alla reserverade varor återförs automatiskt till lagersaldot.",
+          "cancelReasonLabel": "Anledning till avbruten order",
+          "cancelReasonPlaceholder": "T.ex. Kunden ångrade köpet, felaktig adress...",
+          "doNotCancel": "Avbryt inte",
+          "confirmCancel": "Bekräfta och avbryt ordern",
+          "cancelDefaultReason": "Avbruten av butiksadministratör"
         }
       }
     }
