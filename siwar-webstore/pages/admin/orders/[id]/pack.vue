@@ -272,18 +272,27 @@ function applyShortageAction() {
  * @param productId - The ID of the product to reset.
  */
 function resetLineItem(productId: string) {
-  const original = order.value.items.find((i: any) => i.productId.toString() === productId)
-  const current = localItems.value.find((i) => i.productId === productId)
+  const pIdStr = String(productId)
+  // Match original line by original product ID
+  const original = order.value.items.find(
+    (i: any) => String(i.productId) === pIdStr
+  )
+  const current = localItems.value.find(
+    (i) => String(i.productId) === pIdStr
+  )
+
   if (original && current) {
+    current.productId = String(original.productId)
+    current.sku = original.sku
+    current.name = original.name
+    current.unitPriceMinor = original.unitPriceMinor
+    current.momsRate = original.momsRate
     current.fulfilledQuantity = original.quantity
     current.shortageStatus = 'NONE'
-    current.unitPriceMinor = original.unitPriceMinor
-    current.name = original.name
-    current.sku = original.sku
-    pendingActions.value.delete(productId) // Un-queue the shortage action
+    current.isPacked = false
+    pendingActions.value.delete(pIdStr)
   }
 }
-
 /**
  * packAllItems
  * A convenience function that loops through all items in the order and sets `isPacked = true` 
@@ -318,13 +327,22 @@ const isFullyPacked = computed(() => {
 })
 
 /**
+ * totalFulfilledUnits
+ * Total fulfilled units across all rows.
+ */
+const totalFulfilledUnits = computed(() => {
+  return localItems.value.reduce((sum, item) => sum + item.fulfilledQuantity, 0)
+})
+
+/**
  * canDispatch
  * Determines whether the "Slutför och Skicka" (Dispatch) button should be enabled.
  * Returns false if a network request is in flight, if the order is already dispatched, or if not fully packed.
  */
 const canDispatch = computed(() => {
   if (isSubmitting.value) return false
-  if (order.value?.fulfillmentStatus === 'DISPATCHED') return false
+  if (order.value?.fulfillmentStatus === 'DISPATCHED' || order.value?.fulfillmentStatus === 'CANCELLED') return false
+  if (totalFulfilledUnits.value === 0) return false // Block dispatching 0-item orders
   return isFullyPacked.value
 })
 
@@ -440,6 +458,15 @@ async function submitPacking(markDispatched: boolean) {
 
   try {
     const payload = {
+      items: localItems.value.map((i) => ({
+        productId: String(i.productId),
+        fulfilledQuantity: i.fulfilledQuantity,
+        shortageStatus: i.shortageStatus,
+        sku: i.sku,
+        name: i.name,
+        unitPriceMinor: i.unitPriceMinor,
+        momsRate: i.momsRate,
+      })),
       actions: Array.from(pendingActions.value.values()),
       markDispatched,
     }
@@ -449,11 +476,55 @@ async function submitPacking(markDispatched: boolean) {
       body: payload,
     })
 
-    // Navigate back to the orders list upon success
-    await router.push('/admin/orders')
+    // Clear pending actions once successfully saved to backend
+    pendingActions.value.clear()
+
+    if (markDispatched) {
+      await router.push('/admin/orders')
+    } else {
+      // Re-fetch clean order state from server
+      await refresh()
+    }
   } catch (err: any) {
     // Extract and display backend validation/settlement errors
     errorMessage.value = err.data?.statusMessage || err.message || 'Failed to complete packing'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const cancelDialog = ref<HTMLDialogElement | null>(null)
+const manualCancelReason = ref('')
+
+function openCancelModal() {
+  manualCancelReason.value = ''
+  if (cancelDialog.value) {
+    cancelDialog.value.showModal()
+  }
+}
+
+function closeCancelModal() {
+  if (cancelDialog.value) {
+    cancelDialog.value.close()
+  }
+}
+
+async function confirmManualCancellation() {
+  isSubmitting.value = true
+  errorMessage.value = null
+
+  try {
+    await $fetch(`/api/admin/orders/${orderId}/cancel`, {
+      method: 'POST',
+      body: {
+        reason: manualCancelReason.value.trim() || t('admin.orders.pack.modal.cancelDefaultReason', 'Avbruten av butiksadministratör'),
+      },
+    })
+
+    closeCancelModal()
+    await router.push('/admin/orders')
+  } catch (err: any) {
+    errorMessage.value = err.data?.statusMessage || err.message || t('admin.orders.pack.errors.cancelFailed', 'Kunde inte avbryta ordern')
   } finally {
     isSubmitting.value = false
   }
@@ -505,11 +576,24 @@ async function submitPacking(markDispatched: boolean) {
           </div>
 
           <!-- Header Action Buttons -->
-          <div class="flex flex-wrap items-center gap-2.5 justify-end">
+          <div class="flex flex-wrap items-center gap-2.5 justify-start lg:justify-end">
+            <!-- Manual Cancel Action -->
+            <button
+              v-if="order.fulfillmentStatus !== 'DISPATCHED' && order.fulfillmentStatus !== 'CANCELLED'"
+              type="button"
+              class="btn btn-sm btn-ghost text-error hover:bg-error/10 gap-1.5 transition-colors"
+              :disabled="isSubmitting"
+              @click="openCancelModal"
+            >
+              <Icon name="lucide:ban" class="size-4" />
+              <span>{{ t('admin.orders.pack.actions.cancelOrder', 'Avbryt order') }}</span>
+            </button>
+
+            <!-- Mark All Packed -->
             <button
               type="button"
               class="btn btn-sm bg-transparent hover:bg-base-200 text-base-content px-3 border-2 border-brand-500 hover:border-brand-600 shadow-sm transition-colors active:scale-95"
-              :disabled="order.fulfillmentStatus === 'DISPATCHED' || isSubmitting"
+              :disabled="order.fulfillmentStatus === 'DISPATCHED' || order.fulfillmentStatus === 'CANCELLED' || isSubmitting"
               @click="packAllItems"
             >
               <Icon name="lucide:check-check" class="size-4" />
@@ -519,7 +603,7 @@ async function submitPacking(markDispatched: boolean) {
             <button
               type="button"
               class="btn btn-sm bg-transparent hover:bg-base-200 text-base-content px-3 border-2 border-brand-500 hover:border-brand-300 shadow-sm transition-colors"
-              :disabled="isSubmitting || order.fulfillmentStatus === 'DISPATCHED'"
+              :disabled="isSubmitting || order.fulfillmentStatus === 'DISPATCHED' || order.fulfillmentStatus === 'CANCELLED'"
               @click="submitPacking(false)"
             >
               <Icon name="lucide:save" class="size-4" />
@@ -527,6 +611,18 @@ async function submitPacking(markDispatched: boolean) {
             </button>
 
             <button
+              v-if="totalFulfilledUnits === 0"
+              type="button"
+              class="btn btn-sm bg-error hover:bg-error/90 text-white border-transparent px-3 shadow-sm transition-transform active:scale-95 disabled:opacity-50"
+              :disabled="isSubmitting || order.fulfillmentStatus === 'CANCELLED'"
+              @click="submitPacking(true)"
+            >
+              <span v-if="isSubmitting" class="loading loading-spinner loading-xs"></span>
+              <Icon v-else name="lucide:x-circle" class="size-4" />
+              <span>{{ t('admin.orders.pack.actions.cancelEmptyOrder', 'Avbryt order (Hela ordern saknas)') }}</span>
+            </button>
+            <button
+              v-else
               type="button"
               class="btn btn-sm bg-brand-600 hover:bg-brand-700 text-white border-transparent px-3 shadow-sm transition-transform active:scale-95 disabled:opacity-50"
               :disabled="!canDispatch"
@@ -1072,7 +1168,56 @@ async function submitPacking(markDispatched: boolean) {
             </div>
           </div>
           <form method="dialog" class="modal-backdrop">
-            <button>close</button>
+            <button class="outline-none text-transparent cursor-default">Stäng</button>
+          </form>
+        </dialog>
+
+        <!-- Manual Cancel Confirmation Modal -->
+        <dialog ref="cancelDialog" class="modal">
+          <div class="modal-box max-w-md bg-base-100 border border-base-200 shadow-2xl p-6 space-y-4">
+            <div class="flex items-center gap-3 text-error">
+              <div class="p-2 bg-error/10 rounded-full">
+                <Icon name="lucide:alert-triangle" class="size-6" />
+              </div>
+              <h3 class="font-bold text-lg text-base-content">{{ t('admin.orders.pack.modal.cancelOrderTitle', 'Avbryt order') }} {{ order.orderReference }}</h3>
+            </div>
+
+            <p class="text-xs text-base-content/70 leading-relaxed">
+              {{ t('admin.orders.pack.modal.cancelOrderDesc', 'Är du säker på att du vill avbryta hela ordern? Reservationen släpps hos betalväxeln och alla reserverade varor återförs automatiskt till lagersaldot.') }}
+            </p>
+
+            <div class="space-y-1 mt-4">
+              <label class="text-xs font-bold text-base-content">{{ t('admin.orders.pack.modal.cancelReasonLabel', 'Anledning till avbruten order') }}</label>
+              <input
+                v-model="manualCancelReason"
+                type="text"
+                :placeholder="t('admin.orders.pack.modal.cancelReasonPlaceholder', 'T.ex. Kunden ångrade köpet, felaktig adress...')"
+                class="input input-bordered input-sm w-full bg-base-100 text-base-content px-4 py-2"
+              />
+            </div>
+
+            <div class="flex justify-end gap-2 pt-5 border-t border-base-200 mt-6">
+              <button
+                type="button"
+                class="btn btn-sm bg-base-200 hover:bg-base-300 text-base-content border-transparent transition-colors disabled:opacity-50 px-4"
+                :disabled="isSubmitting"
+                @click="closeCancelModal"
+              >
+                {{ t('admin.orders.pack.modal.doNotCancel', 'Avbryt inte') }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm bg-error hover:bg-error/90 text-white border-transparent shadow-sm transition-colors disabled:opacity-50 px-4"
+                :disabled="isSubmitting"
+                @click="confirmManualCancellation"
+              >
+                <span v-if="isSubmitting" class="loading loading-spinner loading-xs"></span>
+                <span v-else>{{ t('admin.orders.pack.modal.confirmCancel', 'Bekräfta och avbryt ordern') }}</span>
+              </button>
+            </div>
+          </div>
+          <form method="dialog" class="modal-backdrop">
+            <button class="outline-none text-transparent cursor-default">Stäng</button>
           </form>
         </dialog>
       </template>
