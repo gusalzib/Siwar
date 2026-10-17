@@ -29,7 +29,7 @@ function formatDate(dateStr?: string | Date) {
 </script>
 
 <template>
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-base-100 p-6 rounded-2xl border border-base-200 shadow-sm">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl border-2 border-slate-200 dark:border-zinc-700/80 shadow-sm">
     <div class="flex items-center gap-3">
       <NuxtLink to="/admin/orders" class="btn btn-ghost btn-circle btn-sm">
         <Icon name="lucide:arrow-left" class="size-5" />
@@ -48,11 +48,11 @@ function formatDate(dateStr?: string | Date) {
           >
             {{ order.fulfillmentStatus }}
           </span>
-          <span class="badge badge-outline badge-sm font-semibold">
+          <span class="badge badge-outline badge-sm font-semibold border-slate-400 dark:border-zinc-500">
             {{ order.paymentProvider }}
           </span>
         </div>
-        <p class="text-xs text-base-content/50 mt-1 font-mono">
+        <p class="text-xs text-base-content/80 mt-1 font-mono font-medium">
           <ClientOnly>
             <span>{{ t('admin.orders.pack.summary.createdAt', 'Skapad:') }} {{ formatDate(order.createdAt) }}</span>
             <template #fallback>

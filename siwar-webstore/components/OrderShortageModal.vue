@@ -170,41 +170,55 @@ function applyShortageAction() {
 
 <template>
   <dialog ref="dialogRef" class="modal" @close="handleNativeClose">
-    <div class="modal-box max-w-lg bg-base-100 border border-base-200 shadow-2xl p-6 sm:p-8">
-      <h3 class="font-bold text-lg flex items-center gap-2">
-        <Icon name="lucide:alert-triangle" class="size-5 text-warning" />
+    <div class="modal-box max-w-lg bg-white dark:bg-zinc-900 border-2 border-slate-300 dark:border-zinc-600 shadow-2xl p-6 sm:p-8 rounded-2xl">
+      <h3 class="font-bold text-xl flex items-center gap-2.5 text-base-content">
+        <Icon name="lucide:alert-triangle" class="size-6 text-warning" />
         {{ t('admin.orders.pack.modal.title') }}
       </h3>
 
-      <p class="text-xs text-base-content/70 mt-1">
-        {{ getLocalizedName(item?.name) }}
-      </p>
+      <!-- Product Context Banner -->
+      <div class="mt-3 p-3 bg-slate-100 dark:bg-zinc-800/80 rounded-xl border border-slate-200 dark:border-zinc-700">
+        <div class="text-sm font-bold text-base-content leading-snug">
+          {{ getLocalizedName(item?.name) }}
+        </div>
+        <div v-if="item?.sku" class="text-xs font-mono text-base-content/70 mt-0.5">
+          SKU: {{ item.sku }}
+        </div>
+      </div>
 
       <div class="space-y-6 mt-6">
         <!-- Select Action Type -->
         <div class="form-control">
-          <label class="label text-xs font-semibold">{{ t('admin.orders.pack.modal.actionLabel') }}</label>
-          <div class="grid grid-cols-3 gap-3">
+          <label class="label text-xs font-bold uppercase tracking-wider text-base-content pb-2">
+            {{ t('admin.orders.pack.modal.actionLabel') }}
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               type="button"
-              class="btn btn-sm"
-              :class="selectedActionType === 'REDUCE_QUANTITY' ? 'bg-brand-600 hover:bg-brand-700 text-white border-brand-600' : 'btn-outline border-brand-500 text-base-content hover:bg-brand-50 hover:border-brand-600 hover:text-brand-800'"
+              class="btn py-3 px-3 h-auto min-h-[46px] rounded-xl font-bold text-xs sm:text-sm text-center shadow-xs transition-all"
+              :class="selectedActionType === 'REDUCE_QUANTITY'
+                ? 'bg-brand-600 hover:bg-brand-700 text-white border-2 border-brand-600 shadow-sm ring-2 ring-brand-500/40'
+                : 'bg-slate-50 dark:bg-zinc-800 text-base-content border-2 border-slate-300 dark:border-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:border-slate-400 dark:hover:border-zinc-500'"
               @click="selectActionType('REDUCE_QUANTITY')"
             >
               {{ t('admin.orders.pack.modal.reduceQty') }}
             </button>
             <button
               type="button"
-              class="btn btn-sm"
-              :class="selectedActionType === 'REMOVE_LINE' ? 'bg-error hover:bg-error/90 text-white border-transparent' : 'btn-outline border-base-300 text-base-content'"
+              class="btn py-3 px-3 h-auto min-h-[46px] rounded-xl font-bold text-xs sm:text-sm text-center shadow-xs transition-all"
+              :class="selectedActionType === 'REMOVE_LINE'
+                ? 'bg-error hover:bg-error/90 text-white border-2 border-error shadow-sm ring-2 ring-error/40'
+                : 'bg-slate-50 dark:bg-zinc-800 text-base-content border-2 border-slate-300 dark:border-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:border-slate-400 dark:hover:border-zinc-500'"
               @click="selectActionType('REMOVE_LINE')"
             >
               {{ t('admin.orders.pack.modal.removeLine') }}
             </button>
             <button
               type="button"
-              class="btn btn-sm"
-              :class="selectedActionType === 'SUBSTITUTE_ITEM' ? 'bg-brand-600 hover:bg-brand-700 text-white border-brand-600' : 'btn-outline border-brand-500 text-base-content hover:bg-brand-50 hover:border-brand-600 hover:text-brand-800'"
+              class="btn py-3 px-3 h-auto min-h-[46px] rounded-xl font-bold text-xs sm:text-sm text-center shadow-xs transition-all"
+              :class="selectedActionType === 'SUBSTITUTE_ITEM'
+                ? 'bg-brand-600 hover:bg-brand-700 text-white border-2 border-brand-600 shadow-sm ring-2 ring-brand-500/40'
+                : 'bg-slate-50 dark:bg-zinc-800 text-base-content border-2 border-slate-300 dark:border-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:border-slate-400 dark:hover:border-zinc-500'"
               @click="selectActionType('SUBSTITUTE_ITEM')"
             >
               {{ t('admin.orders.pack.modal.substituteItem') }}
@@ -214,31 +228,35 @@ function applyShortageAction() {
 
         <!-- Option 1: Reduce Quantity Input -->
         <div v-if="selectedActionType === 'REDUCE_QUANTITY'" class="form-control">
-          <label class="label text-xs font-semibold">{{ t('admin.orders.pack.modal.newQty') }}</label>
+          <label class="label text-xs font-bold uppercase tracking-wider text-base-content pb-1">
+            {{ t('admin.orders.pack.modal.newQty') }}
+          </label>
           <input
             v-model.number="modalAdjustedQuantity"
             type="number"
             min="0"
             :max="item ? item.quantity - 1 : 0"
-            class="input input-bordered input-sm w-full font-mono"
+            class="input w-full font-mono text-base font-bold px-4 py-2.5 h-11 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 transition-all shadow-xs"
           />
         </div>
 
         <!-- Option 2: Substitution Product Search -->
-        <div v-if="selectedActionType === 'SUBSTITUTE_ITEM'" class="space-y-3">
+        <div v-if="selectedActionType === 'SUBSTITUTE_ITEM'" class="space-y-3.5">
           <div class="form-control">
-            <label class="label text-xs font-semibold">{{ t('admin.orders.pack.modal.searchSubstitute') }}</label>
-            <div class="join w-full">
+            <label class="label text-xs font-bold uppercase tracking-wider text-base-content pb-1">
+              {{ t('admin.orders.pack.modal.searchSubstitute') }}
+            </label>
+            <div class="flex gap-2">
               <input
                 v-model="substituteSearchQuery"
                 type="text"
                 :placeholder="t('admin.orders.pack.modal.searchPlaceholder')"
-                class="input input-bordered input-sm join-item w-full"
+                class="input flex-1 px-4 py-2.5 h-11 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 transition-all text-sm shadow-xs"
                 @keydown.enter.prevent="searchSubstitutes"
               />
               <button
                 type="button"
-                class="btn btn-sm btn-primary join-item text-white"
+                class="btn h-11 px-5 bg-brand-600 hover:bg-brand-700 text-white border-transparent font-bold rounded-xl shadow-xs transition-transform active:scale-95"
                 :disabled="isSearchingSubstitute"
                 @click="searchSubstitutes"
               >
@@ -248,54 +266,71 @@ function applyShortageAction() {
             </div>
           </div>
 
-          <!-- Search Results List -->
-          <div v-if="substituteResults.length > 0" class="max-h-40 overflow-y-auto border border-base-200 rounded-lg divide-y">
+          <!-- Search Results List with High Contrast Rows -->
+          <div v-if="substituteResults.length > 0" class="max-h-52 overflow-y-auto border-2 border-slate-300 dark:border-zinc-700 rounded-xl divide-y-2 divide-slate-200 dark:divide-zinc-800 bg-slate-100 dark:bg-zinc-950 shadow-inner">
             <div
               v-for="prod in substituteResults"
               :key="prod._id"
-              class="p-2 text-xs flex justify-between items-center cursor-pointer hover:bg-base-200"
-              :class="{ 'bg-primary/10 border-l-4 border-primary': selectedSubstitute?._id === prod._id }"
+              class="p-3.5 sm:px-4 text-xs sm:text-sm flex justify-between items-center cursor-pointer transition-all bg-white dark:bg-zinc-800 hover:bg-brand-50 dark:hover:bg-zinc-700"
+              :class="{ '!bg-brand-100/90 dark:!bg-brand-900/60 border-l-4 border-l-brand-600 dark:border-l-brand-400 font-bold shadow-xs': selectedSubstitute?._id === prod._id }"
               @click="selectSubstituteProduct(prod)"
             >
-              <div>
-                <div class="font-bold">{{ getLocalizedName(prod.name) }}</div>
-                <div class="text-[10px] text-base-content/50 font-mono">SKU: {{ prod.sku || 'N/A' }}</div>
+              <div class="space-y-0.5">
+                <div class="font-bold text-base-content leading-snug">{{ getLocalizedName(prod.name) }}</div>
+                <div class="text-[11px] text-base-content/70 font-mono font-medium">SKU: {{ prod.sku || 'N/A' }}</div>
               </div>
-              <div class="font-mono font-semibold">
-                {{ formatMoney(prod.price?.[currency] ?? prod.price?.SEK ?? 0, currency) }}
+              <div class="flex items-center gap-2.5">
+                <span class="font-mono font-bold text-sm text-base-content">
+                  {{ formatMoney(prod.price?.[currency] ?? prod.price?.SEK ?? 0, currency) }}
+                </span>
+                <Icon
+                  v-if="selectedSubstitute?._id === prod._id"
+                  name="lucide:check-circle-2"
+                  class="size-5 text-brand-600 dark:text-brand-400 shrink-0"
+                />
               </div>
             </div>
           </div>
 
-          <div v-if="selectedSubstitute" class="form-control">
-            <label class="label text-xs font-semibold">{{ t('admin.orders.pack.modal.substituteQty') }}</label>
+          <div v-if="selectedSubstitute" class="form-control pt-1">
+            <label class="label text-xs font-bold uppercase tracking-wider text-base-content pb-1">
+              {{ t('admin.orders.pack.modal.substituteQty') }}
+            </label>
             <input
               v-model.number="modalAdjustedQuantity"
               type="number"
               min="1"
-              class="input input-bordered input-sm w-full font-mono"
+              class="input w-full font-mono text-base font-bold px-4 py-2.5 h-11 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 transition-all shadow-xs"
             />
           </div>
         </div>
 
         <!-- Note / Reason -->
         <div class="form-control">
-          <label class="label text-xs font-semibold">{{ t('admin.orders.pack.modal.noteLabel') }}</label>
+          <label class="label text-xs font-bold uppercase tracking-wider text-base-content pb-1">
+            {{ t('admin.orders.pack.modal.noteLabel') }}
+          </label>
           <textarea
             v-model="modalNote"
             rows="2"
             :placeholder="t('admin.orders.pack.modal.notePlaceholder')"
-            class="textarea textarea-bordered textarea-sm w-full"
+            class="textarea w-full p-3.5 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 transition-all text-sm shadow-xs leading-relaxed"
           ></textarea>
         </div>
       </div>
 
-      <!-- Modal Action Buttons -->
-      <div class="modal-action mt-8">
-        <button type="button" class="btn btn-ghost btn-sm" @click="handleClose">{{ t('admin.orders.pack.modal.cancel') }}</button>
+      <!-- Modal Action Buttons with Generous Padding and Distance -->
+      <div class="flex items-center justify-end gap-3.5 pt-6 mt-8 border-t-2 border-slate-200 dark:border-zinc-700">
         <button
           type="button"
-          class="btn btn-sm bg-brand-600 hover:bg-brand-700 text-white border-transparent disabled:opacity-50"
+          class="btn px-5 py-2.5 h-11 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-base-content border-2 border-slate-300 dark:border-zinc-600 font-bold rounded-xl transition-colors shadow-xs"
+          @click="handleClose"
+        >
+          {{ t('admin.orders.pack.modal.cancel') }}
+        </button>
+        <button
+          type="button"
+          class="btn px-6 py-2.5 h-11 bg-brand-600 hover:bg-brand-700 text-white border-transparent font-bold rounded-xl shadow-sm transition-transform active:scale-95 disabled:opacity-50"
           :disabled="selectedActionType === 'SUBSTITUTE_ITEM' && !selectedSubstitute"
           @click="applyShortageAction"
         >
@@ -303,7 +338,7 @@ function applyShortageAction() {
         </button>
       </div>
     </div>
-    <form method="dialog" class="modal-backdrop">
+    <form method="dialog" class="modal-backdrop bg-black/60 backdrop-blur-xs">
       <button type="button" class="outline-none text-transparent cursor-default" @click="handleClose">Stäng</button>
     </form>
   </dialog>

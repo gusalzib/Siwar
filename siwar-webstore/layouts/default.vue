@@ -56,10 +56,10 @@ const logout = async () => {
 <template>
   <div class="min-h-screen bg-base-200 text-base-content transition-all duration-150">
     <!-- DaisyUI Navbar -->
-    <header class="navbar bg-base-100 shadow-sm sticky top-0 z-50">
+    <header class="navbar bg-base-100 shadow-sm sticky top-0 z-50 px-2 sm:px-4 gap-2">
 
-      <!-- Brand Logo & Mobile Navigation Trigger -->
-      <div class="flex-1 flex items-center gap-1">
+      <!-- Left: Brand Logo & Mobile Navigation Trigger -->
+      <div class="flex items-center gap-1 shrink-0">
         <!-- Mobile Hamburger Menu (Only visible on screens < 1024px) -->
         <div class="dropdown lg:hidden">
           <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm">
@@ -67,43 +67,67 @@ const logout = async () => {
           </div>
           <ul
             tabindex="0"
-            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[20] mt-3 w-56 p-2 shadow-lg border border-base-200"
+            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[20] mt-3 w-60 p-2.5 shadow-xl border border-base-300"
           >
             <!-- Storefront Pages -->
-            <li class="menu-title text-xs uppercase text-base-content/50 font-bold">
+            <li class="menu-title text-xs uppercase text-base-content/70 font-bold px-2 py-1">
               {{ t('nav.store', 'Butik') }}
             </li>
             <li>
-              <NuxtLink :to="localePath('/catalog')">
+              <NuxtLink
+                :to="localePath('/catalog')"
+                class="font-medium text-base-content"
+                active-class="!bg-brand-600 !text-white font-bold shadow-xs"
+              >
                 <Icon name="lucide:layout-grid" class="h-4 w-4" />
                 {{ t('nav.catalog', 'Sortiment') }}
               </NuxtLink>
             </li>
 
-            <!-- Future User Tabs (e.g. Orders, Favorites) can be added here -->
-
             <!-- Admin Management Section (Conditionally shown if isAdmin) -->
             <template v-if="isAdmin">
-              <div class="divider my-1"></div>
-              <li class="menu-title text-xs uppercase text-primary font-bold">
+              <div class="divider my-1 border-base-300"></div>
+              <li class="menu-title text-xs uppercase text-purple-700 dark:text-purple-300 font-bold px-2 py-1">
                 {{ t('admin.nav.management', 'Administration') }}
               </li>
               <li>
-                <NuxtLink :to="localePath('/admin/products')">
+                <NuxtLink
+                  :to="localePath('/admin/products')"
+                  class="admin-nav-link font-medium text-purple-700 dark:text-purple-300"
+                  active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+                >
                   <Icon name="lucide:package" class="h-4 w-4" />
                   {{ t('admin.nav.products', 'Produkter') }}
                 </NuxtLink>
               </li>
               <li>
-                <NuxtLink :to="localePath('/admin/allergens')">
+                <NuxtLink
+                  :to="localePath('/admin/allergens')"
+                  class="admin-nav-link font-medium text-purple-700 dark:text-purple-300"
+                  active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+                >
                   <Icon name="lucide:shield-alert" class="h-4 w-4" />
                   {{ t('admin.nav.allergens', 'Allergener') }}
                 </NuxtLink>
               </li>
               <li>
-                <NuxtLink :to="localePath('/admin/categories')">
+                <NuxtLink
+                  :to="localePath('/admin/categories')"
+                  class="admin-nav-link font-medium text-purple-700 dark:text-purple-300"
+                  active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+                >
                   <Icon name="lucide:folder-tree" class="h-4 w-4" />
                   {{ t('admin.nav.categories', 'Kategorier') }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink
+                  :to="localePath('/admin/orders')"
+                  class="admin-nav-link font-medium text-purple-700 dark:text-purple-300"
+                  active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+                >
+                  <Icon name="lucide:clipboard-list" class="h-4 w-4" />
+                  {{ t('admin.nav.orders', 'Beställningar') }}
                 </NuxtLink>
               </li>
             </template>
@@ -111,34 +135,72 @@ const logout = async () => {
         </div>
 
         <!-- Store Brand Link -->
-        <NuxtLink :to="localePath('/')" class="btn btn-ghost text-xl font-bold cursor-pointer gap-2">
-          <Icon name="lucide:shopping-bag" class="h-6 w-6 text-primary" />
-          <span class="hidden md:inline-block">{{ t('storeName', 'Siwar') }}</span>
+        <NuxtLink :to="localePath('/')" class="btn btn-ghost text-lg sm:text-xl font-bold cursor-pointer gap-2 px-2 shrink-0">
+          <Icon name="lucide:shopping-bag" class="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+          <span class="inline-block">{{ t('storeName', 'Siwar') }}</span>
         </NuxtLink>
       </div>
-      <div class="flex-none flex items-center gap-2">
-        <!-- Theme Toggler -->
-        <label class="swap swap-rotate btn btn-ghost btn-circle">
-          <!-- <input type="checkbox" v-model="isDark" />  --> <!--Commented out because it is supposed to get it from preference store now-->
-          <input
-            type="checkbox"
-            :checked="preferences.theme === 'dark'"
-            @change="preferences.toggleTheme()"
-          />
-          <Icon name="lucide:sun" class="swap-off h-5 w-5" />
-          <Icon name="lucide:moon" class="swap-on h-5 w-5" />
-        </label>
 
+      <!-- Center: Desktop Navigation Links (Visible on screens >= 1024px) -->
+      <nav class="hidden lg:flex items-center justify-center gap-1 xl:gap-2 flex-1 min-w-0 px-2">
+        <NuxtLink
+          :to="localePath('/catalog')"
+          class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
+          active-class="!bg-brand-600 !text-white font-bold shadow-xs"
+        >
+          <Icon name="lucide:layout-grid" class="h-4 w-4" />
+          {{ t('nav.catalog', 'Sortiment') }}
+        </NuxtLink>
+
+        <!-- Admin Management Links -->
+        <template v-if="isAdmin">
+          <NuxtLink
+            :to="localePath('/admin/products')"
+            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
+            active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+          >
+            <Icon name="lucide:package" class="h-4 w-4" />
+            {{ t('admin.nav.products', 'Produkter') }}
+          </NuxtLink>
+          <NuxtLink
+            :to="localePath('/admin/allergens')"
+            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
+            active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+          >
+            <Icon name="lucide:shield-alert" class="h-4 w-4" />
+            {{ t('admin.nav.allergens', 'Allergener') }}
+          </NuxtLink>
+          <NuxtLink
+            :to="localePath('/admin/categories')"
+            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
+            active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+          >
+            <Icon name="lucide:folder-tree" class="h-4 w-4" />
+            {{ t('admin.nav.categories', 'Kategorier') }}
+          </NuxtLink>
+          <NuxtLink
+            :to="localePath('/admin/orders')"
+            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
+            active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+          >
+            <Icon name="lucide:clipboard-list" class="h-4 w-4" />
+            {{ t('admin.nav.orders', 'Beställningar') }}
+          </NuxtLink>
+        </template>
+      </nav>
+
+      <!-- Right: Utility Controls (Currency, Language, Theme, Cart, Profile) -->
+      <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
         <!-- Interactive Currency Switcher (AC-1) -->
-        <div class="dropdown dropdown-end hidden sm:inline-block">
-          <div tabindex="0" role="button" class="btn btn-ghost btn-sm font-semibold gap-1.5">
+        <div class="dropdown dropdown-end">
+          <div tabindex="0" role="button" class="btn btn-ghost btn-sm font-semibold gap-1 px-2 sm:px-2.5">
             <Icon name="lucide:coins" class="h-4 w-4 text-warning" />
-            <span>{{ preferences.currency }}</span>
+            <span class="text-xs sm:text-sm">{{ preferences.currency }}</span>
             <Icon name="lucide:chevron-down" class="h-3 w-3 opacity-50" />
           </div>
           <ul
             tabindex="0"
-            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[1] w-28 p-1.5 shadow border border-base-200"
+            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[20] w-28 p-1.5 shadow-lg border border-base-200"
           >
             <li v-for="curr in availableCurrencies" :key="curr">
               <button
@@ -152,44 +214,16 @@ const logout = async () => {
           </ul>
         </div>
 
-
-        <!-- Desktop Navigation Links (Visible on screens >= 1024px) -->
-        <div class="hidden lg:flex items-center gap-1">
-          <NuxtLink :to="localePath('/catalog')" class="btn btn-ghost btn-sm font-semibold gap-1">
-            <Icon name="lucide:layout-grid" class="h-4 w-4" />
-            {{ t('nav.catalog', 'Sortiment') }}
-          </NuxtLink>
-
-          <!-- Admin Management Links -->
-          <template v-if="isAdmin">
-            <NuxtLink :to="localePath('/admin/products')" class="btn btn-ghost btn-sm font-semibold text-primary gap-1">
-              <Icon name="lucide:package" class="h-4 w-4" />
-              {{ t('admin.nav.products', 'Produkter') }}
-            </NuxtLink>
-            <NuxtLink :to="localePath('/admin/allergens')" class="btn btn-ghost btn-sm font-semibold text-primary gap-1">
-              <Icon name="lucide:shield-alert" class="h-4 w-4" />
-              {{ t('admin.nav.allergens', 'Allergener') }}
-            </NuxtLink>
-            <NuxtLink :to="localePath('/admin/categories')" class="btn btn-ghost btn-sm font-semibold text-primary gap-1">
-              <Icon name="lucide:folder-tree" class="h-4 w-4" />
-              {{ t('admin.nav.categories', 'Kategorier') }}
-            </NuxtLink>
-            <NuxtLink :to="localePath('/admin/orders')" class="btn btn-ghost btn-sm font-semibold text-primary gap-1">
-              <Icon name="lucide:clipboard-list" class="h-4 w-4" />
-              {{ t('admin.nav.orders', 'Beställningar') }}
-            </NuxtLink>
-          </template>
-        </div>
         <!-- Language Dropdown (Fixes the Arabic Reset Glitch) -->
         <div class="dropdown dropdown-end">
-          <div tabindex="0" role="button" class="btn btn-ghost btn-sm font-normal gap-1">
+          <div tabindex="0" role="button" class="btn btn-ghost btn-sm font-normal gap-1 px-2 sm:px-2.5">
             <Icon name="lucide:globe" class="h-4 w-4" />
-            <span class="hidden md:inline-block">{{ currentLocaleName }}</span>
-            <Icon name="lucide:chevron-down" class="h-4 w-4 opacity-50" />
+            <span class="hidden sm:inline-block text-xs sm:text-sm">{{ currentLocaleName }}</span>
+            <Icon name="lucide:chevron-down" class="h-3 w-3 opacity-50" />
           </div>
           <ul
             tabindex="0"
-            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[1] w-36 p-1.5 shadow border border-base-200"
+            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[20] w-36 p-1.5 shadow-lg border border-base-200"
           >
             <li v-for="item in (locales as any[])" :key="item.code">
               <NuxtLink
@@ -203,41 +237,44 @@ const logout = async () => {
           </ul>
         </div>
 
-        <!-- Cart Button -->
-        <!-- <div class="dropdown dropdown-end">
-          <NuxtLink :to="localePath('/cart')" class="btn btn-ghost btn-circle">
-            <div class="indicator">
-              <Icon name="lucide:shopping-cart" class="h-5 w-5" />
-              <span class="badge badge-sm badge-primary indicator-item">0</span>
-            </div>
-          </NuxtLink>
-        </div> -->
+        <!-- Theme Toggler -->
+        <label class="swap swap-rotate btn btn-ghost btn-circle btn-sm">
+          <input
+            type="checkbox"
+            :checked="preferences.theme === 'dark'"
+            @change="preferences.toggleTheme()"
+          />
+          <Icon name="lucide:sun" class="swap-off h-4 w-4 sm:h-5 sm:w-5" />
+          <Icon name="lucide:moon" class="swap-on h-4 w-4 sm:h-5 sm:w-5" />
+        </label>
+
         <!-- Header Cart Trigger Button -->
-      <button
-        type="button"
-        class="btn btn-ghost btn-circle"
-        @click="cartStore.toggleDrawer()"
-      >
-        <div class="indicator">
-          <Icon name="lucide:shopping-cart" class="size-5" />
-          <span
-            v-if="cartStore.totalItemCount > 0"
-            class="badge badge-sm badge-primary indicator-item"
-          >
-            {{ cartStore.totalItemCount }}
-          </span>
-        </div>
-      </button>
+        <button
+          type="button"
+          class="btn btn-ghost btn-circle btn-sm"
+          @click="cartStore.toggleDrawer()"
+        >
+          <div class="indicator">
+            <Icon name="lucide:shopping-cart" class="size-4 sm:size-5" />
+            <span
+              v-if="cartStore.totalItemCount > 0"
+              class="badge badge-xs sm:badge-sm badge-primary indicator-item"
+            >
+              {{ cartStore.totalItemCount }}
+            </span>
+          </div>
+        </button>
+
         <!-- Account / Profile Dropdown -->
         <div class="dropdown dropdown-end">
-          <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
-            <div class="w-9 rounded-full bg-base-300 flex items-center justify-center text-base-content">
-              <Icon name="lucide:user" class="h-5 w-5 mt-2" />
+          <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm avatar">
+            <div class="w-7 sm:w-8 rounded-full bg-base-300 flex items-center justify-center text-base-content">
+              <Icon name="lucide:user" class="h-4 w-4 sm:h-5 sm:w-5 mt-1 sm:mt-1.5" />
             </div>
           </div>
           <ul
             tabindex="0"
-            class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow border border-base-200"
+            class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[20] mt-3 w-52 p-2 shadow-lg border border-base-200"
           >
             <template v-if="isAdmin">
               <li>

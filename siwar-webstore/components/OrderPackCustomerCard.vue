@@ -48,31 +48,31 @@ function copyDeliveryAddress() {
 <template>
   <div v-if="customer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <!-- Customer Details -->
-    <div class="card bg-base-100 border border-base-200 shadow-sm p-4">
-      <div class="flex items-center justify-between mb-2">
+    <div class="card bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 shadow-sm p-5 rounded-2xl">
+      <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2 font-bold text-sm text-base-content">
           <Icon name="lucide:user" class="size-4 text-primary" />
           <span>{{ t('admin.orders.pack.customer.title', 'Kunduppgifter') }}</span>
         </div>
       </div>
-      <div class="text-sm space-y-1">
-        <div class="font-semibold text-base-content">{{ customer.fullName }}</div>
-        <div v-if="customer.email" class="flex items-center gap-2 text-xs text-base-content/70">
-          <Icon name="lucide:mail" class="size-3.5" />
+      <div class="text-sm space-y-1.5">
+        <div class="font-bold text-base text-base-content">{{ customer.fullName }}</div>
+        <div v-if="customer.email" class="flex items-center gap-2 text-xs text-base-content/80 font-medium">
+          <Icon name="lucide:mail" class="size-3.5 text-base-content/60" />
           <a :href="`mailto:${customer.email}`" class="hover:underline hover:text-primary">
             {{ customer.email }}
           </a>
         </div>
-        <div v-if="customer.phone" class="flex items-center gap-2 text-xs text-base-content/70">
-          <Icon name="lucide:phone" class="size-3.5" />
-          <a :href="`tel:${customer.phone}`" class="font-mono hover:underline hover:text-primary">
+        <div v-if="customer.phone" class="flex items-center gap-2 text-xs text-base-content/80 font-mono font-medium">
+          <Icon name="lucide:phone" class="size-3.5 text-base-content/60" />
+          <a :href="`tel:${customer.phone}`" class="hover:underline hover:text-primary">
             {{ customer.phone }}
           </a>
         </div>
         <div class="pt-2">
           <button
             type="button"
-            class="btn btn-xs btn-outline gap-1"
+            class="btn btn-xs bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-base-content border border-slate-300 dark:border-zinc-600 gap-1.5 font-medium px-2.5 py-1 h-auto shadow-xs"
             @click="copyCustomerDetails"
           >
             <Icon :name="customerCopied ? 'lucide:check' : 'lucide:copy'" class="size-3" />
@@ -83,8 +83,8 @@ function copyDeliveryAddress() {
     </div>
 
     <!-- Delivery / Pickup Address -->
-    <div class="card bg-base-100 border border-base-200 shadow-sm p-4">
-      <div class="flex items-center justify-between mb-2">
+    <div class="card bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 shadow-sm p-5 rounded-2xl">
+      <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2 font-bold text-sm text-base-content">
           <Icon
             :name="customer.fulfillmentMethod === 'DELIVERY' ? 'lucide:truck' : 'lucide:store'"
@@ -96,24 +96,24 @@ function copyDeliveryAddress() {
         </div>
         <span
           class="badge badge-sm font-semibold"
-          :class="customer.fulfillmentMethod === 'DELIVERY' ? 'badge-info text-white' : 'badge-ghost'"
+          :class="customer.fulfillmentMethod === 'DELIVERY' ? 'badge-info text-white' : 'badge-ghost border-slate-300 dark:border-zinc-600'"
         >
           {{ customer.fulfillmentMethod === 'DELIVERY' ? t('admin.orders.pack.shipping.deliveryBadge', 'Postpaket (Delivery)') : t('admin.orders.pack.shipping.pickupBadge', 'Hämta i butik (Pickup)') }}
         </span>
       </div>
 
       <!-- Case A: Delivery Address Displayed with Copy Button -->
-      <div v-if="customer.fulfillmentMethod === 'DELIVERY' && customer.address" class="text-sm space-y-1">
-        <div class="font-medium text-base-content">
+      <div v-if="customer.fulfillmentMethod === 'DELIVERY' && customer.address" class="text-sm space-y-1.5">
+        <div class="font-bold text-base text-base-content">
           {{ customer.address.street }}
         </div>
-        <div class="text-xs text-base-content/70 font-mono">
+        <div class="text-xs text-base-content/80 font-mono font-medium">
           {{ customer.address.postalCode }} {{ customer.address.city }}
         </div>
         <div class="pt-2">
           <button
             type="button"
-            class="btn btn-xs btn-outline gap-1"
+            class="btn btn-xs bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-base-content border border-slate-300 dark:border-zinc-600 gap-1.5 font-medium px-2.5 py-1 h-auto shadow-xs"
             @click="copyDeliveryAddress"
           >
             <Icon :name="addressCopied ? 'lucide:check' : 'lucide:copy'" class="size-3" />
@@ -123,7 +123,7 @@ function copyDeliveryAddress() {
       </div>
 
       <!-- Case B: Pickup Notice -->
-      <div v-else class="text-xs text-base-content/60 space-y-1">
+      <div v-else class="text-xs text-base-content/80 space-y-1 bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-slate-200 dark:border-zinc-700">
         <p>{{ t('admin.orders.pack.shipping.pickupNotice1', 'Kunden hämtar varorna i den fysiska butiken.') }}</p>
         <p class="font-semibold text-base-content">{{ t('admin.orders.pack.shipping.pickupNotice2', 'Ingen fraktsedel behövs.') }}</p>
       </div>

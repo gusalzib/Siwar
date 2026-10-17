@@ -34,20 +34,20 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
 </script>
 
 <template>
-  <div class="card bg-base-100 border border-base-200 shadow-sm overflow-hidden">
+  <div class="card bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 shadow-sm rounded-2xl overflow-hidden">
     <!-- 1. MOBILE & TABLET VIEW (< md: 768px): Responsive Packing Cards -->
-    <div class="block md:hidden divide-y divide-base-200">
+    <div class="block md:hidden divide-y divide-slate-200 dark:divide-zinc-700/80">
       <div
         v-for="item in items"
         :key="item.productId"
-        class="p-4 space-y-3 transition-colors"
-        :class="{ 'bg-base-200/40': item.isPacked, 'opacity-60': item.fulfilledQuantity === 0 }"
+        class="p-5 sm:p-6 space-y-4 hover:bg-slate-50/80 dark:hover:bg-zinc-800/60 transition-colors duration-150"
+        :class="{ 'bg-brand-50/20 dark:bg-brand-900/10': item.isPacked, 'opacity-60': item.fulfilledQuantity === 0 }"
       >
         <!-- Top: Checkbox, Name, SKU, Status -->
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-3.5">
           <input
             type="checkbox"
-            class="checkbox checkbox-md border-2 border-base-content/40 bg-base-100 checked:bg-brand-600 checked:border-brand-600 shrink-0 mt-0.5"
+            class="checkbox checkbox-md border-2 border-slate-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 checked:bg-brand-600 checked:border-brand-600 shrink-0 mt-0.5 transition-all shadow-xs"
             :disabled="item.fulfilledQuantity === 0 || isReadOnly"
             :checked="item.isPacked"
             @click.stop="emit('togglePicked', item)"
@@ -57,17 +57,17 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
             <div class="font-bold text-sm text-base-content leading-snug">
               {{ getLocalizedName(item.name) }}
             </div>
-            <div class="flex flex-wrap items-center gap-1.5 mt-1">
-              <span v-if="item.sku" class="text-xs font-mono text-base-content/60">
+            <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+              <span v-if="item.sku" class="text-xs font-mono text-base-content/80 font-medium bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
                 SKU: {{ item.sku }}
               </span>
-              <span v-if="item.shortageStatus === 'REDUCED'" class="badge badge-warning badge-xs font-semibold">
+              <span v-if="item.shortageStatus === 'REDUCED'" class="badge badge-warning badge-xs font-bold">
                 {{ t('admin.orders.pack.badges.reduced') }}
               </span>
-              <span v-else-if="item.shortageStatus === 'REMOVED'" class="badge badge-error badge-xs text-white font-semibold">
+              <span v-else-if="item.shortageStatus === 'REMOVED'" class="badge badge-error badge-xs text-white font-bold">
                 {{ t('admin.orders.pack.badges.outOfStock') }}
               </span>
-              <span v-else-if="item.shortageStatus === 'SUBSTITUTED'" class="badge badge-info badge-xs text-white font-semibold">
+              <span v-else-if="item.shortageStatus === 'SUBSTITUTED'" class="badge badge-info badge-xs text-white font-bold">
                 {{ t('admin.orders.pack.badges.substituted') }}
               </span>
             </div>
@@ -75,26 +75,26 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
         </div>
 
         <!-- Middle: Quantity & Price Breakdown Grid -->
-        <div class="grid grid-cols-3 gap-2 bg-base-200/50 p-2.5 rounded-xl text-center text-xs">
+        <div class="grid grid-cols-3 gap-2 bg-slate-100 dark:bg-zinc-800/70 p-3.5 rounded-xl border border-slate-200 dark:border-zinc-700 text-center text-xs">
           <div>
-            <div class="text-base-content/60 text-[11px] mb-0.5">{{ t('admin.orders.pack.table.ordered') }}</div>
+            <div class="text-base-content/80 font-semibold text-[11px] mb-0.5 uppercase tracking-wider">{{ t('admin.orders.pack.table.ordered') }}</div>
             <div class="font-mono font-bold text-sm text-base-content">{{ item.quantity }} st</div>
           </div>
           <div>
-            <div class="text-base-content/60 text-[11px] mb-0.5">{{ t('admin.orders.pack.table.packed') }}</div>
+            <div class="text-base-content/80 font-semibold text-[11px] mb-0.5 uppercase tracking-wider">{{ t('admin.orders.pack.table.packed') }}</div>
             <span
-              class="font-mono font-black text-sm px-2 py-0.5 rounded"
+              class="font-mono font-black text-sm px-2.5 py-1 rounded-md inline-block"
               :class="{
                 'bg-success/20 text-success': item.fulfilledQuantity === item.quantity,
-                'bg-warning/20 text-warning-content': item.fulfilledQuantity > 0 && item.fulfilledQuantity < item.quantity,
-                'bg-error/20 text-error': item.fulfilledQuantity === 0,
+                'bg-warning/25 text-warning-content font-black': item.fulfilledQuantity > 0 && item.fulfilledQuantity < item.quantity,
+                'bg-error/20 text-error font-black': item.fulfilledQuantity === 0,
               }"
             >
               {{ item.fulfilledQuantity }} st
             </span>
           </div>
           <div>
-            <div class="text-base-content/60 text-[11px] mb-0.5">{{ t('admin.orders.pack.table.rowTotal') }}</div>
+            <div class="text-base-content/80 font-semibold text-[11px] mb-0.5 uppercase tracking-wider">{{ t('admin.orders.pack.table.rowTotal') }}</div>
             <div class="font-mono font-bold text-sm text-base-content">
               {{ formatMoney(item.unitPriceMinor * item.fulfilledQuantity, currency) }}
             </div>
@@ -107,7 +107,7 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
             v-if="item.shortageStatus === 'NONE'"
             type="button"
             :disabled="isReadOnly"
-            class="btn btn-sm bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-200 border border-amber-500/40 gap-1.5 font-bold shadow-xs transition-colors"
+            class="btn btn-sm bg-amber-500/15 hover:bg-amber-500/25 text-amber-900 dark:text-amber-200 border-2 border-amber-500/50 gap-1.5 font-bold shadow-xs transition-colors"
             @click="emit('openShortage', item)"
           >
             <Icon name="lucide:alert-circle" class="size-4 text-amber-600 dark:text-amber-400" />
@@ -116,7 +116,7 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
           <button
             v-else
             type="button"
-            class="btn btn-sm btn-outline border-base-300 hover:bg-base-200 text-base-content gap-1.5 font-semibold"
+            class="btn btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border-2 border-slate-300 dark:border-zinc-600 text-base-content gap-1.5 font-bold shadow-xs"
             :disabled="isReadOnly"
             @click="emit('resetItem', item)"
           >
@@ -129,25 +129,31 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
 
     <!-- 2. DESKTOP VIEW (≥ md: 768px): Spacious Table -->
     <div class="hidden md:block overflow-x-auto">
-      <table class="table table-zebra w-full border-collapse">
+      <table class="table w-full border-collapse">
         <thead>
-          <tr class="bg-base-200/70 border-b border-base-200 text-xs font-bold text-base-content/70">
-            <th class="w-14 text-center py-4 px-3">Packad</th>
-            <th class="py-4 px-4">{{ t('admin.orders.pack.table.product') }}</th>
-            <th class="text-center py-4 px-3">{{ t('admin.orders.pack.table.ordered') }}</th>
-            <th class="text-center py-4 px-3">{{ t('admin.orders.pack.table.packed') }}</th>
-            <th class="text-end py-4 px-4">{{ t('admin.orders.pack.table.unitPrice') }}</th>
-            <th class="text-end py-4 px-4">{{ t('admin.orders.pack.table.rowTotal') }}</th>
-            <th class="text-center py-4 px-4">{{ t('admin.orders.pack.table.action') }}</th>
+          <tr class="bg-slate-100/90 dark:bg-zinc-800/90 border-b-2 border-slate-200 dark:border-zinc-700 text-xs font-bold text-base-content uppercase tracking-wider">
+            <th class="w-16 text-center py-4 px-4">{{ t('admin.orders.pack.table.packed') }}</th>
+            <th class="py-4 px-5">{{ t('admin.orders.pack.table.product') }}</th>
+            <th class="text-center py-4 px-4">{{ t('admin.orders.pack.table.ordered') }}</th>
+            <th class="text-center py-4 px-4">{{ t('admin.orders.pack.table.packed') }}</th>
+            <th class="text-end py-4 px-5">{{ t('admin.orders.pack.table.unitPrice') }}</th>
+            <th class="text-end py-4 px-5">{{ t('admin.orders.pack.table.rowTotal') }}</th>
+            <th class="text-center py-4 px-5">{{ t('admin.orders.pack.table.action') }}</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-base-200">
-          <tr v-for="item in items" :key="item.productId" class="hover transition-colors">
+        <tbody class="divide-y divide-slate-200 dark:divide-zinc-700/80">
+          <tr
+            v-for="item in items"
+            :key="item.productId"
+            class="hover:bg-brand-50/70 dark:hover:bg-zinc-800/80 transition-colors duration-150 cursor-pointer"
+            :class="{ 'bg-brand-50/20 dark:bg-brand-900/10': item.isPacked, 'opacity-60': item.fulfilledQuantity === 0 }"
+            @click="!isReadOnly && item.fulfilledQuantity > 0 ? emit('togglePicked', item) : null"
+          >
             <!-- Checkbox -->
-            <td class="w-14 text-center py-4 px-3">
+            <td class="w-16 text-center py-5 px-4" @click.stop>
               <input
                 type="checkbox"
-                class="checkbox checkbox-sm border-2 border-base-content/40 bg-base-100 checked:bg-brand-600 checked:border-brand-600 transition-colors"
+                class="checkbox checkbox-md border-2 border-slate-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 checked:bg-brand-600 checked:border-brand-600 transition-all cursor-pointer shadow-xs"
                 :disabled="item.fulfilledQuantity === 0 || isReadOnly"
                 :checked="item.isPacked"
                 @click.stop="emit('togglePicked', item)"
@@ -155,39 +161,39 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
             </td>
 
             <!-- Product Title & SKU -->
-            <td class="py-4 px-4 min-w-[200px]">
-              <div class="font-bold text-sm text-base-content">
+            <td class="py-5 px-5 min-w-[220px]">
+              <div class="font-bold text-sm text-base-content leading-snug">
                 {{ getLocalizedName(item.name) }}
               </div>
-              <div class="flex items-center gap-2 mt-1">
-                <span v-if="item.sku" class="text-xs font-mono text-base-content/60">
+              <div class="flex items-center gap-2 mt-1.5 font-medium">
+                <span v-if="item.sku" class="text-xs font-mono text-base-content/80 font-medium bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
                   SKU: {{ item.sku }}
                 </span>
-                <span v-if="item.shortageStatus === 'REDUCED'" class="badge badge-warning badge-xs font-semibold">
+                <span v-if="item.shortageStatus === 'REDUCED'" class="badge badge-warning badge-xs font-bold">
                   {{ t('admin.orders.pack.badges.reduced') }}
                 </span>
-                <span v-else-if="item.shortageStatus === 'REMOVED'" class="badge badge-error badge-xs text-white font-semibold">
+                <span v-else-if="item.shortageStatus === 'REMOVED'" class="badge badge-error badge-xs text-white font-bold">
                   {{ t('admin.orders.pack.badges.outOfStock') }}
                 </span>
-                <span v-else-if="item.shortageStatus === 'SUBSTITUTED'" class="badge badge-info badge-xs text-white font-semibold">
+                <span v-else-if="item.shortageStatus === 'SUBSTITUTED'" class="badge badge-info badge-xs text-white font-bold">
                   {{ t('admin.orders.pack.badges.substituted') }}
                 </span>
               </div>
             </td>
 
             <!-- Ordered Quantity -->
-            <td class="text-center font-mono font-bold text-sm text-base-content py-4 px-3">
+            <td class="text-center font-mono font-bold text-base text-base-content py-5 px-4">
               {{ item.quantity }}
             </td>
 
             <!-- Fulfilled Quantity -->
-            <td class="text-center py-4 px-3">
+            <td class="text-center py-5 px-4">
               <span
-                class="font-mono font-bold px-2.5 py-1 rounded-md text-sm inline-block min-w-[36px]"
+                class="font-mono font-black px-3 py-1.5 rounded-lg text-sm inline-block min-w-[40px] shadow-xs"
                 :class="{
                   'bg-success/20 text-success': item.fulfilledQuantity === item.quantity,
-                  'bg-warning/20 text-warning-content': item.fulfilledQuantity > 0 && item.fulfilledQuantity < item.quantity,
-                  'bg-error/20 text-error': item.fulfilledQuantity === 0,
+                  'bg-warning/25 text-warning-content font-black': item.fulfilledQuantity > 0 && item.fulfilledQuantity < item.quantity,
+                  'bg-error/20 text-error font-black': item.fulfilledQuantity === 0,
                 }"
               >
                 {{ item.fulfilledQuantity }}
@@ -195,36 +201,36 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
             </td>
 
             <!-- Unit Price -->
-            <td class="text-end font-mono text-sm text-base-content/70 py-4 px-4 whitespace-nowrap">
+            <td class="text-end font-mono text-sm text-base-content/90 font-semibold py-5 px-5 whitespace-nowrap">
               {{ formatMoney(item.unitPriceMinor, currency) }}
             </td>
 
             <!-- Row Total -->
-            <td class="text-end font-mono font-bold text-sm text-base-content py-4 px-4 whitespace-nowrap">
+            <td class="text-end font-mono font-black text-base text-base-content py-5 px-5 whitespace-nowrap">
               {{ formatMoney(item.unitPriceMinor * item.fulfilledQuantity, currency) }}
             </td>
 
             <!-- Shortage Button -->
-            <td class="text-center py-4 px-4 whitespace-nowrap">
+            <td class="text-center py-5 px-5 whitespace-nowrap" @click.stop>
               <button
                 v-if="item.shortageStatus === 'NONE'"
                 type="button"
-                class="btn btn-xs bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-200 border border-amber-500/40 gap-1 font-bold shadow-xs transition-colors"
+                class="btn btn-sm bg-amber-500/15 hover:bg-amber-500/25 text-amber-900 dark:text-amber-200 border-2 border-amber-500/50 gap-1.5 font-bold shadow-xs transition-colors"
                 :disabled="isReadOnly"
-                @click="emit('openShortage', item)"
+                @click.stop="emit('openShortage', item)"
               >
-                <Icon name="lucide:alert-circle" class="size-3.5 text-amber-600 dark:text-amber-400" />
+                <Icon name="lucide:alert-circle" class="size-4 text-amber-600 dark:text-amber-400" />
                 <span>{{ t('admin.orders.pack.actions.shortage') }}</span>
               </button>
               <button
                 v-else
                 type="button"
-                class="btn btn-ghost btn-xs text-base-content/60 hover:text-base-content gap-1 font-semibold"
+                class="btn btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border-2 border-slate-300 dark:border-zinc-600 text-base-content gap-1.5 font-bold shadow-xs transition-colors"
                 :title="t('admin.orders.pack.actions.resetLineTooltip')"
                 :disabled="isReadOnly"
-                @click="emit('resetItem', item)"
+                @click.stop="emit('resetItem', item)"
               >
-                <Icon name="lucide:undo-2" class="size-3.5" />
+                <Icon name="lucide:undo-2" class="size-4" />
                 <span>{{ t('admin.orders.pack.actions.resetLine') }}</span>
               </button>
             </td>

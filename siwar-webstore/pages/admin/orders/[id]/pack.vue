@@ -60,7 +60,7 @@ async function onConfirmCancel(reason: string) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-base-200/50 p-4 sm:p-6 lg:p-8">
+  <div class="min-h-screen bg-slate-100/90 dark:bg-zinc-950 text-base-content p-4 sm:p-6 lg:p-8">
     <div class="max-w-7xl mx-auto space-y-6">
       <div v-if="pending" class="flex justify-center p-12">
         <span class="loading loading-spinner loading-lg text-primary"></span>

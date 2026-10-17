@@ -35,26 +35,26 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
 </script>
 
 <template>
-  <div v-if="adjustments && adjustments.length > 0" class="card bg-base-100 border border-base-200 shadow-sm overflow-hidden">
+  <div v-if="adjustments && adjustments.length > 0" class="card bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 shadow-sm rounded-2xl overflow-hidden">
     <!-- Header -->
-    <div class="px-5 py-4 border-b border-base-200 flex items-center justify-between bg-base-200/40">
+    <div class="px-5 py-4 border-b-2 border-slate-200 dark:border-zinc-700 flex items-center justify-between bg-slate-50 dark:bg-zinc-800/80">
       <div class="flex items-center gap-2">
         <Icon name="lucide:history" class="size-4 text-primary" />
         <h3 class="text-sm font-bold text-base-content">
           {{ t('admin.orders.pack.history.title') }}
         </h3>
       </div>
-      <span class="badge badge-sm badge-neutral font-mono font-semibold">
+      <span class="badge badge-sm badge-neutral font-mono font-bold">
         {{ adjustments.length }} {{ adjustments.length === 1 ? t('admin.orders.pack.history.event') : t('admin.orders.pack.history.events') }}
       </span>
     </div>
 
     <!-- Timeline List -->
-    <div class="divide-y divide-base-200">
+    <div class="divide-y divide-slate-200 dark:divide-zinc-700/80">
       <div
         v-for="(adj, idx) in adjustments"
         :key="idx"
-        class="p-4 sm:p-5 hover:bg-base-200/20 transition-colors space-y-3"
+        class="p-4 sm:p-5 hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors space-y-3"
       >
         <!-- Top Row: Action Badge, PerformedBy, Timestamp -->
         <div class="flex flex-wrap items-center justify-between gap-2">
@@ -78,14 +78,14 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
             </span>
 
             <!-- Performed By User / Staff -->
-            <div class="flex items-center gap-1.5 text-xs text-base-content/80 font-medium bg-base-200 px-2 py-0.5 rounded-md">
-              <Icon name="lucide:user-check" class="size-3.5 text-base-content/60" />
+            <div class="flex items-center gap-1.5 text-xs text-base-content font-medium bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-zinc-700">
+              <Icon name="lucide:user-check" class="size-3.5 text-base-content/70" />
               <span>{{ adj.performedBy || 'Admin' }}</span>
             </div>
           </div>
 
           <!-- Timestamp -->
-          <div class="text-[11px] font-mono text-base-content/50 flex items-center gap-1">
+          <div class="text-[11px] font-mono text-base-content/80 font-medium flex items-center gap-1">
             <Icon name="lucide:clock" class="size-3" />
             <ClientOnly>
               <span>{{ formatDate(adj.timestamp) }}</span>
@@ -97,14 +97,14 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
         </div>
 
         <!-- Middle Row: Product & Quantities Comparison -->
-        <div class="bg-base-200/50 rounded-xl p-3 text-xs space-y-2 border border-base-200">
+        <div class="bg-slate-50 dark:bg-zinc-800/60 rounded-xl p-3.5 text-xs space-y-2 border border-slate-200 dark:border-zinc-700">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <!-- Original Item Identity -->
             <div class="space-y-0.5">
-              <div class="font-bold text-base-content">
+              <div class="font-bold text-sm text-base-content">
                 {{ getLocalizedName(adj.originalName) || t('admin.orders.pack.history.originalProduct') }}
               </div>
-              <div class="flex items-center gap-2 text-[11px] text-base-content/60 font-mono">
+              <div class="flex items-center gap-2 text-[11px] text-base-content/80 font-mono font-medium">
                 <span v-if="adj.originalSku">SKU: {{ adj.originalSku }}</span>
                 <span>{{ t('admin.orders.pack.history.unitPrice') }}: {{ formatMoney(adj.originalUnitPriceMinor) }}</span>
                 <span v-if="adj.originalMomsRate">{{ t('admin.orders.pack.history.moms') }}: {{ adj.originalMomsRate }}%</span>
@@ -113,15 +113,15 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
 
             <!-- Quantity Transformation -->
             <div class="flex items-center gap-2 font-mono font-bold shrink-0 self-start sm:self-center">
-              <span class="px-2 py-0.5 rounded bg-base-100 border border-base-200 text-base-content/80">
+              <span class="px-2.5 py-1 rounded bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-600 text-base-content">
                 {{ adj.originalQuantity }} {{ t('admin.orders.pack.history.pieces') }}
               </span>
-              <Icon name="lucide:arrow-right" class="size-3.5 text-base-content/40" />
+              <Icon name="lucide:arrow-right" class="size-3.5 text-base-content/50" />
               <span
-                class="px-2 py-0.5 rounded"
+                class="px-2.5 py-1 rounded"
                 :class="{
-                  'bg-error/15 text-error': adj.adjustedQuantity === 0,
-                  'bg-warning/20 text-warning-content': adj.adjustedQuantity > 0,
+                  'bg-error/20 text-error font-black': adj.adjustedQuantity === 0,
+                  'bg-warning/25 text-warning-content font-black': adj.adjustedQuantity > 0,
                 }"
               >
                 {{ adj.adjustedQuantity }} {{ t('admin.orders.pack.history.pieces') }}
@@ -132,11 +132,11 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
           <!-- If Substitution: Show the replacement product details -->
           <div
             v-if="adj.action === 'SUBSTITUTE_ITEM'"
-            class="mt-2 pt-2 border-t border-base-200 flex flex-wrap items-center justify-between gap-1 text-[11px] text-info-content bg-info/10 p-2 rounded-lg"
+            class="mt-2 pt-2 border-t border-slate-200 dark:border-zinc-700 flex flex-wrap items-center justify-between gap-1 text-[11px] text-info-content bg-info/15 border border-info/30 p-2.5 rounded-lg"
           >
-            <div class="flex items-center gap-1.5 font-medium">
+            <div class="flex items-center gap-1.5 font-bold">
               <Icon name="lucide:repeat" class="size-3.5 text-info" />
-              <span>{{ t('admin.orders.pack.history.substitutedWithSku') }}: <span class="font-mono font-bold">{{ adj.substitutedSku || 'N/A' }}</span></span>
+              <span>{{ t('admin.orders.pack.history.substitutedWithSku') }}: <span class="font-mono font-black">{{ adj.substitutedSku || 'N/A' }}</span></span>
             </div>
             <div v-if="adj.substitutedUnitPriceMinor" class="font-mono font-bold">
               {{ t('admin.orders.pack.history.newUnitPrice') }}: {{ formatMoney(adj.substitutedUnitPriceMinor) }}
@@ -145,10 +145,10 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
         </div>
 
         <!-- Bottom Row: Staff Note -->
-        <div v-if="adj.note" class="text-xs bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 rounded-lg p-2.5 flex items-start gap-2">
-          <Icon name="lucide:message-square" class="size-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+        <div v-if="adj.note" class="text-xs bg-amber-500/10 border-2 border-amber-500/30 text-amber-900 dark:text-amber-200 rounded-lg p-3 flex items-start gap-2">
+          <Icon name="lucide:message-square" class="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div class="space-y-0.5">
-            <span class="font-bold text-[11px] uppercase tracking-wider block opacity-75">
+            <span class="font-bold text-[11px] uppercase tracking-wider block opacity-85">
               {{ t('admin.orders.pack.history.noteLabel') }}:
             </span>
             <p class="italic text-[12px] leading-relaxed">"{{ adj.note }}"</p>
