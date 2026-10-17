@@ -323,7 +323,21 @@
           "substituted": "Substituted"
         },
         "history": {
-          "title": "Previously registered shortages",
+          "title": "Registered adjustments & shortages",
+          "event": "event",
+          "events": "events",
+          "actions": {
+            "removeLine": "Removed line",
+            "reduceQuantity": "Reduced quantity",
+            "substituteItem": "Substituted item"
+          },
+          "originalProduct": "Original product",
+          "unitPrice": "Unit price",
+          "moms": "VAT",
+          "pieces": "pcs",
+          "substitutedWithSku": "Replaced with SKU",
+          "newUnitPrice": "New unit price",
+          "noteLabel": "Staff note",
           "origin": "Origin",
           "adjusted": "Adjusted"
         },

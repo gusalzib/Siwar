@@ -324,7 +324,21 @@
           "substituted": "مستبدل"
         },
         "history": {
-          "title": "النواقص المسجلة مسبقاً",
+          "title": "التعديلات والنواقص المسجلة",
+          "event": "حدث",
+          "events": "أحداث",
+          "actions": {
+            "removeLine": "سطر محذوف",
+            "reduceQuantity": "كمية مخفضة",
+            "substituteItem": "منتج بديل"
+          },
+          "originalProduct": "المنتج الأصلي",
+          "unitPrice": "سعر الوحدة",
+          "moms": "الضريبة",
+          "pieces": "قطعة",
+          "substitutedWithSku": "تم الاستبدال بـ SKU",
+          "newUnitPrice": "سعر الوحدة الجديد",
+          "noteLabel": "ملاحظة من الموظف",
           "origin": "الأصل",
           "adjusted": "المعدل"
         },

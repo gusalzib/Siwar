@@ -327,7 +327,21 @@
           "substituted": "Ersatt"
         },
         "history": {
-          "title": "Tidigare registrerade brister",
+          "title": "Registrerade justeringar & varubrist",
+          "event": "händelse",
+          "events": "händelser",
+          "actions": {
+            "removeLine": "Borttagen rad",
+            "reduceQuantity": "Minskat antal",
+            "substituteItem": "Ersatt vara"
+          },
+          "originalProduct": "Ursprunglig produkt",
+          "unitPrice": "Á-pris",
+          "moms": "Moms",
+          "pieces": "st",
+          "substitutedWithSku": "Ersatt med SKU",
+          "newUnitPrice": "Nytt á-pris",
+          "noteLabel": "Notering från personal",
           "origin": "Ursprung",
           "adjusted": "Justerat"
         },
