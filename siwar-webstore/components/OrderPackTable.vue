@@ -5,11 +5,13 @@ import type { LineItemState } from '~/composables/useOrderPacking'
 
 interface Props {
   items: LineItemState[]
-  currency: string
+  currency: string,
+  isReadOnly?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   currency: 'SEK',
+  isReadOnly: false,
 })
 
 const emit = defineEmits<{
@@ -46,7 +48,7 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
           <input
             type="checkbox"
             class="checkbox checkbox-md border-2 border-base-content/40 bg-base-100 checked:bg-brand-600 checked:border-brand-600 shrink-0 mt-0.5"
-            :disabled="item.fulfilledQuantity === 0"
+            :disabled="item.fulfilledQuantity === 0 || isReadOnly"
             :checked="item.isPacked"
             @click.stop="emit('togglePicked', item)"
           />
@@ -104,6 +106,7 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
           <button
             v-if="item.shortageStatus === 'NONE'"
             type="button"
+            :disabled="isReadOnly"
             class="btn btn-sm bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-200 border border-amber-500/40 gap-1.5 font-bold shadow-xs transition-colors"
             @click="emit('openShortage', item)"
           >
@@ -114,6 +117,7 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
             v-else
             type="button"
             class="btn btn-sm btn-outline border-base-300 hover:bg-base-200 text-base-content gap-1.5 font-semibold"
+            :disabled="isReadOnly"
             @click="emit('resetItem', item)"
           >
             <Icon name="lucide:undo-2" class="size-4" />
@@ -144,7 +148,7 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
               <input
                 type="checkbox"
                 class="checkbox checkbox-sm border-2 border-base-content/40 bg-base-100 checked:bg-brand-600 checked:border-brand-600 transition-colors"
-                :disabled="item.fulfilledQuantity === 0"
+                :disabled="item.fulfilledQuantity === 0 || isReadOnly"
                 :checked="item.isPacked"
                 @click.stop="emit('togglePicked', item)"
               />
@@ -206,6 +210,7 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
                 v-if="item.shortageStatus === 'NONE'"
                 type="button"
                 class="btn btn-xs bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-200 border border-amber-500/40 gap-1 font-bold shadow-xs transition-colors"
+                :disabled="isReadOnly"
                 @click="emit('openShortage', item)"
               >
                 <Icon name="lucide:alert-circle" class="size-3.5 text-amber-600 dark:text-amber-400" />
@@ -216,6 +221,7 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
                 type="button"
                 class="btn btn-ghost btn-xs text-base-content/60 hover:text-base-content gap-1 font-semibold"
                 :title="t('admin.orders.pack.actions.resetLineTooltip')"
+                :disabled="isReadOnly"
                 @click="emit('resetItem', item)"
               >
                 <Icon name="lucide:undo-2" class="size-3.5" />
