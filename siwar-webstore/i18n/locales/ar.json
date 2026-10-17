@@ -341,7 +341,9 @@
           "momsCalc": "حساب الضريبة (Moms):",
           "moms12": "ضريبة 12% (مواد غذائية):",
           "moms25": "ضريبة 25% (شحن وغيرها):",
-          "totalMoms": "إجمالي الضريبة:"
+          "totalMoms": "إجمالي الضريبة:",
+          "exceedsAuthorizedWarningTitle": "المنتج البديل يتجاوز المبلغ المصرح به",
+          "exceedsAuthorizedWarningDesc": "لقد صرح العميل بمبلغ {amount} فقط. لا يمكن شحن الطلب حتى يتم تعديل المبلغ."
         },
         "customer": {
           "title": "بيانات العميل"

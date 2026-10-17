@@ -340,7 +340,9 @@
           "momsCalc": "VAT Calculation:",
           "moms12": "VAT 12% (Food):",
           "moms25": "VAT 25% (Shipping & Other):",
-          "totalMoms": "Total VAT:"
+          "totalMoms": "Total VAT:",
+          "exceedsAuthorizedWarningTitle": "Replacement item exceeds authorized amount",
+          "exceedsAuthorizedWarningDesc": "The customer only authorized {amount}. The order cannot be dispatched until the amount is adjusted."
         },
         "customer": {
           "title": "Customer Details"

@@ -344,7 +344,9 @@
           "momsCalc": "Momsberäkning:",
           "moms12": "Moms 12% (Livsmedel):",
           "moms25": "Moms 25% (Frakt & Övrigt):",
-          "totalMoms": "Total Moms:"
+          "totalMoms": "Total Moms:",
+          "exceedsAuthorizedWarningTitle": "Ersättningsvaran överstiger auktoriserat belopp",
+          "exceedsAuthorizedWarningDesc": "Kunden har endast auktoriserat {amount}. Ordern kan inte skickas förrän beloppet justeras."
         },
         "customer": {
           "title": "Kunduppgifter"
