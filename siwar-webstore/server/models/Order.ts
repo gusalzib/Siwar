@@ -38,6 +38,9 @@ export interface IShortageAdjustment {
   originalQuantity: number
   adjustedQuantity: number
   originalUnitPriceMinor: number
+  originalSku?: string
+  originalName?: { ar: string; sv: string; en: string }
+  originalMomsRate?: 12 | 25
   substitutedProductId?: mongoose.Types.ObjectId
   substitutedSku?: string
   substitutedUnitPriceMinor?: number
@@ -45,6 +48,7 @@ export interface IShortageAdjustment {
 }
 export interface IOrderItem {
   productId: mongoose.Types.ObjectId
+  originalProductId?: mongoose.Types.ObjectId // Set when item has been substituted
   sku?: string
   name: {
     ar: string
@@ -56,6 +60,7 @@ export interface IOrderItem {
   unitPriceMinor: number
   momsRate: 12 | 25
   shortageStatus: LineItemShortageStatus
+  isPacked?: boolean
 }
 
 export interface IOrderCustomer {
@@ -115,6 +120,7 @@ export interface IOrder extends Document {
 const OrderItemSchema = new Schema<IOrderItem>(
   {
     productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+    originalProductId: { type: Schema.Types.ObjectId, ref: 'Product' },
     sku: { type: String },
     name: {
       ar: { type: String, required: true },
@@ -130,6 +136,7 @@ const OrderItemSchema = new Schema<IOrderItem>(
       enum: ['NONE', 'REDUCED', 'REMOVED', 'SUBSTITUTED'],
       default: 'NONE',
     },
+    isPacked: { type: Boolean, default: false },
   },
   { _id: false }
 )
@@ -147,6 +154,13 @@ const ShortageAdjustmentSchema = new Schema<IShortageAdjustment>(
     originalQuantity: { type: Number, required: true },
     adjustedQuantity: { type: Number, required: true },
     originalUnitPriceMinor: { type: Number, required: true },
+    originalSku: { type: String },
+    originalName: {
+      ar: { type: String },
+      sv: { type: String },
+      en: { type: String },
+    },
+    originalMomsRate: { type: Number, enum: [12, 25] },
     substitutedProductId: { type: Schema.Types.ObjectId, ref: 'Product' },
     substitutedSku: { type: String },
     substitutedUnitPriceMinor: { type: Number },
