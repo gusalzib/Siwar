@@ -96,9 +96,17 @@ async function onConfirmCancel(reason: string) {
             <OrderPackTable
               :items="localItems"
               :currency="order.currency"
+              :is-read-only="order.fulfillmentStatus === 'DISPATCHED' || order.fulfillmentStatus === 'CANCELLED'"
               @toggle-picked="toggleItemPicked"
               @open-shortage="activeShortageItem = $event"
               @reset-item="resetLineItem"
+            />
+
+
+            <!-- Detailed Shortage & Settlement Audit Trail -->
+            <OrderPackAuditTrail
+              :adjustments="order.shortageAdjustments"
+              :currency="order.currency"
             />
           </div>
 
