@@ -16,6 +16,7 @@ const { t, locale } = useI18n()
 
 const provider = ref<PaymentProviderType>('STRIPE')
 const activeOrderReference = ref<string | null>(null)
+const activeOrderId = ref<string | null>(null)
 const isInitializing = ref(true)
 const isProcessing = ref(false)
 const errorMessage = ref<string | null>(null)
@@ -105,6 +106,7 @@ async function initializeSession(draft: any) {
     }
 
     activeOrderReference.value = sessionData.orderReference
+    activeOrderId.value = sessionData.orderId || null
 
     // 3. Mount UI artifacts
     if (provider.value === 'SWISH') {
@@ -155,10 +157,15 @@ async function handleConfirmCardPayment() {
   isProcessing.value = true
   errorMessage.value = null
 
+  const targetId = activeOrderId.value || activeOrderReference.value || ''
+  const returnUrl = targetId
+    ? `${window.location.origin}${localePath(`/order/confirmation/${targetId}`)}`
+    : `${window.location.origin}${localePath('/order/confirmation')}`
+
   const { error, paymentIntent } = await stripe.confirmPayment({
     elements,
     confirmParams: {
-      return_url: `${window.location.origin}${localePath('/order/confirmation')}`,
+      return_url: returnUrl,
     },
     redirect: 'if_required',
   })
@@ -170,7 +177,8 @@ async function handleConfirmCardPayment() {
     cartStore.clearCart()
     sessionStorage.removeItem('siwar_checkout_payload')
     sessionStorage.removeItem('siwar_active_payment_session') // Purge session cache
-    await router.push(localePath(`/order/confirmation?intent_id=${paymentIntent.id}`))
+    const finalId = activeOrderId.value || activeOrderReference.value || paymentIntent.id
+    await router.push(localePath(`/order/confirmation/${finalId}`))
   }
 }
 

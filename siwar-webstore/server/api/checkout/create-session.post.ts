@@ -162,6 +162,7 @@ export default defineEventHandler(async (event) => {
   // 7. Return session parameters to frontend
   return {
     ...session,
+    orderId: draftOrder._id.toString(),
     currency: body.currency,
     totalMinor: grandTotalMinor,
     orderReference,
