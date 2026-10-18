@@ -1,6 +1,10 @@
-// server/services/mail.service.ts
 import { Resend } from 'resend'
 import type { IOrder } from '~/server/models/Order'
+import {
+  getStorePickupSettings,
+  DEFAULT_PICKUP_CONFIG,
+  type IPickupSettings,
+} from '~/server/models/StoreSettings'
 
 export type EmailLocale = 'ar' | 'sv' | 'en'
 
@@ -83,6 +87,11 @@ export const mailService = {
     }
 
     const isPickup = order.customer?.fulfillmentMethod === 'PICKUP'
+    let pickupSettings: IPickupSettings | undefined
+
+    if (isPickup) {
+      pickupSettings = await getStorePickupSettings()
+    }
 
     const subjects: Record<EmailLocale, string> = {
       ar: isPickup
@@ -96,7 +105,7 @@ export const mailService = {
         : `Your order #${order.orderReference} is packed and awaiting courier pickup`,
     }
 
-    const html = generatePackedHtml(order, locale)
+    const html = generatePackedHtml(order, locale, pickupSettings)
 
     if (!resend) {
       console.log(`[MOCK EMAIL: PACKED] To: ${to} | Subject: ${subjects[locale]}`)
@@ -117,6 +126,8 @@ export const mailService = {
   async sendReadyForPickup(order: IOrder, locale: EmailLocale = 'sv') {
     return this.sendOrderPackedNotice(order, locale)
   },
+
+  generatePackedHtml,
 
   /**
    * 3. Order Dispatched (Sent when staff clicks 'Slutför och Skicka' -> DISPATCHED)
@@ -348,46 +359,128 @@ function generateConfirmationHtml(order: IOrder, locale: EmailLocale): string {
   `
 }
 
-function generatePackedHtml(order: IOrder, locale: EmailLocale): string {
+function generatePackedHtml(
+  order: IOrder,
+  locale: EmailLocale,
+  pickupSettings?: IPickupSettings
+): string {
   const isRtl = locale === 'ar'
   const dir = isRtl ? 'rtl' : 'ltr'
-  const isPickup = order.customer.fulfillmentMethod === 'PICKUP'
+  const align = isRtl ? 'right' : 'left'
+  const isPickup = order.customer?.fulfillmentMethod === 'PICKUP'
+  const customerName = order.customer?.fullName || ''
+
+  const pickup = pickupSettings || DEFAULT_PICKUP_CONFIG
+  const street = pickup.address?.street || 'Storgatan 12'
+  const postalCode = pickup.address?.postalCode || '302 43'
+  const city = pickup.address?.city || 'Halmstad'
+  const fullAddress = `${street}, ${postalCode} ${city}`
+
+  const pickupHours =
+    pickup.pickupHours?.[locale] ||
+    pickup.pickupHours?.sv ||
+    pickup.pickupHours?.en ||
+    pickup.pickupHours?.ar ||
+    'Måndag - Fredag: 10:00 - 18:00 | Lördag: 11:00 - 15:00'
+
+  const instructions =
+    pickup.instructions?.[locale] ||
+    pickup.instructions?.sv ||
+    pickup.instructions?.en ||
+    pickup.instructions?.ar ||
+    ''
 
   const copy = {
     ar: {
-      heading: isPickup ? 'طلبك جاهز للاستلام!' : 'تم تجهيز طلبك بنجاح!',
-      greeting: `مرحباً ${order.customer.fullName}،`,
+      heading: isPickup ? 'طلبك جاهز للاستلام من المتجر!' : 'تم تجهيز طلبك بنجاح!',
+      greeting: `مرحباً ${customerName}،`,
       body: isPickup
-        ? `يسعدنا إبلاغك بأن طلبك رقم <strong>${order.orderReference}</strong> أصبح جاهزاً للاستلام من المتجر في العنوان التالي: Storgatan 12, Halmstad.`
+        ? `يسعدنا إبلاغك بأن طلبك رقم <strong>${order.orderReference}</strong> أصبح مجهزاً بالكامل ومتاحاً للاستلام الآن في المتجر.`
         : `لقد انتهينا من تجهيز وتغليف طلبك رقم <strong>${order.orderReference}</strong>. الطرد جاهز الآن وفي انتظار تسليمه لشركة الشحن (PostNord). سنرسل لك رسالة أخرى برابط التتبع بمجرد خروج الشحنة.`,
-      tableTitle: 'محتويات الشحنة المجهزة:',
+      pickupCardTitle: 'معلومات الاستلام من المتجر',
+      addressLabel: 'عنوان المتجر',
+      hoursLabel: 'أوقات الاستلام',
+      instructionsLabel: 'تعليمات الاستلام',
+      tableTitle: isPickup ? 'محتويات الطلب المجهز للاستلام:' : 'محتويات الشحنة المجهزة:',
     },
     sv: {
-      heading: isPickup ? 'Din order är redo att hämtas!' : 'Din order är färdigpackad!',
-      greeting: `Hej ${order.customer.fullName},`,
+      heading: isPickup ? 'Din order är redo att hämtas i butik!' : 'Din order är färdigpackad!',
+      greeting: `Hej ${customerName},`,
       body: isPickup
-        ? `Din order <strong>${order.orderReference}</strong> är nu färdigpackad och kan hämtas i butiken på Storgatan 12, Halmstad.`
+        ? `Din order <strong>${order.orderReference}</strong> är nu färdigpackad och finns redo för avhämtning i vår butik.`
         : `Vi har nu packat din order <strong>${order.orderReference}</strong>. Paketet inväntar upphämtning av PostNord. Vi meddelar dig med spårningslänk så snart transportören har hämtat paketet.`,
-      tableTitle: 'Packade artiklar:',
+      pickupCardTitle: 'Information för utlämning i butik',
+      addressLabel: 'Hämtadress',
+      hoursLabel: 'Öppettider för utlämning',
+      instructionsLabel: 'Instruktioner',
+      tableTitle: isPickup ? 'Färdigpackade artiklar för avhämtning:' : 'Packade artiklar:',
     },
     en: {
-      heading: isPickup ? 'Your order is ready for pickup!' : 'Your order is packed!',
-      greeting: `Hello ${order.customer.fullName},`,
+      heading: isPickup ? 'Your order is ready for in-store pickup!' : 'Your order is packed!',
+      greeting: `Hello ${customerName},`,
       body: isPickup
-        ? `Your order <strong>${order.orderReference}</strong> is packed and ready for pickup at our store on Storgatan 12, Halmstad.`
+        ? `Your order <strong>${order.orderReference}</strong> is packed and ready for collection at our store.`
         : `We have packed your order <strong>${order.orderReference}</strong>. It is now awaiting courier collection by PostNord. We will notify you with tracking details as soon as it is dispatched.`,
-      tableTitle: 'Packed items:',
+      pickupCardTitle: 'In-Store Pickup Information',
+      addressLabel: 'Pickup Address',
+      hoursLabel: 'Pickup Hours',
+      instructionsLabel: 'Instructions',
+      tableTitle: isPickup ? 'Items ready for collection:' : 'Packed items:',
     },
   }[locale]
 
+  const pickupInfoBox = isPickup
+    ? `
+    <div style="background-color: #f0fdf4; border: 2px solid #86efac; border-radius: 8px; padding: 20px; margin: 22px 0; text-align: ${align};">
+      <div style="font-weight: bold; color: #166534; font-size: 16px; margin-bottom: 12px; border-bottom: 1px solid #bbf7d0; padding-bottom: 8px;">
+        📍 ${copy.pickupCardTitle}
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #1f2937;">
+        <tr>
+          <td style="padding: 6px 0; vertical-align: top; width: 32%; color: #374151; font-weight: bold;">
+            ${copy.addressLabel}:
+          </td>
+          <td style="padding: 6px 0; vertical-align: top; color: #111827; font-weight: 500;">
+            ${fullAddress}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; vertical-align: top; width: 32%; color: #374151; font-weight: bold;">
+            ${copy.hoursLabel}:
+          </td>
+          <td style="padding: 6px 0; vertical-align: top; color: #166534; font-weight: 700;">
+            ${pickupHours}
+          </td>
+        </tr>
+        ${
+          instructions
+            ? `
+        <tr>
+          <td style="padding: 6px 0; vertical-align: top; width: 32%; color: #374151; font-weight: bold;">
+            ${copy.instructionsLabel}:
+          </td>
+          <td style="padding: 6px 0; vertical-align: top; color: #4b5563;">
+            ${instructions}
+          </td>
+        </tr>
+        `
+            : ''
+        }
+      </table>
+    </div>
+    `
+    : ''
+
   return `
     <div dir="${dir}" style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; color: #1f2937;">
-      <div style="background-color: #0284c7; color: #ffffff; padding: 24px; text-align: center;">
+      <div style="background-color: ${isPickup ? '#16a34a' : '#0284c7'}; color: #ffffff; padding: 24px; text-align: center;">
         <h1 style="margin: 0; font-size: 22px;">${copy.heading}</h1>
       </div>
       <div style="padding: 24px;">
         <p style="font-size: 15px;">${copy.greeting}</p>
         <p style="font-size: 14px; color: #4b5563; line-height: 1.5;">${copy.body}</p>
+
+        ${pickupInfoBox}
 
         <h3 style="font-size: 14px; margin-top: 24px; margin-bottom: 0;">${copy.tableTitle}</h3>
         ${renderItemsTable(order, locale)}
