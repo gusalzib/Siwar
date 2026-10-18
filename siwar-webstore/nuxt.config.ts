@@ -20,6 +20,10 @@ export default defineNuxtConfig({
     swishCallbackUrl: process.env.SWISH_CALLBACK_URL,
     swishEnv: process.env.SWISH_ENVIRONMENT || 'test',
 
+    // Email Service (Resend)
+    resendApiKey: process.env.RESEND_API_KEY || process.env.MAIL_API_KEY || '',
+    mailFrom: process.env.MAIL_FROM || process.env.MAIL_FROM_ADDRESS || 'Siwar Webstore <order@siwar.se>',
+
     // Private keys accessible strictly on the server side
     r2AccountId: process.env.R2_ACCOUNT_ID || '',
     r2AccessKeyId: process.env.R2_ACCESS_KEY_ID || '',
