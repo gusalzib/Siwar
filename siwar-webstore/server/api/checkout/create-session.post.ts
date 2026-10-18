@@ -16,6 +16,7 @@ interface CreateSessionRequestBody {
   currency: 'SEK' | 'EUR' | 'USD'
   items: Array<{ productId: string; quantity: number }>
   shippingFeeMinor: number
+  locale?: 'ar' | 'sv' | 'en'
   customer: {
     fullName: string
     email: string
@@ -113,6 +114,7 @@ export default defineEventHandler(async (event) => {
   const draftOrder = await Order.create({
     orderReference,
     idempotencyKey,
+    customerLocale: body.locale || 'sv',
     paymentProvider: body.provider,
     paymentStatus: 'PENDING',
     currency: body.currency,

@@ -24,6 +24,8 @@ export type LineItemShortageStatus =
   | 'REMOVED'
   | 'SUBSTITUTED'
 
+export type OrderLocale = 'ar' | 'sv' | 'en'
+
 export interface IShortageAdjustment {
   timestamp: Date
   /**
@@ -103,6 +105,7 @@ export interface IOrder extends Document {
   paymentStatus: OrderPaymentStatus
   fulfillmentStatus: OrderFulfillmentStatus
   currency: 'SEK' | 'EUR' | 'USD'
+  customerLocale?: OrderLocale
   customer: IOrderCustomer
   items: IOrderItem[]
   shortageAdjustments: IShortageAdjustment[]
@@ -173,6 +176,11 @@ const OrderSchema = new Schema<IOrder>(
   {
     orderReference: { type: String, required: true, unique: true },
     idempotencyKey: { type: String, required: true, unique: true },
+    customerLocale: {
+      type: String,
+      enum: ['ar', 'sv', 'en'],
+      default: 'sv', // <--- Guarantees a fallback for older orders and avoids validation errors on .save()
+    },
     paymentProvider: {
       type: String,
       required: true,
