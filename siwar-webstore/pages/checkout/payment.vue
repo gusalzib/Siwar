@@ -83,8 +83,12 @@ async function initializeSession(draft: any) {
 
     if (rawCachedSession) {
       const cached = JSON.parse(rawCachedSession)
-      // Reuse if same provider and currency
-      if (cached.provider === provider.value && cached.currency === activeCurrency) {
+      // Reuse if same provider, currency and storefront language
+      if (
+        cached.provider === provider.value &&
+        cached.currency === activeCurrency &&
+        cached.locale === locale.value
+      ) {
         sessionData = cached
       }
     }
@@ -95,12 +99,14 @@ async function initializeSession(draft: any) {
         method: 'POST',
         body: {
           provider: provider.value,
+          locale: locale.value,
           currency: activeCurrency,
           items: cartStore.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
           shippingFeeMinor: draft.shippingFeeMinor || 0,
           customer: draft.customer,
         },
       })
+      sessionData.locale = locale.value
       // Cache session details
       sessionStorage.setItem('siwar_active_payment_session', JSON.stringify(sessionData))
     }

@@ -111,6 +111,7 @@ export interface IOrder extends Document {
   shortageAdjustments: IShortageAdjustment[]
   pricing: IOrderPricing
   inventoryDecremented: boolean
+  confirmationEmailSent?: boolean
   authorizedAt?: Date
   paidAt?: Date
   packedAt?: Date
@@ -241,6 +242,7 @@ const OrderSchema = new Schema<IOrder>(
       taxSplit: { type: Schema.Types.Mixed, required: true },
     },
     inventoryDecremented: { type: Boolean, default: false },
+    confirmationEmailSent: { type: Boolean, default: false },
     authorizedAt: { type: Date },
     paidAt: { type: Date },
     packedAt: { type: Date },
