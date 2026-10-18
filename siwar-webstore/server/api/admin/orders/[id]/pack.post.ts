@@ -133,7 +133,8 @@ export default defineEventHandler(async (event) => {
     updatedItems,
     order.customer?.fulfillmentMethod,
     order.pricing?.shippingFeeMinor || 0,
-    order.pricing?.authorizedTotalMinor || 0
+    order.pricing?.authorizedTotalMinor || 0,
+    order.currency as any
   )
 
   const capturedTotal = finalPricing.capturedTotalMinor ?? finalPricing.grandTotalMinor
@@ -249,9 +250,9 @@ export default defineEventHandler(async (event) => {
           preferredLocale
         )
       }
-    } else if (order.fulfillmentStatus === 'PACKED' && order.customer.fulfillmentMethod === 'PICKUP') {
-      // In-store pickup notification (AC-4)
-      await mailService.sendReadyForPickup(order, preferredLocale)
+    } else if (order.fulfillmentStatus === 'PACKED') {
+      // 2. Packed Notice (In-Store Pickup ready alert or Parcel waiting for courier pickup)
+      await mailService.sendOrderPackedNotice(order, preferredLocale)
     }
   } catch (mailErr) {
     console.error('[MailService] Failed to send transactional notice:', mailErr)
