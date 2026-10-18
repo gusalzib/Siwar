@@ -4,6 +4,7 @@ import { getPaymentGateway } from '~/server/services/payments'
 import { Order } from '~/server/models/Order'
 import { Product } from '~/server/models/Product'
 import { ProcessedWebhookEvent } from '~/server/models/ProcessedWebhookEvent'
+import { mailService, type EmailLocale } from '~/server/services/mail.service'
 
 export default defineEventHandler(async (event) => {
   // 1. AC-1: Extract signature header
@@ -94,6 +95,20 @@ export default defineEventHandler(async (event) => {
         { _id: order._id },
         { $set: { inventoryDecremented: true } }
       )
+    }
+
+    // Trigger Order Confirmation email immediately upon authorization
+    if (order && !order.confirmationEmailSent) {
+      const customerLocale = (order.customerLocale || 'sv') as EmailLocale
+      try {
+        await mailService.sendOrderConfirmation(order, customerLocale)
+        await Order.updateOne(
+          { _id: order._id },
+          { $set: { confirmationEmailSent: true } }
+        )
+      } catch (mailErr) {
+        console.error('[MailService] Failed to send order confirmation notice:', mailErr)
+      }
     }
   } else if (webhookResult.eventType === 'payment_intent.payment_failed') {
     const paymentIntent = stripeEvent.data.object as Stripe.PaymentIntent
