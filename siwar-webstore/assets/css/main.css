@@ -7,3 +7,30 @@
 [dir="rtl"] {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
+
+/* Ensure active navigation links in dropdown/hamburger menus are high-contrast and readable across light & dark themes */
+.menu li > a.router-link-active,
+.menu li > a.router-link-exact-active {
+  background-color: #6A9A28 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.menu li > a.router-link-active svg,
+.menu li > a.router-link-exact-active svg {
+  color: #ffffff !important;
+}
+
+/* For admin active items in menu */
+.menu li > a.admin-nav-link.router-link-active,
+.menu li > a.admin-nav-link.router-link-exact-active {
+  background-color: #7e22ce !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.menu li > a.admin-nav-link.router-link-active svg,
+.menu li > a.admin-nav-link.router-link-exact-active svg {
+  color: #ffffff !important;
+}
+

@@ -189,7 +189,7 @@ async function handleSubmit() {
     }
 
     await $fetch(`/api/admin/products/${productId}`, {
-      method: 'PUT',
+      method: 'PUT' as any,
       body: payload,
     })
 

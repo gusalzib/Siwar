@@ -93,6 +93,7 @@ export default defineEventHandler(async (event) => {
       sku: product.barcode,
       name: product.name,
       quantity: item.quantity,
+      fulfilledQuantity: item.quantity, // Default to ordered quantity
       unitPriceMinor: unitPrice,
       momsRate: product.momsRate as 12 | 25,
     })
@@ -121,6 +122,7 @@ export default defineEventHandler(async (event) => {
       itemsTotalMinor: grossProductsMinor,
       shippingFeeMinor: effectiveShipping,
       grandTotalMinor,
+      authorizedTotalMinor: grandTotalMinor,
       taxSplit,
     },
     inventoryDecremented: false,

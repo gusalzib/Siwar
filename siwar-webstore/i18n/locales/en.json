@@ -47,7 +47,8 @@
       "products": "Manage Products",
       "logout": "Log Out",
       "categories": "Categories",
-      "allergens": "Allergens"
+      "allergens": "Allergens",
+      "orders": "Orders"
     },
     "login": {
       "adminLogin": "Admin Login",
@@ -248,6 +249,149 @@
       "empty": "No allergens found",
       "cancel": "Cancel",
       "save": "Save Allergen"
+    },
+    "orders": {
+      "title": "Order Management",
+      "subtitle": "Pack orders, manage shortages, and review payments",
+      "stats": {
+        "pendingPacking": "To Pack",
+        "dispatched": "Dispatched"
+      },
+      "filters": {
+        "searchPlaceholder": "Search order no, customer, phone...",
+        "allFulfillmentStatuses": "All packing statuses",
+        "pendingPacking": "To Pack (Pending Packing)",
+        "packed": "Packed",
+        "dispatched": "Dispatched",
+        "cancelled": "Cancelled",
+        "allPaymentStatuses": "All payment statuses",
+        "authorized": "Authorized",
+        "captured": "Captured",
+        "partiallyCaptured": "Partially Captured",
+        "paid": "Paid",
+        "resetFilters": "Reset filters"
+      },
+      "table": {
+        "reference": "Reference",
+        "customer": "Customer & Delivery",
+        "items": "Items",
+        "fulfillmentStatus": "Packing Status",
+        "payment": "Payment",
+        "amount": "Amount",
+        "date": "Date",
+        "action": "Action"
+      },
+      "emptyState": "No orders matched your filters.",
+      "badges": {
+        "hasShortages": "Has registered shortages",
+        "shortage": "Shortage",
+        "pieces": "pcs"
+      },
+      "actions": {
+        "view": "View",
+        "pack": "Pack"
+      },
+      "pack": {
+        "errors": {
+          "loadFailed": "Could not load the order.",
+          "cancelFailed": "Failed to cancel order."
+        },
+        "actions": {
+          "savePacked": "Save packing status (Packed)",
+          "dispatch": "Complete and Dispatch (Capture)",
+          "shortage": "Shortage",
+          "resetLineTooltip": "Reset line",
+          "resetLine": "Reset",
+          "cancelEmptyOrder": "Cancel order (All items missing)",
+          "markAllPacked": "Mark all as packed",
+          "copyAddress": "Copy address",
+          "copyCustomer": "Copy customer details",
+          "copied": "Copied!",
+          "cancelOrder": "Cancel order"
+        },
+        "table": {
+          "product": "Product",
+          "ordered": "Ordered",
+          "packed": "Packed",
+          "unitPrice": "Unit Price",
+          "rowTotal": "Row Total",
+          "action": "Action"
+        },
+        "badges": {
+          "reduced": "Reduced",
+          "outOfStock": "Out of stock",
+          "substituted": "Substituted"
+        },
+        "history": {
+          "title": "Registered adjustments & shortages",
+          "event": "event",
+          "events": "events",
+          "actions": {
+            "removeLine": "Removed line",
+            "reduceQuantity": "Reduced quantity",
+            "substituteItem": "Substituted item"
+          },
+          "originalProduct": "Original product",
+          "unitPrice": "Unit price",
+          "moms": "VAT",
+          "pieces": "pcs",
+          "substitutedWithSku": "Replaced with SKU",
+          "newUnitPrice": "New unit price",
+          "noteLabel": "Staff note",
+          "origin": "Origin",
+          "adjusted": "Adjusted"
+        },
+        "summary": {
+          "createdAt": "Created:",
+          "title": "Payment and Capture",
+          "authorized": "Reserved amount",
+          "fulfilledItems": "Fulfilled items",
+          "shippingFee": "Shipping fee",
+          "actualAmount": "Actual amount to capture",
+          "releaseAmount": "Amount to release / refund:",
+          "stripeNote": "The card reservation is reduced automatically; the remaining reservation is released immediately without charge.",
+          "swishNote": "The Swish payment is adjusted via direct Swish refund to the customer's bank account.",
+          "momsCalc": "VAT Calculation:",
+          "moms12": "VAT 12% (Food):",
+          "moms25": "VAT 25% (Shipping & Other):",
+          "totalMoms": "Total VAT:",
+          "exceedsAuthorizedWarningTitle": "Replacement item exceeds authorized amount",
+          "exceedsAuthorizedWarningDesc": "The customer only authorized {amount}. The order cannot be dispatched until the amount is adjusted."
+        },
+        "customer": {
+          "title": "Customer Details"
+        },
+        "shipping": {
+          "delivery": "Delivery Address",
+          "pickup": "In-Store Pickup",
+          "deliveryBadge": "Parcel (Delivery)",
+          "pickupBadge": "In-store (Pickup)",
+          "pickupNotice1": "The customer will pick up the items in the physical store.",
+          "pickupNotice2": "No shipping label required."
+        },
+        "modal": {
+          "title": "Manage Shortage (Out of stock)",
+          "actionLabel": "Action",
+          "reduceQty": "Reduce quantity",
+          "removeLine": "Remove line",
+          "substituteItem": "Substitute item",
+          "newQty": "New quantity to pack",
+          "searchSubstitute": "Search substitute article in catalog",
+          "searchPlaceholder": "Search name or SKU...",
+          "substituteQty": "Number of substitute units",
+          "noteLabel": "Internal note (optional)",
+          "notePlaceholder": "e.g. Out of stock at supplier, replaced with equivalent brand",
+          "cancel": "Cancel",
+          "apply": "Apply change",
+          "cancelOrderTitle": "Cancel order",
+          "cancelOrderDesc": "Are you sure you want to cancel the entire order? The payment hold will be released, and all reserved items will automatically return to inventory.",
+          "cancelReasonLabel": "Reason for cancellation",
+          "cancelReasonPlaceholder": "e.g., Customer changed mind, incorrect address...",
+          "doNotCancel": "Do not cancel",
+          "confirmCancel": "Confirm and cancel order",
+          "cancelDefaultReason": "Cancelled by store administrator"
+        }
+      }
     }
   },
 

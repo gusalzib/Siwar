@@ -87,6 +87,14 @@ export interface WebhookVerificationResult {
   rawPayload: any
 }
 
+
+export interface RefundPaymentParams {
+  paymentId: string
+  orderReference: string
+  amountMinor: number
+  reason?: string
+}
+
 /**
  * Universal payment gateway adapter contract (Adapter Pattern).
  *
@@ -116,7 +124,7 @@ export interface PaymentGatewayAdapter {
    * @param amountMinor - Amount to capture in minor currency units.
    * @returns Promise resolving to true if capture succeeded, false otherwise.
    */
-  captureFunds(paymentId: string, amountMinor: number): Promise<boolean>
+  captureFunds(paymentId: string, fulfilledTotalMinor: number): Promise<boolean>
 
   /**
    * Voids or cancels an active authorization hold before capture occurs.
@@ -126,6 +134,9 @@ export interface PaymentGatewayAdapter {
    * @returns Promise resolving to true if authorization was released, false otherwise.
    */
   cancelAuthorization(paymentId: string): Promise<boolean>
+
+
+  refundPayment?(params: RefundPaymentParams): Promise<boolean>
 
   /**
    * Verifies the authenticity and cryptographic signature of an inbound webhook,
