@@ -38,6 +38,7 @@ export interface ShortageActionDraft {
 
 export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<void>) {
   const router = useRouter()
+  const localePath = useLocalePath()
   const localItems = ref<LineItemState[]>([])
   const pendingActions = ref<Map<string, ShortageActionDraft>>(new Map())
   const isSubmitting = ref(false)
@@ -315,7 +316,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
 
       pendingActions.value.clear()
       if (markDispatched) {
-        await router.push('/admin/orders')
+        await router.push(localePath('/admin/orders'))
       } else {
         await refreshOrder()
       }

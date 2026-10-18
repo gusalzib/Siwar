@@ -8,8 +8,9 @@
 import { defineNuxtRouteMiddleware, navigateTo, useRequestHeaders } from '#app'
 
 export default defineNuxtRouteMiddleware(async (to) => {
+  const localePath = useLocalePath()
   // Allow unauthenticated access to the login screen itself
-  if (to.path === '/admin/login') {
+  if (to.path.endsWith('/admin/login')) {
     return
   }
 
@@ -28,10 +29,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     })
 
     if (!response || response.statusCode !== 200) {
-      return navigateTo('/admin/login', { replace: true })
+      return navigateTo(localePath('/admin/login'), { replace: true })
     }
   } catch {
     // On network failure or 401 Unauthorized, redirect to login
-    return navigateTo('/admin/login', { replace: true })
+    return navigateTo(localePath('/admin/login'), { replace: true })
   }
 })

@@ -19,6 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const localePath = useLocalePath()
 
 function formatDate(dateStr?: string | Date) {
   if (!dateStr) return ''
@@ -31,7 +32,7 @@ function formatDate(dateStr?: string | Date) {
 <template>
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl border-2 border-slate-200 dark:border-zinc-700/80 shadow-sm">
     <div class="flex items-center gap-3">
-      <NuxtLink to="/admin/orders" class="btn btn-ghost btn-circle btn-sm">
+      <NuxtLink :to="localePath('/admin/orders')" class="btn btn-ghost btn-circle btn-sm">
         <Icon name="lucide:arrow-left" class="size-5" />
       </NuxtLink>
       <div>

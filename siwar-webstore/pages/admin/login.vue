@@ -12,6 +12,7 @@ const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const isLoading = ref(false)
+const localePath = useLocalePath()
 const errorMessage = ref('')
 
 // Check if an active session already exists; if so, navigate to admin catalog
@@ -19,7 +20,7 @@ onMounted(async () => {
   try {
     const session = await $fetch<{ statusCode: number, authenticated: boolean }>('/api/admin/auth/me')
     if (session?.authenticated === true) {
-      await navigateTo('/admin/products')
+      await navigateTo(localePath('/admin/products'))
     }
   } catch {
     // Unauthenticated: remain on the login form
@@ -39,7 +40,7 @@ async function handleLogin() {
       },
     })
 
-    await navigateTo('/admin/products')
+    await navigateTo(localePath('/admin/products'))
   } catch (err: any) {
     errorMessage.value =
       err?.data?.statusMessage ||

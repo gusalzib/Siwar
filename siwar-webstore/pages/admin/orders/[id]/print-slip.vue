@@ -8,6 +8,7 @@ definePageMeta({
 })
 
 const route = useRoute()
+const localePath = useLocalePath()
 const orderId = route.params.id as string
 const { data: order, pending, error } = await useFetch<any>(`/api/admin/orders/${orderId}`)
 
@@ -20,7 +21,7 @@ function onPrint() {
   <div class="print-container p-6 max-w-4xl mx-auto font-sans text-black">
     <!-- Non-printable top action bar -->
     <div class="no-print flex items-center justify-between pb-6 border-b border-gray-200 mb-6">
-      <NuxtLink :to="`/admin/orders/${orderId}/pack`" class="text-sm font-semibold text-gray-600 hover:text-black">
+      <NuxtLink :to="localePath(`/admin/orders/${orderId}/pack`)" class="text-sm font-semibold text-gray-600 hover:text-black">
         &larr; Tillbaka till orderpackning
       </NuxtLink>
       <button type="button" class="bg-black text-white px-4 py-2 rounded text-sm font-bold cursor-pointer" @click="onPrint">

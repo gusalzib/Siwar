@@ -7,6 +7,7 @@ definePageMeta({
 })
 
 const { t } = useI18n()
+const localePath = useLocalePath()
 
 const searchQuery = ref('')
 const selectedFulfillmentStatus = ref('all')
@@ -262,7 +263,7 @@ const dispatchedCount = computed(
             <!-- Bottom: Action Button -->
             <div class="flex justify-end pt-1">
               <NuxtLink
-                :to="`/admin/orders/${order.id}/pack`"
+                :to="localePath(`/admin/orders/${order.id}/pack`)"
                 class="btn btn-sm w-full sm:w-auto px-5 font-bold shadow-xs gap-1.5"
                 :class="order.fulfillmentStatus === 'PENDING_PACKING' ? 'bg-brand-600 hover:bg-brand-700 text-white border-transparent' : 'btn-ghost border-2 border-slate-300 dark:border-zinc-600 text-base-content'"
               >
@@ -405,7 +406,7 @@ const dispatchedCount = computed(
                 <!-- Action: Pack CTA -->
                 <td class="text-center py-4 px-5">
                   <NuxtLink
-                    :to="`/admin/orders/${order.id}/pack`"
+                    :to="localePath(`/admin/orders/${order.id}/pack`)"
                     class="btn btn-sm px-4 font-bold shadow-xs gap-1.5"
                     :class="order.fulfillmentStatus === 'PENDING_PACKING' ? 'bg-brand-600 hover:bg-brand-700 text-white border-transparent' : 'btn-ghost border border-slate-300 dark:border-zinc-600 text-base-content'"
                   >

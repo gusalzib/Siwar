@@ -193,7 +193,7 @@ async function handleSubmit() {
       body: payload,
     })
 
-    await navigateTo('/admin/products')
+    await navigateTo(localePath('/admin/products'))
   } catch (err: any) {
     errorMessage.value = err?.data?.statusMessage || err?.data?.message || 'Failed to update product'
   } finally {
@@ -215,7 +215,7 @@ async function handleSubmit() {
         <!-- Top Bar -->
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <NuxtLink .to="localePath('/admin/products')" class="btn border-2 border-base-content/20 bg-transparent hover:bg-brand-500 hover:border-brand-500 hover:text-white text-base-content btn-sm gap-2 transition-all">
+            <NuxtLink :to="localePath('/admin/products')" class="btn border-2 border-base-content/20 bg-transparent hover:bg-brand-500 hover:border-brand-500 hover:text-white text-base-content btn-sm gap-2 transition-all">
               <Icon name="lucide:arrow-left" class="size-4" />
               {{ t('admin.productForm.backToList') }}
             </NuxtLink>
