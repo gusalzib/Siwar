@@ -4,9 +4,20 @@ import type { IOrder } from '~/server/models/Order'
 
 export type EmailLocale = 'ar' | 'sv' | 'en'
 
+function getRuntimeConfigSafe(): any {
+  try {
+    if (typeof useRuntimeConfig === 'function') {
+      return useRuntimeConfig()
+    }
+  } catch {
+    // Outside Nuxt/Nitro runtime context (e.g. unit tests)
+  }
+  return null
+}
+
 function getResendClient() {
-  const config = useRuntimeConfig()
-  const apiKey = (config.resendApiKey as string | undefined) || process.env.RESEND_API_KEY || process.env.MAIL_API_KEY
+  const config = getRuntimeConfigSafe()
+  const apiKey = (config?.resendApiKey as string | undefined) || process.env.RESEND_API_KEY || process.env.MAIL_API_KEY
   if (!apiKey) return null
   return new Resend(apiKey)
 }
@@ -16,9 +27,9 @@ function formatMoney(amountMinor: number, currency = 'SEK'): string {
 }
 
 function getMailFrom(): string {
-  const config = useRuntimeConfig()
+  const config = getRuntimeConfigSafe()
   return (
-    (config.mailFrom as string | undefined) ||
+    (config?.mailFrom as string | undefined) ||
     process.env.MAIL_FROM ||
     process.env.MAIL_FROM_ADDRESS ||
     'Siwar Webstore <order@ibrahim-alzoubi.se>'
@@ -32,12 +43,16 @@ export const mailService = {
   async sendOrderConfirmation(order: IOrder, locale: EmailLocale = 'sv') {
     const resend = getResendClient()
     const from = getMailFrom()
-    const to = order.customer.email
+    const to = order.customer?.email
 
     const subjects: Record<EmailLocale, string> = {
       ar: `تأكيد استلام الطلب #${order.orderReference} - متجر سوار`,
       sv: `Orderbekräftelse #${order.orderReference} - Siwar`,
       en: `Order Confirmation #${order.orderReference} - Siwar Store`,
+    }
+
+    if (!to) {
+      return { id: 'skipped-no-recipient' }
     }
 
     const html = generateConfirmationHtml(order, locale)
@@ -61,9 +76,13 @@ export const mailService = {
   async sendOrderPackedNotice(order: IOrder, locale: EmailLocale = 'sv') {
     const resend = getResendClient()
     const from = getMailFrom()
-    const to = order.customer.email
+    const to = order.customer?.email
 
-    const isPickup = order.customer.fulfillmentMethod === 'PICKUP'
+    if (!to) {
+      return { id: 'skipped-no-recipient' }
+    }
+
+    const isPickup = order.customer?.fulfillmentMethod === 'PICKUP'
 
     const subjects: Record<EmailLocale, string> = {
       ar: isPickup
@@ -109,7 +128,11 @@ export const mailService = {
     const { order, trackingCode, carrier = 'PostNord' } = params
     const resend = getResendClient()
     const from = getMailFrom()
-    const to = order.customer.email
+    const to = order.customer?.email
+
+    if (!to) {
+      return { id: 'skipped-no-recipient' }
+    }
 
     const subjects: Record<EmailLocale, string> = {
       ar: `تم شحن طلبك #${order.orderReference} - الفاتورة النهائية`,
