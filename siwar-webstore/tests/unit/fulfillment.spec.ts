@@ -145,6 +145,69 @@ describe('Issue #12: Order Fulfillment & Shortage Engine', () => {
       expect(pricing.grandTotalMinor).toBe(112700)
       expect(pricing.releasedOrRefundedMinor).toBe(0)
     })
+
+    it('grants free shipping for USD orders >= 90.00 USD (9000 cents)', () => {
+      const items: IOrderItem[] = [
+        {
+          productId: itemA_Id,
+          sku: 'USD-01',
+          name: { ar: 'منتج', sv: 'Produkt', en: 'Product' },
+          quantity: 1,
+          fulfilledQuantity: 1,
+          unitPriceMinor: 11150, // 111.50 USD
+          momsRate: 12,
+          shortageStatus: 'NONE',
+        },
+      ]
+
+      const pricing = computeOrderPricing(items, 'DELIVERY', 0, 11150, 'USD')
+
+      expect(pricing.itemsTotalMinor).toBe(11150)
+      expect(pricing.shippingFeeMinor).toBe(0) // Free shipping!
+      expect(pricing.grandTotalMinor).toBe(11150)
+    })
+
+    it('assesses 8.00 USD shipping when USD subtotal drops below 90.00 USD', () => {
+      const items: IOrderItem[] = [
+        {
+          productId: itemA_Id,
+          sku: 'USD-02',
+          name: { ar: 'منتج', sv: 'Produkt', en: 'Product' },
+          quantity: 1,
+          fulfilledQuantity: 1,
+          unitPriceMinor: 5000, // 50.00 USD (< 90.00 threshold)
+          momsRate: 12,
+          shortageStatus: 'NONE',
+        },
+      ]
+
+      const pricing = computeOrderPricing(items, 'DELIVERY', 0, 9500, 'USD')
+
+      expect(pricing.itemsTotalMinor).toBe(5000)
+      expect(pricing.shippingFeeMinor).toBe(800) // Fallback tier 1: 8.00 USD
+      expect(pricing.grandTotalMinor).toBe(5800)
+    })
+
+    it('grants free shipping for EUR orders >= 85.00 EUR (8500 cents)', () => {
+      const items: IOrderItem[] = [
+        {
+          productId: itemA_Id,
+          sku: 'EUR-01',
+          name: { ar: 'منتج', sv: 'Produkt', en: 'Product' },
+          quantity: 1,
+          fulfilledQuantity: 1,
+          unitPriceMinor: 9500, // 95.00 EUR
+          momsRate: 12,
+          shortageStatus: 'NONE',
+        },
+      ]
+
+      const pricing = computeOrderPricing(items, 'DELIVERY', 0, 9500, 'EUR')
+
+      expect(pricing.itemsTotalMinor).toBe(9500)
+      expect(pricing.shippingFeeMinor).toBe(0) // Free shipping!
+      expect(pricing.grandTotalMinor).toBe(9500)
+    })
   })
 
   // -------------------------------------------------------------------------

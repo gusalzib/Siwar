@@ -16,6 +16,7 @@ interface CreateSessionRequestBody {
   currency: 'SEK' | 'EUR' | 'USD'
   items: Array<{ productId: string; quantity: number }>
   shippingFeeMinor: number
+  locale?: 'ar' | 'sv' | 'en'
   customer: {
     fullName: string
     email: string
@@ -104,17 +105,19 @@ export default defineEventHandler(async (event) => {
   const grandTotalMinor = grossProductsMinor + effectiveShipping
   const taxSplit = calculateMomsSplit(calculationLines, effectiveShipping)
 
-  // Added: 4. Generate unique tracking identifiers & pre-register Order document in MongoDB (PENDING)
+  // 4. Generate unique tracking identifiers & pre-register Order document in MongoDB (PENDING)
   const orderReference = `ORD-${Date.now().toString().slice(-6)}`
-  // Added: Generate UUIDv4 idempotency key to prevent duplicate charges/sessions during network retries
   const idempotencyKey = randomUUID()
+  const customerLocale = (['ar', 'sv', 'en'].includes(body.locale || '') ? body.locale : 'sv') as 'ar' | 'sv' | 'en'
 
-  // Added: Create draft Order in database with PENDING status prior to contacting external gateway
+  // Create draft Order in database with PENDING status prior to contacting external gateway
   const draftOrder = await Order.create({
     orderReference,
     idempotencyKey,
+    customerLocale,
     paymentProvider: body.provider,
     paymentStatus: 'PENDING',
+    confirmationEmailSent: false,
     currency: body.currency,
     customer: body.customer,
     items: orderItems,
@@ -160,6 +163,7 @@ export default defineEventHandler(async (event) => {
   // 7. Return session parameters to frontend
   return {
     ...session,
+    orderId: draftOrder._id.toString(),
     currency: body.currency,
     totalMinor: grandTotalMinor,
     orderReference,

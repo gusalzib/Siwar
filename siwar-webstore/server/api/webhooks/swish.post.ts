@@ -3,6 +3,7 @@ import { getPaymentGateway } from '~/server/services/payments'
 import { Order } from '~/server/models/Order'
 import { Product } from '~/server/models/Product'
 import { ProcessedWebhookEvent } from '~/server/models/ProcessedWebhookEvent'
+import { mailService, type EmailLocale } from '~/server/services/mail.service'
 
 export default defineEventHandler(async (event) => {
   const rawBody = await readRawBody(event)
@@ -69,6 +70,20 @@ export default defineEventHandler(async (event) => {
         { _id: order._id },
         { $set: { inventoryDecremented: true } }
       )
+    }
+
+    // Trigger Order Confirmation email
+    if (order && !order.confirmationEmailSent) {
+      const customerLocale = (order.customerLocale || 'sv') as EmailLocale
+      try {
+        await mailService.sendOrderConfirmation(order, customerLocale)
+        await Order.updateOne(
+          { _id: order._id },
+          { $set: { confirmationEmailSent: true } }
+        )
+      } catch (mailErr) {
+        console.error('[MailService] Failed to send order confirmation notice:', mailErr)
+      }
     }
   } else if (result.eventType === 'DECLINED' || result.eventType === 'CANCELLED') {
     await Order.updateOne(

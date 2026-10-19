@@ -4,6 +4,7 @@ import { Order } from '~/server/models/Order'
 import { Product } from '~/server/models/Product'
 import { recalculateOrderShortage, computeOrderPricing, type ShortageActionInput } from '~/server/services/fulfillment.service'
 import { getPaymentGateway } from '~/server/services/payments'
+import { mailService, type EmailLocale } from '~/server/services/mail.service'
 
 interface PackItemInput {
   index?: number
@@ -22,6 +23,7 @@ interface PackOrderBody {
   items?: PackItemInput[]
   actions: ShortageActionInput[]
   markDispatched?: boolean
+  trackingCode?: string
 }
 
 export default defineEventHandler(async (event) => {
@@ -131,7 +133,8 @@ export default defineEventHandler(async (event) => {
     updatedItems,
     order.customer?.fulfillmentMethod,
     order.pricing?.shippingFeeMinor || 0,
-    order.pricing?.authorizedTotalMinor || 0
+    order.pricing?.authorizedTotalMinor || 0,
+    order.currency as any
   )
 
   const capturedTotal = finalPricing.capturedTotalMinor ?? finalPricing.grandTotalMinor
@@ -230,6 +233,29 @@ export default defineEventHandler(async (event) => {
 
   if (releasedAmount > 0 && body.actions && body.actions.length > 0) {
     console.info(`[Shortage Notification Queued] Customer: ${order.customer.email} | Released: ${releasedAmount / 100} SEK`)
+  }
+  // Trigger post-fulfillment notices asynchronously
+  try {
+    const preferredLocale = (order.customerLocale || 'sv') as EmailLocale
+
+    if (body.markDispatched) {
+      if (order.customer.fulfillmentMethod === 'DELIVERY') {
+        // Carrier Dispatch Email with tracking code
+        await mailService.sendOrderDispatched(
+          {
+            order,
+            trackingCode: body.trackingCode, // e.g. PostNord Kolli-ID
+            carrier: 'PostNord',
+          },
+          preferredLocale
+        )
+      }
+    } else if (order.fulfillmentStatus === 'PACKED') {
+      // 2. Packed Notice (In-Store Pickup ready alert or Parcel waiting for courier pickup)
+      await mailService.sendOrderPackedNotice(order, preferredLocale)
+    }
+  } catch (mailErr) {
+    console.error('[MailService] Failed to send transactional notice:', mailErr)
   }
   return {
     success: true,

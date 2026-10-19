@@ -198,7 +198,7 @@ async function handleSubmit() {
       body: payload,
     })
 
-    await navigateTo('/admin/products')
+    await navigateTo(localePath('/admin/products'))
   } catch (err: any) {
     errorMessage.value = err?.data?.statusMessage || err?.data?.message || t('admin.productForm.feedback.error')
   } finally {

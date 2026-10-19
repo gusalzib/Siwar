@@ -6,6 +6,7 @@ definePageMeta({ middleware: 'admin' })
 
 const route = useRoute()
 const router = useRouter()
+const localePath = useLocalePath()
 const orderId = route.params.id as string
 const { data: order, pending, error, refresh } = await useFetch<any>(`/api/admin/orders/${orderId}`)
 
@@ -43,7 +44,7 @@ async function onConfirmCancel(reason: string) {
     })
 
     isCancelModalOpen.value = false // Closes the modal on success
-    await router.push('/admin/orders')
+    await router.push(localePath('/admin/orders'))
   } catch (err: any) {
     errorMessage.value = err.data?.statusMessage || err.message || 'Kunde inte avbryta ordern'
   } finally {

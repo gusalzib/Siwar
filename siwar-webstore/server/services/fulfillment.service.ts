@@ -2,6 +2,7 @@
 import mongoose from 'mongoose'
 import type { IOrder, IOrderItem, IShortageAdjustment } from '~/server/models/Order'
 import { calculateMomsSplit, type LineItemInput } from '~/server/services/pricing.service'
+import { DEFAULT_SHIPPING_CONFIG } from '~/utils/shipping'
 
 export interface ShortageActionInput {
   productId: string
@@ -23,9 +24,10 @@ export interface ShortageActionInput {
  */
 export function computeOrderPricing(
   items: IOrderItem[],
-  fulfillmentMethod: string | undefined,
-  existingShippingFee: number,
-  authorizedTotalMinor: number
+  fulfillmentMethod: string | undefined = 'DELIVERY',
+  existingShippingFee: number = 0,
+  authorizedTotalMinor: number = 0,
+  currency: 'SEK' | 'EUR' | 'USD' = 'SEK'
 ) {
   const lineCalculationInputs: LineItemInput[] = []
   let itemsTotalMinor = 0
@@ -44,13 +46,17 @@ export function computeOrderPricing(
 
   // Dynamic shipping recalculation:
   // 1. If 0 items or In-Store Pickup, shipping is 0
-  // 2. If delivery, free shipping threshold is 899 SEK (89900 öre)
+  // 2. Multi-currency free shipping threshold: 899 SEK / 85 EUR / 90 USD
   let shippingFeeMinor = 0
+  const curr = (currency || 'SEK') as 'SEK' | 'EUR' | 'USD'
+  const freeThreshold = DEFAULT_SHIPPING_CONFIG.freeShippingThreshold[curr] ?? DEFAULT_SHIPPING_CONFIG.freeShippingThreshold.SEK
+  const fallbackFee = DEFAULT_SHIPPING_CONFIG.tiers[0]?.price[curr] ?? DEFAULT_SHIPPING_CONFIG.tiers[0]?.price.SEK ?? 7700
+
   if (itemsTotalMinor > 0 && fulfillmentMethod === 'DELIVERY') {
-    if (itemsTotalMinor >= 89900) {
+    if (itemsTotalMinor >= freeThreshold) {
       shippingFeeMinor = 0
     } else {
-      shippingFeeMinor = existingShippingFee > 0 ? existingShippingFee : 7700
+      shippingFeeMinor = existingShippingFee > 0 ? existingShippingFee : fallbackFee
     }
   }
 
@@ -189,7 +195,8 @@ export function recalculateOrderShortage(
     updatedItems,
     order.customer?.fulfillmentMethod,
     order.pricing?.shippingFeeMinor || 0,
-    order.pricing?.authorizedTotalMinor || 0
+    order.pricing?.authorizedTotalMinor || 0,
+    order.currency as any
   )
 
   return {

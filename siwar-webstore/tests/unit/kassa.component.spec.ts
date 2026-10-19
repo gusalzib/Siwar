@@ -12,6 +12,11 @@ vi.mock('nuxt/app', () => ({
   }
 }))
 
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  useRoute: () => ({ params: {}, query: {} }),
+}))
+
 // Mock Nuxt composables and components
 vi.stubGlobal('useRouter', () => ({ replace: vi.fn(), push: vi.fn() }))
 vi.stubGlobal('useLocalePath', () => (path: string) => path)

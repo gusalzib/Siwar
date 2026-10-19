@@ -1,5 +1,5 @@
-// composables/useOrderPacking.ts
 import { ref, computed, watch, type Ref } from 'vue'
+import { DEFAULT_SHIPPING_CONFIG } from '~/utils/shipping'
 
 export interface LineItemState {
   productId: string
@@ -38,6 +38,7 @@ export interface ShortageActionDraft {
 
 export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<void>) {
   const router = useRouter()
+  const localePath = useLocalePath()
   const localItems = ref<LineItemState[]>([])
   const pendingActions = ref<Map<string, ShortageActionDraft>>(new Map())
   const isSubmitting = ref(false)
@@ -242,13 +243,17 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
       else moms25Gross += lineGross
     }
 
-    // Dynamic Shipping calculation
+    // Dynamic Shipping calculation (currency-aware threshold & tier fallback)
     let shippingFee = 0
     if (itemsTotal > 0 && order.value.customer?.fulfillmentMethod === 'DELIVERY') {
-      if (itemsTotal >= 89900) {
+      const curr = (order.value.currency || 'SEK') as 'SEK' | 'EUR' | 'USD'
+      const threshold = DEFAULT_SHIPPING_CONFIG.freeShippingThreshold[curr] ?? DEFAULT_SHIPPING_CONFIG.freeShippingThreshold.SEK
+      const fallbackFee = DEFAULT_SHIPPING_CONFIG.tiers[0]?.price[curr] ?? DEFAULT_SHIPPING_CONFIG.tiers[0]?.price.SEK ?? 7700
+
+      if (itemsTotal >= threshold) {
         shippingFee = 0 // Free shipping
       } else {
-        shippingFee = order.value.pricing?.shippingFeeMinor > 0 ? order.value.pricing.shippingFeeMinor : 7700
+        shippingFee = order.value.pricing?.shippingFeeMinor > 0 ? order.value.pricing.shippingFeeMinor : fallbackFee
       }
     }
 
@@ -311,7 +316,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
 
       pendingActions.value.clear()
       if (markDispatched) {
-        await router.push('/admin/orders')
+        await router.push(localePath('/admin/orders'))
       } else {
         await refreshOrder()
       }

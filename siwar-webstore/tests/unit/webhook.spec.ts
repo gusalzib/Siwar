@@ -69,6 +69,14 @@ vi.mock('~/server/models/ProcessedWebhookEvent', () => ({
 vi.mock('~/server/services/payments', () => ({
   getPaymentGateway: vi.fn(() => mockGateway),
 }))
+vi.mock('~/server/services/mail.service', () => ({
+  mailService: {
+    sendOrderConfirmation: vi.fn().mockResolvedValue({ id: 'mock-mail-id' }),
+    sendOrderPackedNotice: vi.fn().mockResolvedValue({ id: 'mock-mail-id' }),
+    sendReadyForPickup: vi.fn().mockResolvedValue({ id: 'mock-mail-id' }),
+    sendOrderDispatched: vi.fn().mockResolvedValue({ id: 'mock-mail-id' }),
+  },
+}))
 
 // Import Route Handlers after hoisting
 import stripeWebhookHandler from '~/server/api/webhooks/stripe.post'
