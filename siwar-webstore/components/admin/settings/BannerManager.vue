@@ -11,6 +11,9 @@ const { t, locale } = useI18n()
 // Fetch existing banners
 const { data: banners, pending: isLoading, refresh } = await useFetch<any[]>('/api/admin/settings/banners')
 
+// Fetch categories for destination category selector
+const { data: categories } = await useFetch<any[]>('/api/admin/categories')
+
 // Watch count to notify parent
 watch(
   banners,
@@ -66,6 +69,40 @@ const initialForm: BannerForm = {
 
 const form = ref<BannerForm>(JSON.parse(JSON.stringify(initialForm)))
 const isEditing = computed(() => !!form.value.id || !!form.value._id)
+
+const selectedCategoryLink = ref<string>('/catalog')
+const isCustomUrl = ref(false)
+
+// Resolve category link
+function getCategoryLink(cat: any): string {
+  const slug = cat?.slug?.en || cat?.slug?.sv || cat?.slug?.ar || cat?.id || ''
+  return `/catalog?category=${slug}`
+}
+
+function handleCategoryChange(e: Event) {
+  const target = e.target as HTMLSelectElement
+  const val = target.value
+  if (val === 'custom') {
+    isCustomUrl.value = true
+  } else {
+    isCustomUrl.value = false
+    form.value.linkUrl = val
+    clearFieldError('linkUrl')
+  }
+}
+
+function toggleCustomUrl() {
+  isCustomUrl.value = !isCustomUrl.value
+  if (!isCustomUrl.value) {
+    if (selectedCategoryLink.value !== 'custom') {
+      form.value.linkUrl = selectedCategoryLink.value
+    } else {
+      selectedCategoryLink.value = '/catalog'
+      form.value.linkUrl = '/catalog'
+    }
+    clearFieldError('linkUrl')
+  }
+}
 
 // Localized text helper
 function getLocalizedText(obj?: Record<string, string>): string {
@@ -163,6 +200,7 @@ const filteredBanners = computed(() => {
 function openModal(banner: any = null) {
   fieldErrors.value = {}
   if (banner && !(banner instanceof Event)) {
+    const rawLink = banner.linkUrl || '/catalog'
     form.value = {
       id: banner.id || banner._id,
       _id: banner._id || banner.id,
@@ -171,17 +209,39 @@ function openModal(banner: any = null) {
       badge: { ar: banner.badge?.ar || '', sv: banner.badge?.sv || '', en: banner.badge?.en || '' },
       imageUrl: banner.imageUrl || '',
       mobileImageUrl: banner.mobileImageUrl || '',
-      linkUrl: banner.linkUrl || '/catalog',
+      linkUrl: rawLink,
       sortOrder: typeof banner.sortOrder === 'number' ? banner.sortOrder : 0,
       isActive: banner.isActive !== false,
       startsAt: formatForInput(banner.startsAt),
       expiresAt: formatForInput(banner.expiresAt),
+    }
+
+    const trimmed = rawLink.trim()
+    const matchedCategory = categories.value?.find((c) => {
+      const standard = getCategoryLink(c)
+      if (standard === trimmed) return true
+      if (c.slug && Object.values(c.slug).some((s) => trimmed === `/catalog?category=${s}`)) return true
+      if (c.id && trimmed === `/catalog?category=${c.id}`) return true
+      return false
+    })
+
+    if (matchedCategory) {
+      selectedCategoryLink.value = getCategoryLink(matchedCategory)
+      isCustomUrl.value = false
+    } else if (trimmed === '/catalog' || !trimmed) {
+      selectedCategoryLink.value = '/catalog'
+      isCustomUrl.value = false
+    } else {
+      selectedCategoryLink.value = 'custom'
+      isCustomUrl.value = true
     }
   } else {
     form.value = {
       ...JSON.parse(JSON.stringify(initialForm)),
       sortOrder: (banners.value?.length || 0),
     }
+    selectedCategoryLink.value = '/catalog'
+    isCustomUrl.value = false
   }
   errorMessage.value = ''
   uploadError.value = ''
@@ -191,6 +251,8 @@ function openModal(banner: any = null) {
 function closeModal() {
   modalRef.value?.close()
   form.value = JSON.parse(JSON.stringify(initialForm))
+  selectedCategoryLink.value = '/catalog'
+  isCustomUrl.value = false
   fieldErrors.value = {}
   uploadError.value = ''
   errorMessage.value = ''
@@ -1054,20 +1116,70 @@ async function moveBanner(index: number, direction: 'up' | 'down') {
           <!-- Configuration: Link destination & Sort Order & Publishing -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-200 dark:border-zinc-700/60">
             <div class="form-control md:col-span-2">
-              <label class="label py-0.5"><span class="label-text font-bold text-xs">{{ t('admin.banners.form.linkUrl', 'Mål-URL') }} *</span></label>
-              <div class="relative">
+              <div class="flex items-center justify-between pb-1">
+                <label class="label py-0 px-0">
+                  <span class="label-text font-bold text-xs">
+                    {{ t('admin.banners.form.linkUrlLabel', 'Måldestination / Kategori') }} *
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  class="text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:underline"
+                  @click="toggleCustomUrl"
+                >
+                  {{ isCustomUrl ? t('admin.banners.form.chooseCategory', 'Välj från kategorier') : t('admin.banners.form.enterCustomUrl', 'Ange anpassad URL') }}
+                </button>
+              </div>
+
+              <!-- Category Dropdown Selector -->
+              <div v-if="!isCustomUrl" class="relative">
+                <select
+                  v-model="selectedCategoryLink"
+                  class="select select-bordered h-9 min-h-0 pl-8 pr-8 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl text-xs w-full transition-colors focus:border-brand-500"
+                  @change="handleCategoryChange"
+                >
+                  <option value="/catalog">
+                    {{ t('admin.banners.form.allCategories', 'Hela sortimentet (Alla produkter)') }}
+                  </option>
+                  <optgroup :label="t('admin.banners.form.categoriesGroup', 'Butikskategorier')">
+                    <option
+                      v-for="cat in categories"
+                      :key="cat.id"
+                      :value="getCategoryLink(cat)"
+                    >
+                      {{ getLocalizedText(cat.name) }}
+                    </option>
+                  </optgroup>
+                  <option value="custom">
+                    {{ t('admin.banners.form.customUrlOption', 'Anpassad länk / URL...') }}
+                  </option>
+                </select>
+                <Icon name="lucide:folder-tree" class="absolute left-2.5 top-2.5 size-3.5 text-base-content/50 pointer-events-none rtl:left-auto rtl:right-2.5" />
+              </div>
+
+              <!-- Manual Custom URL Input -->
+              <div v-else class="relative">
                 <input
                   v-model="form.linkUrl"
                   type="text"
                   required
                   placeholder="/catalog?category=sweets"
-                  class="input input-bordered pl-8 h-9 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl text-xs font-mono w-full transition-colors"
+                  class="input input-bordered pl-8 h-9 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl text-xs font-mono w-full transition-colors focus:border-brand-500"
                   :class="{ '!border-error !ring-1 !ring-error': fieldErrors['linkUrl'] }"
                   @input="clearFieldError('linkUrl')"
                 />
-                <Icon name="lucide:link" class="absolute left-2.5 top-2.5 size-3.5 text-base-content/50" />
+                <Icon name="lucide:link" class="absolute left-2.5 top-2.5 size-3.5 text-base-content/50 rtl:left-auto rtl:right-2.5" />
               </div>
-              <span v-if="fieldErrors['linkUrl']" class="text-error text-[11px] font-semibold mt-0.5 block">{{ fieldErrors['linkUrl'] }}</span>
+
+              <!-- Display injected URL preview -->
+              <div class="flex items-center gap-1.5 px-1 pt-1 text-[11px] font-mono text-base-content/65">
+                <Icon name="lucide:link-2" class="size-3 shrink-0 opacity-60" />
+                <span class="truncate">{{ form.linkUrl || '/catalog' }}</span>
+              </div>
+
+              <span v-if="fieldErrors['linkUrl']" class="text-error text-[11px] font-semibold mt-0.5 block">
+                {{ fieldErrors['linkUrl'] }}
+              </span>
             </div>
 
             <div class="form-control">
