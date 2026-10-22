@@ -34,3 +34,18 @@
   color: #ffffff !important;
 }
 
+/* Ensure dropdown menus and their items fill full width cleanly across all viewports */
+.dropdown-content.menu {
+  flex-wrap: nowrap !important;
+}
+
+.dropdown-content.menu li {
+  width: 100%;
+}
+
+.dropdown-content.menu li > a,
+.dropdown-content.menu li > button {
+  width: 100%;
+}
+
+

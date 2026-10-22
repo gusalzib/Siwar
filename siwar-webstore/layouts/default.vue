@@ -102,32 +102,22 @@ const logout = async () => {
               </li>
               <li>
                 <NuxtLink
-                  :to="localePath('/admin/allergens')"
-                  class="admin-nav-link font-medium text-purple-700 dark:text-purple-300"
-                  active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
-                >
-                  <Icon name="lucide:shield-alert" class="h-4 w-4" />
-                  {{ t('admin.nav.allergens', 'Allergener') }}
-                </NuxtLink>
-              </li>
-              <li>
-                <NuxtLink
-                  :to="localePath('/admin/categories')"
-                  class="admin-nav-link font-medium text-purple-700 dark:text-purple-300"
-                  active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
-                >
-                  <Icon name="lucide:folder-tree" class="h-4 w-4" />
-                  {{ t('admin.nav.categories', 'Kategorier') }}
-                </NuxtLink>
-              </li>
-              <li>
-                <NuxtLink
                   :to="localePath('/admin/orders')"
                   class="admin-nav-link font-medium text-purple-700 dark:text-purple-300"
                   active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
                 >
                   <Icon name="lucide:clipboard-list" class="h-4 w-4" />
                   {{ t('admin.nav.orders', 'Beställningar') }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink
+                  :to="localePath('/admin/settings')"
+                  class="admin-nav-link font-medium text-purple-700 dark:text-purple-300"
+                  active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+                >
+                  <Icon name="lucide:settings" class="h-4 w-4" />
+                  {{ t('admin.nav.settings', 'Butiksinställningar') }}
                 </NuxtLink>
               </li>
             </template>
@@ -163,28 +153,20 @@ const logout = async () => {
             {{ t('admin.nav.products', 'Produkter') }}
           </NuxtLink>
           <NuxtLink
-            :to="localePath('/admin/allergens')"
-            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
-            active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
-          >
-            <Icon name="lucide:shield-alert" class="h-4 w-4" />
-            {{ t('admin.nav.allergens', 'Allergener') }}
-          </NuxtLink>
-          <NuxtLink
-            :to="localePath('/admin/categories')"
-            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
-            active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
-          >
-            <Icon name="lucide:folder-tree" class="h-4 w-4" />
-            {{ t('admin.nav.categories', 'Kategorier') }}
-          </NuxtLink>
-          <NuxtLink
             :to="localePath('/admin/orders')"
             class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
             active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
           >
             <Icon name="lucide:clipboard-list" class="h-4 w-4" />
             {{ t('admin.nav.orders', 'Beställningar') }}
+          </NuxtLink>
+          <NuxtLink
+            :to="localePath('/admin/settings')"
+            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
+            active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+          >
+            <Icon name="lucide:settings" class="h-4 w-4" />
+            {{ t('admin.nav.settings', 'Butiksinställningar') }}
           </NuxtLink>
         </template>
       </nav>
@@ -200,15 +182,21 @@ const logout = async () => {
           </div>
           <ul
             tabindex="0"
-            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[20] w-28 p-1.5 shadow-lg border border-base-200"
+            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[20] w-32 p-1.5 shadow-lg border border-base-200 flex-col flex-nowrap"
           >
-            <li v-for="curr in availableCurrencies" :key="curr">
+            <li v-for="curr in availableCurrencies" :key="curr" class="w-full">
               <button
                 type="button"
+                class="w-full flex items-center justify-between text-start px-3 py-1.5 rounded-lg transition-colors"
                 :class="{ 'active font-bold !bg-primary !text-white': preferences.currency === curr }"
                 @click="preferences.setCurrency(curr)"
               >
-                {{ curr }}
+                <span>{{ curr }}</span>
+                <Icon
+                  v-if="preferences.currency === curr"
+                  name="lucide:check"
+                  class="size-3.5 shrink-0"
+                />
               </button>
             </li>
           </ul>
@@ -223,15 +211,20 @@ const logout = async () => {
           </div>
           <ul
             tabindex="0"
-            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[20] w-36 p-1.5 shadow-lg border border-base-200"
+            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[20] w-36 p-1.5 shadow-lg border border-base-200 flex-col flex-nowrap"
           >
-            <li v-for="item in (locales as any[])" :key="item.code">
+            <li v-for="item in (locales as any[])" :key="item.code" class="w-full">
               <NuxtLink
                 :to="switchLocalePath(item.code)"
+                class="w-full flex items-center justify-between text-start px-3 py-1.5 rounded-lg transition-colors"
                 :class="{ 'active font-bold !bg-primary !text-white': locale === item.code }"
-                class="transition-colors"
               >
-                {{ item.name }}
+                <span>{{ item.name }}</span>
+                <Icon
+                  v-if="locale === item.code"
+                  name="lucide:check"
+                  class="size-3.5 shrink-0"
+                />
               </NuxtLink>
             </li>
           </ul>
@@ -274,14 +267,14 @@ const logout = async () => {
           </div>
           <ul
             tabindex="0"
-            class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[20] mt-3 w-52 p-2 shadow-lg border border-base-200"
+            class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[20] mt-3 w-52 p-2 shadow-lg border border-base-200 flex-col flex-nowrap"
           >
             <template v-if="isAdmin">
-              <li>
+              <li class="w-full">
                 <button
                   type="button"
                   @click="logout"
-                  class="text-error font-bold hover:bg-base-300 transition-colors flex items-center gap-2"
+                  class="w-full text-error font-bold hover:bg-base-300 transition-colors flex items-center gap-2"
                 >
                   <Icon name="lucide:log-out" class="h-4 w-4" />
                   {{ t('admin.nav.logout', 'Logga ut') }}
@@ -289,8 +282,9 @@ const logout = async () => {
               </li>
             </template>
             <template v-else>
-              <li>
-                <NuxtLink :to="localePath('/admin/login')">
+              <li class="w-full">
+                <NuxtLink :to="localePath('/admin/login')" class="w-full flex items-center gap-2">
+                  <Icon name="lucide:lock" class="h-4 w-4" />
                   {{ t('admin.login.adminLogin', 'Admininloggning') }}
                 </NuxtLink>
               </li>
