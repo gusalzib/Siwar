@@ -91,6 +91,22 @@ function formatForInput(dateVal?: string | Date | null): string {
   }
 }
 
+// Deterministic date formatting for SSR and client hydration consistency
+function formatDisplayDate(dateVal?: string | Date | null): string {
+  if (!dateVal) return '∞'
+  try {
+    const d = new Date(dateVal)
+    if (isNaN(d.getTime())) return '∞'
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const year = d.getFullYear()
+    const month = pad(d.getMonth() + 1)
+    const day = pad(d.getDate())
+    return `${year}-${month}-${day}`
+  } catch {
+    return '∞'
+  }
+}
+
 // Banner scheduling status helper
 function getBannerStatus(banner: any): { label: string; class: string; icon: string } {
   if (banner.isActive === false) {
@@ -639,7 +655,7 @@ async function moveBanner(index: number, direction: 'up' | 'down') {
                       {{ getBannerStatus(banner).label }}
                     </span>
                     <span v-if="banner.startsAt || banner.expiresAt" class="text-[10px] text-base-content/60 font-mono">
-                      {{ banner.startsAt ? new Date(banner.startsAt).toLocaleDateString() : '∞' }} → {{ banner.expiresAt ? new Date(banner.expiresAt).toLocaleDateString() : '∞' }}
+                      {{ formatDisplayDate(banner.startsAt) }} → {{ formatDisplayDate(banner.expiresAt) }}
                     </span>
                   </div>
                 </td>
@@ -717,7 +733,7 @@ async function moveBanner(index: number, direction: 'up' | 'down') {
                   </div>
                   <div v-if="banner.startsAt || banner.expiresAt" class="inline-flex items-center gap-1 font-mono text-[11px] text-base-content/65 bg-slate-100/70 dark:bg-zinc-800/70 px-2 py-0.5 rounded-md">
                     <Icon name="lucide:calendar" class="size-3 shrink-0 opacity-60" />
-                    <span>{{ banner.startsAt ? new Date(banner.startsAt).toLocaleDateString() : '∞' }} → {{ banner.expiresAt ? new Date(banner.expiresAt).toLocaleDateString() : '∞' }}</span>
+                    <span>{{ formatDisplayDate(banner.startsAt) }} → {{ formatDisplayDate(banner.expiresAt) }}</span>
                   </div>
                 </div>
 

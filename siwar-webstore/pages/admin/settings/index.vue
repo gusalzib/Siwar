@@ -70,7 +70,7 @@ watch(
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-100/90 dark:bg-zinc-950 p-4 sm:p-6 lg:p-8 text-base-content">
+  <div class="min-h-screen bg-slate-100/90 dark:bg-zinc-950 p-2 sm:p-6 lg:p-8 text-base-content">
     <div class="max-w-7xl mx-auto space-y-6">
       
       <!-- Header & Stats Summary (Matches pages/admin/orders/index.vue style) -->
@@ -94,27 +94,27 @@ watch(
         <!-- Quick Counters Summary -->
         <div class="flex items-center gap-3 w-full sm:w-auto">
           <div class="stats shadow-sm bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 rounded-2xl w-full sm:w-auto grid grid-cols-3 sm:flex">
-            <div class="stat py-2.5 px-3 sm:px-5">
-              <div class="stat-title text-[11px] sm:text-xs font-bold uppercase tracking-wider text-base-content/80 truncate">
+            <div class="stat py-2 px-2 sm:py-2.5 sm:px-5">
+              <div class="stat-title text-[10px] sm:text-xs font-bold uppercase tracking-wider text-base-content/80 truncate">
                 {{ t('admin.settings.stats.categories', 'Kategorier') }}
               </div>
-              <div class="stat-value text-xl sm:text-2xl font-black text-brand-600 dark:text-brand-400">
+              <div class="stat-value text-lg sm:text-2xl font-black text-brand-600 dark:text-brand-400">
                 {{ categoriesCount }}
               </div>
             </div>
-            <div class="stat py-2.5 px-3 sm:px-5 border-l-2 border-slate-200 dark:border-zinc-700/80">
-              <div class="stat-title text-[11px] sm:text-xs font-bold uppercase tracking-wider text-base-content/80 truncate">
+            <div class="stat py-2 px-2 sm:py-2.5 sm:px-5 border-l-2 border-slate-200 dark:border-zinc-700/80">
+              <div class="stat-title text-[10px] sm:text-xs font-bold uppercase tracking-wider text-base-content/80 truncate">
                 {{ t('admin.settings.stats.allergens', 'Allergener') }}
               </div>
-              <div class="stat-value text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">
+              <div class="stat-value text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400">
                 {{ allergensCount }}
               </div>
             </div>
-            <div class="stat py-2.5 px-3 sm:px-5 border-l-2 border-slate-200 dark:border-zinc-700/80">
-              <div class="stat-title text-[11px] sm:text-xs font-bold uppercase tracking-wider text-base-content/80 truncate">
+            <div class="stat py-2 px-2 sm:py-2.5 sm:px-5 border-l-2 border-slate-200 dark:border-zinc-700/80">
+              <div class="stat-title text-[10px] sm:text-xs font-bold uppercase tracking-wider text-base-content/80 truncate">
                 {{ t('admin.settings.stats.banners', 'Banners') }}
               </div>
-              <div class="stat-value text-xl sm:text-2xl font-black text-teal-600 dark:text-teal-400">
+              <div class="stat-value text-lg sm:text-2xl font-black text-teal-600 dark:text-teal-400">
                 {{ bannersCount }}
               </div>
             </div>

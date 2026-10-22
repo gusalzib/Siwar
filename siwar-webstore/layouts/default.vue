@@ -54,12 +54,12 @@ const logout = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-base-200 text-base-content transition-all duration-150">
+  <div class="min-h-screen bg-base-200 text-base-content transition-all duration-150 overflow-x-clip">
     <!-- DaisyUI Navbar -->
-    <header class="navbar bg-base-100 shadow-sm sticky top-0 z-50 px-2 sm:px-4 gap-2">
+    <header class="navbar bg-base-100 shadow-sm sticky top-0 z-50 px-1.5 sm:px-4 gap-1 sm:gap-2">
 
       <!-- Left: Brand Logo & Mobile Navigation Trigger -->
-      <div class="flex items-center gap-1 shrink-0">
+      <div class="flex items-center gap-0.5 sm:gap-1 shrink-0">
         <!-- Mobile Hamburger Menu (Only visible on screens < 1024px) -->
         <div class="dropdown lg:hidden">
           <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm">
@@ -82,6 +82,25 @@ const logout = async () => {
                 <Icon name="lucide:layout-grid" class="h-4 w-4" />
                 {{ t('nav.catalog', 'Sortiment') }}
               </NuxtLink>
+            </li>
+
+            <!-- Preferences / Quick Settings on Mobile -->
+            <div class="divider my-1 border-base-300"></div>
+            <li class="menu-title text-xs uppercase text-base-content/70 font-bold px-2 py-1">
+              {{ t('nav.preferences', 'Inställningar') }}
+            </li>
+            <li>
+              <button
+                type="button"
+                class="flex items-center justify-between font-medium text-base-content py-2"
+                @click="preferences.toggleTheme()"
+              >
+                <span class="flex items-center gap-2">
+                  <Icon :name="preferences.theme === 'dark' ? 'lucide:moon' : 'lucide:sun'" class="h-4 w-4 text-warning" />
+                  {{ preferences.theme === 'dark' ? t('theme.dark', 'Mörkt läge') : t('theme.light', 'Ljust läge') }}
+                </span>
+                <span class="badge badge-xs badge-ghost uppercase font-mono">{{ preferences.theme }}</span>
+              </button>
             </li>
 
             <!-- Admin Management Section (Conditionally shown if isAdmin) -->
@@ -125,8 +144,8 @@ const logout = async () => {
         </div>
 
         <!-- Store Brand Link -->
-        <NuxtLink :to="localePath('/')" class="btn btn-ghost text-lg sm:text-xl font-bold cursor-pointer gap-2 px-2 shrink-0">
-          <Icon name="lucide:shopping-bag" class="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+        <NuxtLink :to="localePath('/')" class="btn btn-ghost text-base sm:text-xl font-bold cursor-pointer gap-1.5 sm:gap-2 px-1 sm:px-2 shrink-0">
+          <Icon name="lucide:shopping-bag" class="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
           <span class="inline-block">{{ t('storeName', 'Siwar') }}</span>
         </NuxtLink>
       </div>
@@ -172,13 +191,13 @@ const logout = async () => {
       </nav>
 
       <!-- Right: Utility Controls (Currency, Language, Theme, Cart, Profile) -->
-      <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
+      <div class="flex items-center gap-0.5 sm:gap-1.5 shrink-0 ml-auto">
         <!-- Interactive Currency Switcher (AC-1) -->
         <div class="dropdown dropdown-end">
-          <div tabindex="0" role="button" class="btn btn-ghost btn-sm font-semibold gap-1 px-2 sm:px-2.5">
-            <Icon name="lucide:coins" class="h-4 w-4 text-warning" />
-            <span class="text-xs sm:text-sm">{{ preferences.currency }}</span>
-            <Icon name="lucide:chevron-down" class="h-3 w-3 opacity-50" />
+          <div tabindex="0" role="button" class="btn btn-ghost btn-sm font-semibold gap-1 px-1.5 sm:px-2.5">
+            <Icon name="lucide:coins" class="h-3.5 w-3.5 sm:h-4 sm:w-4 text-warning" />
+            <span class="text-xs sm:text-sm font-bold">{{ preferences.currency }}</span>
+            <Icon name="lucide:chevron-down" class="h-3 w-3 opacity-50 hidden sm:inline-block" />
           </div>
           <ul
             tabindex="0"
@@ -204,10 +223,10 @@ const logout = async () => {
 
         <!-- Language Dropdown (Fixes the Arabic Reset Glitch) -->
         <div class="dropdown dropdown-end">
-          <div tabindex="0" role="button" class="btn btn-ghost btn-sm font-normal gap-1 px-2 sm:px-2.5">
+          <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm sm:btn-sm sm:w-auto sm:px-2.5 sm:rounded-btn gap-1">
             <Icon name="lucide:globe" class="h-4 w-4" />
             <span class="hidden sm:inline-block text-xs sm:text-sm">{{ currentLocaleName }}</span>
-            <Icon name="lucide:chevron-down" class="h-3 w-3 opacity-50" />
+            <Icon name="lucide:chevron-down" class="h-3 w-3 opacity-50 hidden sm:inline-block" />
           </div>
           <ul
             tabindex="0"
