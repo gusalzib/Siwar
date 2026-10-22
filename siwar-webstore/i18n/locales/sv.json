@@ -6,7 +6,8 @@
   "nav": {
       "home": "Hem",
       "catalog": "Produktkatalog",
-      "store": "Butik"
+      "store": "Butik",
+      "preferences": "Inställningar"
     },
   "inventory": {
     "IN_STOCK": "I lager",
@@ -49,7 +50,9 @@
       "logout": "Logga ut",
       "categories": "Kategorier",
       "allergens": "Allergener",
-      "orders": "Beställningar"
+      "orders": "Beställningar",
+      "settings": "Butiksinställningar",
+      "management": "Administration"
     },
     "login": {
       "adminLogin": "Admininloggning",
@@ -222,11 +225,104 @@
 
 
 
+    "settings": {
+      "title": "Butiksinställningar",
+      "subtitle": "Hantera butikskategorier, allergener och konfiguration",
+      "navigation": "Inställningsmeny",
+      "tabs": {
+        "categories": "Kategorier",
+        "allergens": "Allergener",
+        "banners": "Kampanjbanners",
+        "shipping": "Frakt & Leverans",
+        "pickup": "Upphämtning i butik",
+        "general": "Allmänna inställningar"
+      },
+      "stats": {
+        "categories": "Kategorier",
+        "allergens": "Allergener",
+        "banners": "Banners"
+      },
+      "comingSoon": "Snart",
+      "searchPlaceholder": "Sök..."
+    },
+    "banners": {
+      "title": "Kampanjbanners",
+      "subtitle": "Hantera förstasidans kampanjbanners, grafik och länkar",
+      "searchPlaceholder": "Filtrera banners efter titel eller länk...",
+      "add": "Lägg till banner",
+      "addTitle": "Skapa kampanjbanner",
+      "editTitle": "Redigera kampanjbanner",
+      "edit": "Redigera",
+      "delete": "Ta bort",
+      "empty": "Inga kampanjbanners konfigurerade ännu.",
+      "confirmDelete": "Är du säker på att du vill ta bort denna banner?",
+      "success": "Banners har sparats!",
+      "error": "Kunde inte spara banners.",
+      "table": {
+        "preview": "Förhandsvisning",
+        "title": "Titel & Underrubrik",
+        "link": "Mål-URL",
+        "status": "Status",
+        "order": "Ordning",
+        "actions": "Åtgärder"
+      },
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "scheduled": "Schemalagd",
+        "expired": "Utgången"
+      },
+      "form": {
+        "titleEn": "Titel (engelska)",
+        "titleSv": "Titel (svenska)",
+        "titleAr": "Titel (arabiska)",
+        "subtitleEn": "Underrubrik (engelska)",
+        "subtitleSv": "Underrubrik (svenska)",
+        "subtitleAr": "Underrubrik (arabiska)",
+        "badgeEn": "Badge-text (engelska, valfritt)",
+        "badgeSv": "Badge-text (svenska, valfritt)",
+        "badgeAr": "Badge-text (arabiska, valfritt)",
+        "desktopImage": "Bannerbild för desktop (WebP)",
+        "mobileImage": "Mobil bild (valfritt)",
+        "uploadHint": "Rekommenderat bildförhållande 21:9 eller 16:9 (Max 10MB)",
+        "uploading": "Laddar upp bild...",
+        "uploadBtn": "Ladda upp bild",
+        "linkUrl": "Mål-URL (t.ex. /catalog?category=sweets)",
+        "linkUrlLabel": "Måldestination / Kategori",
+        "allCategories": "Hela sortimentet (Alla produkter)",
+        "categoriesGroup": "Butikskategorier",
+        "customUrlOption": "Anpassad länk / URL...",
+        "chooseCategory": "Välj från kategorier",
+        "enterCustomUrl": "Ange anpassad URL",
+        "sortOrder": "Sorteringsordning",
+        "isActive": "Publicera banner i butiken",
+        "scheduling": "Schemaläggning (valfritt)",
+        "startsAt": "Starttid",
+        "expiresAt": "Sluttid",
+        "cancel": "Avbryt",
+        "save": "Spara banner"
+      },
+      "validation": {
+        "fixErrors": "Vänligen fyll i alla obligatoriska fält markerade med *.",
+        "imageRequired": "Bannerbild för desktop krävs.",
+        "linkRequired": "Mål-URL krävs.",
+        "titleEnRequired": "Titel på engelska krävs.",
+        "titleSvRequired": "Titel på svenska krävs.",
+        "titleArRequired": "Titel på arabiska krävs.",
+        "subtitleEnRequired": "Underrubrik på engelska krävs.",
+        "subtitleSvRequired": "Underrubrik på svenska krävs.",
+        "subtitleArRequired": "Underrubrik på arabiska krävs.",
+        "expiryAfterStart": "Sluttiden måste vara efter starttiden."
+      }
+    },
     "categories": {
       "title": "Kategorihantering",
       "subtitle": "Visa, redigera och organisera kategorier, URL-slugs och översättningar",
       "add": "Lägg till kategori",
       "addTitle": "Skapa ny kategori",
+      "editTitle": "Redigera kategori",
+      "edit": "Redigera",
+      "delete": "Ta bort",
       "name": "Kategorinamn",
       "slug": "URL-slug",
       "actions": "Åtgärder",
@@ -236,13 +332,26 @@
       "nameAr": "Namn (arabiska)",
       "isActive": "Publicera kategori i butiken",
       "cancel": "Avbryt",
-      "save": "Spara kategori"
+      "save": "Spara kategori",
+      "confirmDelete": "Är du säker på att du vill ta bort denna kategori?",
+      "success": "Kategorin har sparats!",
+      "error": "Kunde inte spara kategorin.",
+      "searchPlaceholder": "Filtrera kategorier efter namn eller slug...",
+      "status": "Status",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "validation": {
+        "nameRequired": "Vänligen fyll i kategorinamn på alla tre språk (svenska, engelska och arabiska)."
+      }
     },
     "allergens": {
       "title": "Allergenhantering",
       "subtitle": "Visa, redigera och hantera lagstadgade allergener och översättningar",
       "add": "Lägg till allergen",
       "addTitle": "Skapa ny allergen",
+      "editTitle": "Redigera allergen",
+      "edit": "Redigera",
+      "delete": "Ta bort",
       "code": "Kod",
       "codeLabel": "Allergenkod (t.ex. GLUTEN eller MILK)",
       "name": "Namn",
@@ -252,7 +361,16 @@
       "actions": "Åtgärder",
       "empty": "Inga allergener hittades",
       "cancel": "Avbryt",
-      "save": "Spara allergen"
+      "save": "Spara allergen",
+      "confirmDelete": "Är du säker på att du vill ta bort denna allergen?",
+      "success": "Allergen har sparats!",
+      "error": "Kunde inte spara allergen.",
+      "searchPlaceholder": "Filtrera allergener efter kod eller namn...",
+      "translations": "Översättningar",
+      "validation": {
+        "codeRequired": "Allergenkod krävs.",
+        "nameRequired": "Vänligen fyll i allergennamn på alla tre språk (svenska, engelska och arabiska)."
+      }
     },
     "orders": {
       "title": "Orderhantering",
@@ -403,6 +521,15 @@
 
   "home": {
     "hero": {
+      "fallback": {
+        "badge": "Specialerbjudanden",
+        "title": "Autentiska kryddor & orientaliska råvaror",
+        "subtitle": "Upptäck vårt handplockade sortiment av baljväxter, kallpressade oljor och kryddor.",
+        "cta": "Handla erbjudanden"
+      },
+      "ctaDefault": "Handla nu",
+      "prev": "Föregående bild",
+      "next": "Nästa bild",
       "slide1": {
         "badge": "Kampanj",
         "title": "Autentiska kryddor & orientaliskt skafferi",

@@ -6,7 +6,8 @@
   "nav": {
     "home": "Home",
     "catalog": "Product Catalog",
-    "store": "Store"
+    "store": "Store",
+    "preferences": "Preferences"
   },
   "inventory": {
       "IN_STOCK": "In stock",
@@ -48,7 +49,9 @@
       "logout": "Log Out",
       "categories": "Categories",
       "allergens": "Allergens",
-      "orders": "Orders"
+      "orders": "Orders",
+      "settings": "Store Settings",
+      "management": "Administration"
     },
     "login": {
       "adminLogin": "Admin Login",
@@ -218,11 +221,104 @@
 
 
 
+    "settings": {
+      "title": "Store Settings",
+      "subtitle": "Manage store categories, allergens, and configuration",
+      "navigation": "Settings Menu",
+      "tabs": {
+        "categories": "Categories",
+        "allergens": "Allergens",
+        "banners": "Promotional Banners",
+        "shipping": "Shipping & Delivery",
+        "pickup": "Store Pickup",
+        "general": "General Settings"
+      },
+      "stats": {
+        "categories": "Categories",
+        "allergens": "Allergens",
+        "banners": "Banners"
+      },
+      "comingSoon": "Soon",
+      "searchPlaceholder": "Search..."
+    },
+    "banners": {
+      "title": "Promotional Banners",
+      "subtitle": "Manage homepage hero slideshow banners, graphics, and link destinations",
+      "searchPlaceholder": "Filter banners by title or link...",
+      "add": "Add New Banner",
+      "addTitle": "Create Promotional Banner",
+      "editTitle": "Edit Promotional Banner",
+      "edit": "Edit",
+      "delete": "Delete",
+      "empty": "No promotional banners configured yet.",
+      "confirmDelete": "Are you sure you want to delete this banner?",
+      "success": "Banners updated successfully!",
+      "error": "Failed to save banners.",
+      "table": {
+        "preview": "Preview",
+        "title": "Title & Subtitle",
+        "link": "Destination URL",
+        "status": "Status",
+        "order": "Order",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "scheduled": "Scheduled",
+        "expired": "Expired"
+      },
+      "form": {
+        "titleEn": "Title (English)",
+        "titleSv": "Title (Swedish)",
+        "titleAr": "Title (Arabic)",
+        "subtitleEn": "Subtitle (English)",
+        "subtitleSv": "Subtitle (Swedish)",
+        "subtitleAr": "Subtitle (Arabic)",
+        "badgeEn": "Badge text (English, optional)",
+        "badgeSv": "Badge text (Swedish, optional)",
+        "badgeAr": "Badge text (Arabic, optional)",
+        "desktopImage": "Desktop Banner Image (WebP)",
+        "mobileImage": "Mobile Graphic (optional)",
+        "uploadHint": "Recommended aspect ratio 21:9 or 16:9 (Max 10MB)",
+        "uploading": "Uploading image...",
+        "uploadBtn": "Upload Image",
+        "linkUrl": "Destination Link URL (e.g. /catalog?category=sweets)",
+        "linkUrlLabel": "Destination Link / Category",
+        "allCategories": "All Products (/catalog)",
+        "categoriesGroup": "Store Categories",
+        "customUrlOption": "Custom Link / URL...",
+        "chooseCategory": "Choose from categories",
+        "enterCustomUrl": "Enter custom URL",
+        "sortOrder": "Sort Order Index",
+        "isActive": "Publish banner to storefront",
+        "scheduling": "Scheduling Window (optional)",
+        "startsAt": "Start Time",
+        "expiresAt": "Expiry Time",
+        "cancel": "Cancel",
+        "save": "Save Banner"
+      },
+      "validation": {
+        "fixErrors": "Please fill in all required fields marked with *.",
+        "imageRequired": "Desktop banner image is required.",
+        "linkRequired": "Destination link URL is required.",
+        "titleEnRequired": "Title in English is required.",
+        "titleSvRequired": "Title in Swedish is required.",
+        "titleArRequired": "Title in Arabic is required.",
+        "subtitleEnRequired": "Subtitle in English is required.",
+        "subtitleSvRequired": "Subtitle in Swedish is required.",
+        "subtitleArRequired": "Subtitle in Arabic is required.",
+        "expiryAfterStart": "Expiry time must be after the start time."
+      }
+    },
     "categories": {
       "title": "Category Management",
       "subtitle": "View, edit, and organize categories, URL slugs, and translations",
       "add": "Add New Category",
       "addTitle": "Create New Category",
+      "editTitle": "Edit Category",
+      "edit": "Edit",
+      "delete": "Delete",
       "name": "Category Name",
       "slug": "URL Slug",
       "actions": "Actions",
@@ -232,13 +328,26 @@
       "nameAr": "Name (Arabic)",
       "isActive": "Publish category to storefront",
       "cancel": "Cancel",
-      "save": "Save Category"
+      "save": "Save Category",
+      "confirmDelete": "Are you sure you want to delete this category?",
+      "success": "Category saved successfully!",
+      "error": "Failed to save category.",
+      "searchPlaceholder": "Filter categories by name or slug...",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "validation": {
+        "nameRequired": "Please provide category names in all three languages (English, Swedish, and Arabic)."
+      }
     },
     "allergens": {
       "title": "Allergen Management",
       "subtitle": "View, edit, and manage food regulatory allergens and translations",
       "add": "Add New Allergen",
       "addTitle": "Create New Allergen",
+      "editTitle": "Edit Allergen",
+      "edit": "Edit",
+      "delete": "Delete",
       "code": "Code",
       "codeLabel": "Allergen Code (e.g., GLUTEN or MILK)",
       "name": "Name",
@@ -248,7 +357,16 @@
       "actions": "Actions",
       "empty": "No allergens found",
       "cancel": "Cancel",
-      "save": "Save Allergen"
+      "save": "Save Allergen",
+      "confirmDelete": "Are you sure you want to delete this allergen?",
+      "success": "Allergen saved successfully!",
+      "error": "Failed to save allergen.",
+      "searchPlaceholder": "Filter allergens by code or name...",
+      "translations": "Translations",
+      "validation": {
+        "codeRequired": "Allergen code is required.",
+        "nameRequired": "Please provide allergen names in all three languages."
+      }
     },
     "orders": {
       "title": "Order Management",
@@ -400,6 +518,15 @@
 
   "home": {
     "hero": {
+      "fallback": {
+        "badge": "Special Deals",
+        "title": "Authentic Spices & Middle Eastern Pantry",
+        "subtitle": "Discover our hand-picked selection of premium pulses, cold-pressed oils, and spices.",
+        "cta": "Shop Deals"
+      },
+      "ctaDefault": "Shop Now",
+      "prev": "Previous slide",
+      "next": "Next slide",
       "slide1": {
         "badge": "Special Deals",
         "title": "Authentic Spices & Middle Eastern Pantry",

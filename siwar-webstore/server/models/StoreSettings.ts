@@ -1,5 +1,22 @@
 // server/models/StoreSettings.ts
-import mongoose, { Schema, model, type Document } from 'mongoose'
+import mongoose, { Schema, model, type Document, type Types } from 'mongoose'
+
+export interface IBanner {
+  _id?: Types.ObjectId
+  id?: string
+  title: { ar: string; sv: string; en: string }
+  subtitle: { ar: string; sv: string; en: string }
+  badge?: { ar?: string; sv?: string; en?: string }
+  imageUrl: string
+  mobileImageUrl?: string
+  linkUrl: string
+  sortOrder: number
+  isActive: boolean
+  startsAt?: Date | null
+  expiresAt?: Date | null
+  createdAt?: Date
+  updatedAt?: Date
+}
 
 export interface IShippingTier {
   maxWeightGrams: number // e.g., 3000, 7000, or null/Infinity for final tier
@@ -56,6 +73,7 @@ export interface IStoreSettings {
     defaultGlobalSafetyBuffer: number // Fallback buffer (e.g., 3 or 5)
   }
   pickup: IPickupSettings
+  banners: IBanner[]
   updatedAt: Date
 }
 
@@ -269,6 +287,34 @@ const PickupSchema = new Schema<IPickupSettings>(
   { _id: false }
 )
 
+const BannerSchema = new Schema<IBanner>(
+  {
+    title: {
+      ar: { type: String, required: true },
+      sv: { type: String, required: true },
+      en: { type: String, required: true },
+    },
+    subtitle: {
+      ar: { type: String, required: true },
+      sv: { type: String, required: true },
+      en: { type: String, required: true },
+    },
+    badge: {
+      ar: { type: String, default: '' },
+      sv: { type: String, default: '' },
+      en: { type: String, default: '' },
+    },
+    imageUrl: { type: String, required: true },
+    mobileImageUrl: { type: String, default: '' },
+    linkUrl: { type: String, required: true, default: '/catalog' },
+    sortOrder: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
+    startsAt: { type: Date, default: null },
+    expiresAt: { type: Date, default: null },
+  },
+  { timestamps: true }
+)
+
 const StoreSettingsSchema = new Schema<IStoreSettings>(
   {
     shipping: {
@@ -292,6 +338,10 @@ const StoreSettingsSchema = new Schema<IStoreSettings>(
     pickup: {
       type: PickupSchema,
       default: () => ({ ...DEFAULT_PICKUP_CONFIG }),
+    },
+    banners: {
+      type: [BannerSchema],
+      default: [],
     },
   },
   { timestamps: true }

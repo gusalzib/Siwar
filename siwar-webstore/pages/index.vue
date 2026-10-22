@@ -18,6 +18,17 @@ interface AllergenFacet {
   name: LocalizedField
 }
 
+interface StorefrontBanner {
+  id: string
+  title: LocalizedField
+  subtitle: LocalizedField
+  badge?: LocalizedField
+  imageUrl: string
+  mobileImageUrl?: string
+  linkUrl: string
+  sortOrder: number
+}
+
 interface FilterFacets {
   categories: CategoryFacet[]
   allergens: AllergenFacet[]
@@ -37,13 +48,68 @@ const { data: facetData } = await useAsyncData<FilterFacets>(
   () => $fetch<FilterFacets>('/api/catalog/filters' as string)
 )
 
+// 3. Fetch active promotional banners for dynamic hero
+const { data: banners } = await useAsyncData<StorefrontBanner[]>(
+  'hero-banners',
+  () => $fetch<StorefrontBanner[]>('/api/banners' as string)
+)
+
+// 4. Hero Carousel state & auto-play logic
+const currentSlide = ref(0)
+let autoplayTimer: ReturnType<typeof setInterval> | null = null
+
+function startAutoplay() {
+  if (autoplayTimer) clearInterval(autoplayTimer)
+  if (!banners.value || banners.value.length <= 1) return
+  autoplayTimer = setInterval(() => {
+    if (!banners.value || banners.value.length <= 1) return
+    currentSlide.value = (currentSlide.value + 1) % banners.value.length
+  }, 5000)
+}
+
+function pauseAutoplay() {
+  if (autoplayTimer) {
+    clearInterval(autoplayTimer)
+    autoplayTimer = null
+  }
+}
+
+function resumeAutoplay() {
+  startAutoplay()
+}
+
+function nextSlide() {
+  if (!banners.value || banners.value.length === 0) return
+  currentSlide.value = (currentSlide.value + 1) % banners.value.length
+  startAutoplay()
+}
+
+function prevSlide() {
+  if (!banners.value || banners.value.length === 0) return
+  currentSlide.value = (currentSlide.value - 1 + banners.value.length) % banners.value.length
+  startAutoplay()
+}
+
+function goToSlide(idx: number) {
+  currentSlide.value = idx
+  startAutoplay()
+}
+
+onMounted(() => {
+  startAutoplay()
+})
+
+onUnmounted(() => {
+  pauseAutoplay()
+})
+
 // Helper: Safely resolve localized text across Arabic, Swedish, and English
 function getLocalized(obj?: Record<string, string>): string {
   if (!obj) return ''
   return obj[locale.value] || obj.sv || obj.en || obj.ar || ''
 }
 
-// 3. Seamless Transition to /catalog preserving active locale
+// 5. Seamless Transition to /catalog preserving active locale
 function submitSearch() {
   const query: Record<string, string | undefined> = {}
 
@@ -73,68 +139,172 @@ function toggleQuickAllergen(allergenCodeOrId: string) {
 
 <template>
   <div class="space-y-12 pb-16">
-    <!-- 1. Hero Slideshow Banner (DaisyUI Carousel) -->
+    <!-- 1. Hero Slideshow Banner -->
     <section class="relative w-full">
-      <div class="carousel w-full rounded-3xl overflow-hidden shadow-lg border border-base-200">
-        <!-- Slide 1: Pantry & Spices -->
+      <!-- Case A: Multiple Active Banners (Interactive Carousel with Autoplay & Pause-on-hover) -->
+      <div
+        v-if="banners && banners.length > 1"
+        class="relative w-full rounded-3xl overflow-hidden shadow-lg border border-base-200 min-h-[320px] md:min-h-[420px] bg-slate-900"
+        @mouseenter="pauseAutoplay"
+        @mouseleave="resumeAutoplay"
+      >
         <div
-          id="slide1"
-          class="carousel-item relative w-full bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white min-h-[300px] md:min-h-[360px] flex items-center p-8 md:p-14"
+          v-for="(banner, index) in banners"
+          :key="banner.id || index"
+          class="absolute inset-0 transition-opacity duration-700 ease-in-out flex items-center p-8 md:p-14"
+          :class="currentSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'"
         >
-          <div class="max-w-xl space-y-4">
-            <span class="badge badge-accent font-semibold tracking-wide">
-              {{ t('home.hero.slide1.badge') }}
-            </span>
-            <h1 class="text-3xl md:text-5xl font-black leading-tight">
-              {{ t('home.hero.slide1.title') }}
-            </h1>
-            <p class="text-sm md:text-base text-emerald-100">
-              {{ t('home.hero.slide1.subtitle') }}
-            </p>
-            <NuxtLink
-              :to="localePath('/catalog')"
-              class="btn btn-primary gap-2 text-white shadow-md font-bold"
-            >
-              <span>{{ t('home.hero.slide1.cta') }}</span>
-              <Icon name="lucide:arrow-right" class="size-4 rtl:rotate-180" />
-            </NuxtLink>
-          </div>
+          <!-- Background image graphic with optional mobile source -->
+          <picture class="absolute inset-0 w-full h-full">
+            <source
+              v-if="banner.mobileImageUrl"
+              :srcset="banner.mobileImageUrl"
+              media="(max-width: 640px)"
+            />
+            <img
+              :src="banner.imageUrl"
+              :alt="getLocalized(banner.title)"
+              class="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </picture>
 
-          <!-- Carousel navigation controls -->
-          <div class="absolute flex justify-between transform -translate-y-1/2 left-4 right-4 top-1/2 pointer-events-none">
-            <a href="#slide2" class="btn btn-circle btn-sm btn-ghost bg-black/20 text-white pointer-events-auto">❮</a>
-            <a href="#slide2" class="btn btn-circle btn-sm btn-ghost bg-black/20 text-white pointer-events-auto">❯</a>
+          <!-- Gradient Scrim for readable high-contrast typography in LTR & RTL -->
+          <div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/25 rtl:bg-gradient-to-l rtl:from-black/85 rtl:via-black/55 rtl:to-black/25"></div>
+
+          <!-- Slide Content -->
+          <div class="relative max-w-xl space-y-4 text-white z-10 text-start">
+            <span
+              v-if="getLocalized(banner.badge)"
+              class="badge badge-primary font-bold tracking-wide shadow-sm"
+            >
+              {{ getLocalized(banner.badge) }}
+            </span>
+            <h1 class="text-3xl md:text-5xl font-black leading-tight drop-shadow-sm">
+              {{ getLocalized(banner.title) }}
+            </h1>
+            <p
+              v-if="getLocalized(banner.subtitle)"
+              class="text-sm md:text-base text-white/90 drop-shadow-sm font-medium"
+            >
+              {{ getLocalized(banner.subtitle) }}
+            </p>
+            <div>
+              <NuxtLink
+                :to="localePath(banner.linkUrl || '/catalog')"
+                class="btn btn-primary gap-2 text-white shadow-md font-bold rounded-xl"
+              >
+                <span>{{ t('home.hero.ctaDefault', 'Handla nu') }}</span>
+                <Icon name="lucide:arrow-right" class="size-4 rtl:rotate-180" />
+              </NuxtLink>
+            </div>
           </div>
         </div>
 
-        <!-- Slide 2: Sweets & Fresh Bakery -->
-        <div
-          id="slide2"
-          class="carousel-item relative w-full bg-gradient-to-r from-amber-900 via-orange-900 to-amber-800 text-white min-h-[300px] md:min-h-[360px] flex items-center p-8 md:p-14"
-        >
-          <div class="max-w-xl space-y-4">
-            <span class="badge badge-warning font-semibold tracking-wide">
-              {{ t('home.hero.slide2.badge') }}
-            </span>
-            <h1 class="text-3xl md:text-5xl font-black leading-tight">
-              {{ t('home.hero.slide2.title') }}
-            </h1>
-            <p class="text-sm md:text-base text-amber-100">
-              {{ t('home.hero.slide2.subtitle') }}
-            </p>
+        <!-- Manual Navigation Controls -->
+        <div class="absolute inset-y-0 left-3 right-3 flex justify-between items-center z-20 pointer-events-none">
+          <button
+            type="button"
+            class="btn btn-circle btn-sm md:btn-md bg-black/40 hover:bg-black/70 text-white border-0 pointer-events-auto backdrop-blur-xs shadow-md transition-transform active:scale-95"
+            :aria-label="t('home.hero.prev', 'Föregående bild')"
+            @click="prevSlide"
+          >
+            <Icon name="lucide:chevron-left" class="size-5 rtl:rotate-180" />
+          </button>
+          <button
+            type="button"
+            class="btn btn-circle btn-sm md:btn-md bg-black/40 hover:bg-black/70 text-white border-0 pointer-events-auto backdrop-blur-xs shadow-md transition-transform active:scale-95"
+            :aria-label="t('home.hero.next', 'Nästa bild')"
+            @click="nextSlide"
+          >
+            <Icon name="lucide:chevron-right" class="size-5 rtl:rotate-180" />
+          </button>
+        </div>
+
+        <!-- Slide Indicator Dots -->
+        <div class="absolute bottom-4 left-0 right-0 flex justify-center items-center gap-2 z-20 pointer-events-auto">
+          <button
+            v-for="(_, dotIdx) in banners"
+            :key="dotIdx"
+            type="button"
+            class="h-2 rounded-full transition-all duration-300"
+            :class="currentSlide === dotIdx ? 'w-8 bg-primary shadow-xs' : 'w-2 bg-white/50 hover:bg-white/80'"
+            :aria-label="`Slide ${dotIdx + 1}`"
+            @click="goToSlide(dotIdx)"
+          />
+        </div>
+      </div>
+
+      <!-- Case B: Exactly 1 Active Banner (Static Display without arrows, dots, or timers) -->
+      <div
+        v-else-if="banners && banners.length === 1"
+        class="relative w-full rounded-3xl overflow-hidden shadow-lg border border-base-200 min-h-[320px] md:min-h-[420px] bg-slate-900 flex items-center p-8 md:p-14"
+      >
+        <picture class="absolute inset-0 w-full h-full">
+          <source
+            v-if="banners[0]?.mobileImageUrl"
+            :srcset="banners[0]?.mobileImageUrl"
+            media="(max-width: 640px)"
+          />
+          <img
+            :src="banners[0]?.imageUrl"
+            :alt="getLocalized(banners[0]?.title)"
+            class="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </picture>
+        <div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/25 rtl:bg-gradient-to-l rtl:from-black/85 rtl:via-black/55 rtl:to-black/25"></div>
+        <div class="relative max-w-xl space-y-4 text-white z-10 text-start">
+          <span
+            v-if="getLocalized(banners[0]?.badge)"
+            class="badge badge-primary font-bold tracking-wide shadow-sm"
+          >
+            {{ getLocalized(banners[0]?.badge) }}
+          </span>
+          <h1 class="text-3xl md:text-5xl font-black leading-tight drop-shadow-sm">
+            {{ getLocalized(banners[0]?.title) }}
+          </h1>
+          <p
+            v-if="getLocalized(banners[0]?.subtitle)"
+            class="text-sm md:text-base text-white/90 drop-shadow-sm font-medium"
+          >
+            {{ getLocalized(banners[0]?.subtitle) }}
+          </p>
+          <div>
             <NuxtLink
-              :to="localePath('/catalog')"
-              class="btn btn-warning gap-2 font-bold"
+              :to="localePath(banners[0]?.linkUrl || '/catalog')"
+              class="btn btn-primary gap-2 text-white shadow-md font-bold rounded-xl"
             >
-              <span>{{ t('home.hero.slide2.cta') }}</span>
+              <span>{{ t('home.hero.ctaDefault', 'Handla nu') }}</span>
               <Icon name="lucide:arrow-right" class="size-4 rtl:rotate-180" />
             </NuxtLink>
           </div>
+        </div>
+      </div>
 
-          <!-- Carousel navigation controls -->
-          <div class="absolute flex justify-between transform -translate-y-1/2 left-4 right-4 top-1/2 pointer-events-none">
-            <a href="#slide1" class="btn btn-circle btn-sm btn-ghost bg-black/20 text-white pointer-events-auto">❮</a>
-            <a href="#slide1" class="btn btn-circle btn-sm btn-ghost bg-black/20 text-white pointer-events-auto">❯</a>
+      <!-- Case C: Zero Active Banners (Graceful Theme Fallback Container) -->
+      <div
+        v-else
+        class="relative w-full rounded-3xl overflow-hidden shadow-lg border border-base-200 min-h-[300px] md:min-h-[380px] bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-950 flex items-center p-8 md:p-14 text-white"
+      >
+        <div class="max-w-xl space-y-4 text-start">
+          <span class="badge badge-accent font-semibold tracking-wide">
+            {{ t('home.hero.fallback.badge', t('home.hero.slide1.badge')) }}
+          </span>
+          <h1 class="text-3xl md:text-5xl font-black leading-tight">
+            {{ t('home.hero.fallback.title', t('home.hero.slide1.title')) }}
+          </h1>
+          <p class="text-sm md:text-base text-emerald-100">
+            {{ t('home.hero.fallback.subtitle', t('home.hero.slide1.subtitle')) }}
+          </p>
+          <div>
+            <NuxtLink
+              :to="localePath('/catalog')"
+              class="btn btn-primary gap-2 text-white shadow-md font-bold rounded-xl"
+            >
+              <span>{{ t('home.hero.fallback.cta', t('home.hero.slide1.cta')) }}</span>
+              <Icon name="lucide:arrow-right" class="size-4 rtl:rotate-180" />
+            </NuxtLink>
           </div>
         </div>
       </div>
