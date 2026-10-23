@@ -40,6 +40,11 @@ export interface StorefrontProduct {
     USD: number
   }
   discount?: number
+  discountedPrice?: {
+    SEK: number
+    EUR: number
+    USD: number
+  } | null
   netQuantity: {
     value: number
     unit: SupportedUnit

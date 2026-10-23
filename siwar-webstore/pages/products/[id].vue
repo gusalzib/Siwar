@@ -41,9 +41,23 @@ const selectedQuantity = ref(1)
 // Active Currency & Price Derivation
 const activeCurrency = computed<'SEK' | 'EUR' | 'USD'>(() => preferences.currency || 'SEK')
 
-const displayPrice = computed(() => {
+const hasDiscount = computed(() => {
+  return Boolean(product.value?.discount && product.value.discount > 0 && product.value.discountedPrice)
+})
+
+const originalPrice = computed(() => {
   if (!product.value?.price) return '0.00'
   const minorPrice = product.value.price[activeCurrency.value] ?? product.value.price.SEK
+  return (minorPrice / 100).toFixed(2)
+})
+
+const displayPrice = computed(() => {
+  if (!product.value) return '0.00'
+  if (hasDiscount.value && product.value.discountedPrice) {
+    const minorPrice = product.value.discountedPrice[activeCurrency.value] ?? product.value.discountedPrice.SEK
+    return (minorPrice / 100).toFixed(2)
+  }
+  const minorPrice = product.value.price?.[activeCurrency.value] ?? product.value.price?.SEK ?? 0
   return (minorPrice / 100).toFixed(2)
 })
 
@@ -54,8 +68,11 @@ const comparisonPrice = computed(() => {
   const unit = product.value.netQuantity.unit.toLowerCase() as SupportedUnit
   if (!['g', 'kg', 'ml', 'l'].includes(unit)) return null
 
-  const minorPrice = product.value.price[activeCurrency.value] ?? product.value.price.SEK
-  const unitPriceMinor = calculateJamforpris(minorPrice, product.value.netQuantity.value, unit)
+  const effectiveMinorPrice = hasDiscount.value && product.value.discountedPrice
+    ? (product.value.discountedPrice[activeCurrency.value] ?? product.value.discountedPrice.SEK)
+    : (product.value.price[activeCurrency.value] ?? product.value.price.SEK)
+
+  const unitPriceMinor = calculateJamforpris(effectiveMinorPrice, product.value.netQuantity.value, unit)
   const formattedAmount = (unitPriceMinor / 100).toFixed(2)
 
   const referenceUnit = ['g', 'kg'].includes(unit) ? 'kg' : 'l'
@@ -105,13 +122,16 @@ function addToCart() {
 
   // 3. Dispatch to Pinia cart store
   const primaryImg = product.value.images?.find((img: any) => img.isPrimary) || product.value.images?.[0]
+  const effectivePrice = hasDiscount.value && product.value.discountedPrice
+    ? product.value.discountedPrice
+    : product.value.price
 
   const status = cartStore.addItem(
     {
       productId: product.value.id || (product.value as any)._id,
       name: product.value.name,
       thumbnailUrl: primaryImg?.url || '',
-      price: product.value.price,
+      price: effectivePrice,
       momsRate: product.value.momsRate,
       grossWeight: product.value.grossWeight || 0,
       availableStock: product.value.availability.availableStock,
@@ -176,6 +196,17 @@ const localePath = useLocalePath()
             <span class="text-sm">{{ t(  'admin.products.noImage') }}</span>
           </div>
 
+          <!-- Bold Attention-Grabbing Discount Tag -->
+          <div v-if="hasDiscount" class="absolute top-4 start-4 z-10">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-black bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white shadow-lg shadow-red-500/30 border border-white/20 tracking-wide uppercase">
+              <span class="relative flex size-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-90" />
+                <span class="relative inline-flex rounded-full size-2 bg-amber-400" />
+              </span>
+              <span>{{ t('home.deals.save', { percent: product.discount }) }}</span>
+            </span>
+          </div>
+
           <!-- Stock Status Badge -->
           <span
             v-if="product.availability.statusCode === 'OUT_OF_STOCK_ONLINE'"
@@ -234,10 +265,21 @@ const localePath = useLocalePath()
           <!-- Price & Jämförpris Section (AC-1) -->
           <div class="p-4 rounded-xl bg-base-200/60 border border-base-200 flex items-baseline justify-between">
             <div>
-              <div class="text-3xl font-black text-base-content">
+              <div v-if="hasDiscount" class="flex items-baseline gap-2.5 flex-wrap">
+                <span class="text-3xl font-black text-error">
+                  {{ displayPrice }} {{ activeCurrency }}
+                </span>
+                <span class="text-lg font-semibold text-base-content/50 line-through">
+                  {{ originalPrice }} {{ activeCurrency }}
+                </span>
+                <span class="badge badge-error text-white font-bold text-xs shadow-xs">
+                  -{{ product.discount }}%
+                </span>
+              </div>
+              <div v-else class="text-3xl font-black text-base-content">
                 {{ displayPrice }} {{ activeCurrency }}
               </div>
-              <div v-if="comparisonPrice" class="text-xs text-base-content/70 mt-0.5">
+              <div v-if="comparisonPrice" class="text-xs text-base-content/70 mt-1">
                 {{ t(  'admin.products.jamforpris') }}: <span class="font-semibold">{{ comparisonPrice }}</span>
               </div>
             </div>
