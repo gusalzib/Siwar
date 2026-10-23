@@ -13,6 +13,7 @@ interface PackItemInput {
   fulfilledQuantity: number
   shortageStatus: 'NONE' | 'REDUCED' | 'REMOVED' | 'SUBSTITUTED'
   sku?: string
+  imageUrl?: string
   name?: { ar: string; sv: string; en: string }
   unitPriceMinor?: number
   momsRate?: 12 | 25
@@ -79,6 +80,7 @@ export default defineEventHandler(async (event) => {
         if (submittedItem.momsRate != null) match.momsRate = submittedItem.momsRate
         if (submittedItem.name) match.name = submittedItem.name
         if (submittedItem.sku !== undefined) match.sku = submittedItem.sku
+        if (submittedItem.imageUrl !== undefined) match.imageUrl = submittedItem.imageUrl
 
         // Persist or clear the original-product link
         if (submittedItem.originalProductId) {

@@ -11,6 +11,7 @@ export interface ShortageActionInput {
   substitutedProduct?: {
     _id: string
     sku?: string
+    imageUrl?: string
     name: { ar: string; sv: string; en: string }
     priceMinor: number
     momsRate: 12 | 25
@@ -179,6 +180,7 @@ export function recalculateOrderShortage(
         productId: new mongoose.Types.ObjectId(sub._id),
         originalProductId: line.productId, // preserve link to the original product
         sku: sub.sku,
+        imageUrl: sub.imageUrl,
         name: sub.name,
         quantity: originalQty,
         fulfilledQuantity: newQty,

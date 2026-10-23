@@ -156,6 +156,7 @@ function applyShortageAction() {
         name: sub.name,
         priceMinor: subPriceMinor,
         momsRate: sub.momsRate || 12,
+        imageUrl: sub.images?.find((img: any) => img.isPrimary)?.url || sub.images?.[0]?.url || '',
       },
       note: modalNote.value,
     }

@@ -7,16 +7,20 @@ export interface LineItemState {
   originalItem?: {
     productId: string
     sku?: string
+    imageUrl?: string
     name: { ar: string; sv: string; en: string }
     quantity: number
     unitPriceMinor: number
     momsRate: 12 | 25
   }
   sku?: string
+  imageUrl?: string
   name: { ar: string; sv: string; en: string }
   quantity: number
   fulfilledQuantity: number
   unitPriceMinor: number
+  originalUnitPriceMinor?: number
+  discount?: number
   momsRate: 12 | 25
   shortageStatus: 'NONE' | 'REDUCED' | 'REMOVED' | 'SUBSTITUTED'
   isPacked: boolean
@@ -29,6 +33,7 @@ export interface ShortageActionDraft {
   substitutedProduct?: {
     _id: string
     sku?: string
+    imageUrl?: string
     name: { ar: string; sv: string; en: string }
     priceMinor: number
     momsRate: 12 | 25
@@ -81,6 +86,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
             originalSnapshot = {
               productId: extractId(subAdjustment.productId),
               sku: subAdjustment.originalSku || undefined,
+              imageUrl: i.imageUrl || existing?.imageUrl || '',
               name: { ...subAdjustment.originalName },
               quantity: subAdjustment.originalQuantity || i.quantity,
               unitPriceMinor: subAdjustment.originalUnitPriceMinor || i.unitPriceMinor,
@@ -93,6 +99,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
             originalSnapshot = {
               productId: dbOriginalProductId,
               sku: undefined,
+              imageUrl: i.imageUrl || existing?.imageUrl || '',
               name: i.name ? { ...i.name } : { ar: '', sv: '', en: '' },
               quantity: i.quantity,
               unitPriceMinor: i.unitPriceMinor,
@@ -103,6 +110,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
             originalSnapshot = {
               productId: idStr,
               sku: i.sku,
+              imageUrl: i.imageUrl || existing?.imageUrl || '',
               name: i.name ? { ...i.name } : { ar: '', sv: '', en: '' },
               quantity: i.quantity,
               unitPriceMinor: i.unitPriceMinor,
@@ -119,6 +127,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
         return {
           ...i,
           productId: idStr,
+          imageUrl: i.imageUrl || existing?.imageUrl || '',
           originalProductId: resolvedOriginalProductId && resolvedOriginalProductId !== idStr
             ? resolvedOriginalProductId
             : undefined,
@@ -142,6 +151,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
       target.originalItem = {
         productId: target.productId,
         sku: target.sku,
+        imageUrl: target.imageUrl,
         name: { ...target.name },
         quantity: target.quantity,
         unitPriceMinor: target.unitPriceMinor,
@@ -154,6 +164,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
       target.originalProductId = target.originalProductId || target.productId
       target.productId = String(sub._id)
       target.sku = sub.sku
+      target.imageUrl = sub.imageUrl || target.imageUrl
       target.name = { ...sub.name }
       target.fulfilledQuantity = draft.adjustedQuantity
       target.unitPriceMinor = sub.priceMinor
@@ -192,6 +203,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
     if (orig) {
       item.productId = String(orig.productId)
       item.sku = orig.sku
+      item.imageUrl = orig.imageUrl || item.imageUrl
       item.name = { ...orig.name }
       item.unitPriceMinor = orig.unitPriceMinor
       item.momsRate = orig.momsRate
@@ -300,6 +312,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
           fulfilledQuantity: i.fulfilledQuantity,
           shortageStatus: i.shortageStatus,
           sku: i.sku,
+          imageUrl: i.imageUrl,
           name: i.name,
           unitPriceMinor: i.unitPriceMinor,
           momsRate: i.momsRate,
