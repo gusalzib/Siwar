@@ -68,6 +68,36 @@ function getLocalizedText(obj?: Record<string, string>): string {
 }
 
 // ---------------------------------------------------------------------------
+// Real-Time Discounted Price Calculation
+// ---------------------------------------------------------------------------
+const discountedPricePreview = computed(() => {
+  const discount = Math.max(0, Math.min(100, Number(form.value.discount) || 0))
+  if (discount <= 0) return null
+
+  const calculateDiscounted = (priceStr: string) => {
+    const price = parseFloat(priceStr)
+    if (isNaN(price) || price <= 0) return '0.00'
+    return (price * (1 - discount / 100)).toFixed(2)
+  }
+
+  const calculateSavings = (priceStr: string) => {
+    const price = parseFloat(priceStr)
+    if (isNaN(price) || price <= 0) return '0.00'
+    return (price * (discount / 100)).toFixed(2)
+  }
+
+  return {
+    discount,
+    SEK: calculateDiscounted(form.value.prices.SEK),
+    EUR: calculateDiscounted(form.value.prices.EUR),
+    USD: calculateDiscounted(form.value.prices.USD),
+    savingsSEK: calculateSavings(form.value.prices.SEK),
+    savingsEUR: calculateSavings(form.value.prices.EUR),
+    savingsUSD: calculateSavings(form.value.prices.USD),
+  }
+})
+
+// ---------------------------------------------------------------------------
 // Image Management & Upload Pipeline
 // ---------------------------------------------------------------------------
 
@@ -422,19 +452,130 @@ async function handleSubmit() {
               </div>
             </div>
 
-            <!-- Discount -->
-            <div class="form-control max-w-xs">
-              <label class="label">
-                <span class="label-text font-medium">{{ t('admin.productForm.fields.discount') }}</span>
-              </label>
-              <input
-                v-model="form.discount"
-                type="number"
-                min="0"
-                max="100"
-                placeholder="0"
-                class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
-              />
+            <!-- Discount Configuration & Real-Time Preview -->
+            <div class="pt-4 border-t border-base-200 space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h3 class="font-semibold text-sm text-base-content flex items-center gap-2">
+                    <Icon name="lucide:percent" class="size-4 text-error" />
+                    {{ t('admin.productForm.fields.discount') }}
+                  </h3>
+                  <p class="text-xs text-base-content/60 mt-0.5">
+                    {{ t('admin.productForm.fields.discountHelp') }}
+                  </p>
+                </div>
+
+                <!-- Quick Percentage Presets -->
+                <div class="flex items-center gap-1 flex-wrap">
+                  <button
+                    v-for="preset in [0, 10, 15, 20, 25, 50]"
+                    :key="preset"
+                    type="button"
+                    @click="form.discount = preset"
+                    :class="[
+                      'btn btn-xs rounded-lg transition-all',
+                      form.discount === preset
+                        ? 'btn-error text-white font-bold shadow-xs'
+                        : 'btn-ghost border border-base-300 text-base-content/70 hover:text-base-content'
+                    ]"
+                  >
+                    {{ preset === 0 ? t('admin.productForm.fields.discountNone') : `-${preset}%` }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Input with percentage suffix -->
+              <div class="max-w-xs">
+                <div class="relative">
+                  <input
+                    v-model.number="form.discount"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    placeholder="0"
+                    class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 transition-colors w-full pe-10 font-mono font-semibold"
+                  />
+                  <span class="absolute inset-y-0 end-0 flex items-center pe-3 text-sm font-bold text-base-content/50 pointer-events-none">
+                    %
+                  </span>
+                </div>
+              </div>
+
+              <!-- Live Discounted Price Preview Card -->
+              <div
+                v-if="discountedPricePreview"
+                class="rounded-xl border border-error/30 bg-error/5 dark:bg-error/10 p-4 space-y-3"
+              >
+                <div class="flex items-center justify-between flex-wrap gap-2 border-b border-error/20 pb-2.5">
+                  <div class="flex items-center gap-2">
+                    <span class="badge badge-error text-white font-black text-xs">
+                      -{{ discountedPricePreview.discount }}%
+                    </span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-error">
+                      {{ t('admin.productForm.fields.discountPreviewTitle') }}
+                    </span>
+                  </div>
+                  <span class="text-[11px] text-base-content/60 font-medium">
+                    {{ t('admin.productForm.fields.discountPreviewNote') }}
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <!-- SEK Preview -->
+                  <div class="bg-base-100/90 rounded-lg p-3 border border-base-200">
+                    <div class="text-[11px] font-medium text-base-content/60">SEK (Sverige)</div>
+                    <div class="flex items-baseline gap-2 mt-1">
+                      <span class="text-lg font-black font-mono text-error">
+                        {{ discountedPricePreview.SEK }}
+                      </span>
+                      <span class="text-xs font-mono text-base-content/40 line-through">
+                        {{ form.prices.SEK || '0.00' }}
+                      </span>
+                    </div>
+                    <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                      {{ t('admin.productForm.fields.customerSaves') }}: {{ discountedPricePreview.savingsSEK }} SEK
+                    </div>
+                  </div>
+
+                  <!-- EUR Preview -->
+                  <div class="bg-base-100/90 rounded-lg p-3 border border-base-200">
+                    <div class="text-[11px] font-medium text-base-content/60">EUR (Europa)</div>
+                    <div class="flex items-baseline gap-2 mt-1">
+                      <span class="text-lg font-black font-mono text-error">
+                        {{ discountedPricePreview.EUR }}
+                      </span>
+                      <span class="text-xs font-mono text-base-content/40 line-through">
+                        {{ form.prices.EUR || '0.00' }}
+                      </span>
+                    </div>
+                    <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                      {{ t('admin.productForm.fields.customerSaves') }}: {{ discountedPricePreview.savingsEUR }} EUR
+                    </div>
+                  </div>
+
+                  <!-- USD Preview -->
+                  <div class="bg-base-100/90 rounded-lg p-3 border border-base-200">
+                    <div class="text-[11px] font-medium text-base-content/60">USD (Global)</div>
+                    <div class="flex items-baseline gap-2 mt-1">
+                      <span class="text-lg font-black font-mono text-error">
+                        {{ discountedPricePreview.USD }}
+                      </span>
+                      <span class="text-xs font-mono text-base-content/40 line-through">
+                        {{ form.prices.USD || '0.00' }}
+                      </span>
+                    </div>
+                    <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                      {{ t('admin.productForm.fields.customerSaves') }}: {{ discountedPricePreview.savingsUSD }} USD
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="text-xs text-base-content/50 italic flex items-center gap-1.5">
+                <Icon name="lucide:info" class="size-3.5" />
+                {{ t('admin.productForm.fields.noDiscountNotice') }}
+              </div>
             </div>
           </div>
         </div>

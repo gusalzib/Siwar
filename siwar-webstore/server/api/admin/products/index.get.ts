@@ -118,6 +118,7 @@ export default defineEventHandler(async (event) => {
       category: p.category,
       images: p.images,
       price: p.price,
+      discount: p.discount || 0,
       stockQuantity: p.stockQuantity,
       safetyBuffer: p.safetyBuffer,
       availableStock,
