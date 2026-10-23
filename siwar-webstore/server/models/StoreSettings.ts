@@ -60,6 +60,40 @@ export interface IPickupSettings {
   }
 }
 
+export interface IGeneralSettings {
+  storeName: {
+    ar: string
+    sv: string
+    en: string
+  }
+  tagline?: {
+    ar?: string
+    sv?: string
+    en?: string
+  }
+  company: {
+    name: string
+    orgNumber: string
+    vatNumber: string
+  }
+  contact: {
+    email: string
+    phone: string
+  }
+  address: {
+    street: string
+    postalCode: string
+    city: string
+    country: string
+  }
+  schedule: IDaySchedule[]
+  openingHours?: {
+    ar?: string
+    sv?: string
+    en?: string
+  }
+}
+
 export interface IStoreSettings {
   shipping: {
     freeShippingThresholdMinorSEK: number // e.g., 89900 (899.00 SEK)
@@ -72,6 +106,7 @@ export interface IStoreSettings {
   inventory: {
     defaultGlobalSafetyBuffer: number // Fallback buffer (e.g., 3 or 5)
   }
+  general: IGeneralSettings
   pickup: IPickupSettings
   banners: IBanner[]
   updatedAt: Date
@@ -208,6 +243,40 @@ export function formatWeeklySchedule(
   return parts.join(' | ')
 }
 
+export const DEFAULT_GENERAL_CONFIG: IGeneralSettings = {
+  storeName: {
+    ar: 'سوار',
+    sv: 'Siwar',
+    en: 'Siwar',
+  },
+  tagline: {
+    ar: 'متجرك المفضل للمنتجات والمأكولات الشرقية الأصيلة',
+    sv: 'Din orientaliska livsmedelsbutik i Halmstad',
+    en: 'Your authentic Middle Eastern grocery store',
+  },
+  company: {
+    name: 'Siwar Butik AB',
+    orgNumber: '559123-4567',
+    vatNumber: 'SE559123456701',
+  },
+  contact: {
+    email: 'order@siwar.se',
+    phone: '+46 35 123 456',
+  },
+  address: {
+    street: 'Storgatan 12',
+    postalCode: '302 43',
+    city: 'Halmstad',
+    country: 'Sverige',
+  },
+  schedule: DEFAULT_WEEKLY_SCHEDULE.map((d) => ({ ...d })),
+  openingHours: {
+    ar: formatWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE, 'ar'),
+    sv: formatWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE, 'sv'),
+    en: formatWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE, 'en'),
+  },
+}
+
 export const DEFAULT_PICKUP_CONFIG: IPickupSettings = {
   enabled: true,
   address: {
@@ -247,6 +316,46 @@ const DayScheduleSchema = new Schema<IDaySchedule>(
     isOpen: { type: Boolean, default: true },
     openTime: { type: String, default: '10:00' },
     closeTime: { type: String, default: '18:00' },
+  },
+  { _id: false }
+)
+
+const GeneralSettingsSchema = new Schema<IGeneralSettings>(
+  {
+    storeName: {
+      ar: { type: String, default: 'سوار' },
+      sv: { type: String, default: 'Siwar' },
+      en: { type: String, default: 'Siwar' },
+    },
+    tagline: {
+      ar: { type: String, default: 'متجرك المفضل للمنتجات والمأكولات الشرقية الأصيلة' },
+      sv: { type: String, default: 'Din orientaliska livsmedelsbutik i Halmstad' },
+      en: { type: String, default: 'Your authentic Middle Eastern grocery store' },
+    },
+    company: {
+      name: { type: String, default: 'Siwar Butik AB' },
+      orgNumber: { type: String, default: '559123-4567' },
+      vatNumber: { type: String, default: 'SE559123456701' },
+    },
+    contact: {
+      email: { type: String, default: 'order@siwar.se' },
+      phone: { type: String, default: '+46 35 123 456' },
+    },
+    address: {
+      street: { type: String, default: 'Storgatan 12' },
+      postalCode: { type: String, default: '302 43' },
+      city: { type: String, default: 'Halmstad' },
+      country: { type: String, default: 'Sverige' },
+    },
+    schedule: {
+      type: [DayScheduleSchema],
+      default: () => DEFAULT_WEEKLY_SCHEDULE.map((d) => ({ ...d })),
+    },
+    openingHours: {
+      ar: { type: String },
+      sv: { type: String },
+      en: { type: String },
+    },
   },
   { _id: false }
 )
@@ -335,6 +444,10 @@ const StoreSettingsSchema = new Schema<IStoreSettings>(
     inventory: {
       defaultGlobalSafetyBuffer: { type: Number, default: 5 },
     },
+    general: {
+      type: GeneralSettingsSchema,
+      default: () => ({ ...DEFAULT_GENERAL_CONFIG }),
+    },
     pickup: {
       type: PickupSchema,
       default: () => ({ ...DEFAULT_PICKUP_CONFIG }),
@@ -349,6 +462,68 @@ const StoreSettingsSchema = new Schema<IStoreSettings>(
 
 export const StoreSettings =
   mongoose.models.StoreSettings || model<IStoreSettings>('StoreSettings', StoreSettingsSchema)
+
+let cachedGeneral: IGeneralSettings | null = null
+let generalCacheExpiry = 0
+
+export async function getStoreGeneralSettings(): Promise<IGeneralSettings> {
+  const now = Date.now()
+  if (cachedGeneral && now < generalCacheExpiry) {
+    return cachedGeneral
+  }
+
+  try {
+    const settings = await StoreSettings.findOne().select('general').lean()
+    if (!settings || !settings.general) {
+      cachedGeneral = { ...DEFAULT_GENERAL_CONFIG }
+    } else {
+      const schedule = normalizeSchedule(settings.general.schedule)
+      cachedGeneral = {
+        storeName: {
+          ar: settings.general.storeName?.ar || DEFAULT_GENERAL_CONFIG.storeName.ar,
+          sv: settings.general.storeName?.sv || DEFAULT_GENERAL_CONFIG.storeName.sv,
+          en: settings.general.storeName?.en || DEFAULT_GENERAL_CONFIG.storeName.en,
+        },
+        tagline: {
+          ar: settings.general.tagline?.ar ?? DEFAULT_GENERAL_CONFIG.tagline?.ar,
+          sv: settings.general.tagline?.sv ?? DEFAULT_GENERAL_CONFIG.tagline?.sv,
+          en: settings.general.tagline?.en ?? DEFAULT_GENERAL_CONFIG.tagline?.en,
+        },
+        company: {
+          name: settings.general.company?.name || DEFAULT_GENERAL_CONFIG.company.name,
+          orgNumber: settings.general.company?.orgNumber || DEFAULT_GENERAL_CONFIG.company.orgNumber,
+          vatNumber: settings.general.company?.vatNumber || DEFAULT_GENERAL_CONFIG.company.vatNumber,
+        },
+        contact: {
+          email: settings.general.contact?.email || DEFAULT_GENERAL_CONFIG.contact.email,
+          phone: settings.general.contact?.phone || DEFAULT_GENERAL_CONFIG.contact.phone,
+        },
+        address: {
+          street: settings.general.address?.street || DEFAULT_GENERAL_CONFIG.address.street,
+          postalCode: settings.general.address?.postalCode || DEFAULT_GENERAL_CONFIG.address.postalCode,
+          city: settings.general.address?.city || DEFAULT_GENERAL_CONFIG.address.city,
+          country: settings.general.address?.country || DEFAULT_GENERAL_CONFIG.address.country,
+        },
+        schedule,
+        openingHours: {
+          ar: settings.general.openingHours?.ar || formatWeeklySchedule(schedule, 'ar'),
+          sv: settings.general.openingHours?.sv || formatWeeklySchedule(schedule, 'sv'),
+          en: settings.general.openingHours?.en || formatWeeklySchedule(schedule, 'en'),
+        },
+      }
+    }
+  } catch (err) {
+    cachedGeneral = { ...DEFAULT_GENERAL_CONFIG }
+  }
+
+  generalCacheExpiry = now + 5 * 60 * 1000 // 5 minutes cache
+  return cachedGeneral
+}
+
+export function clearGeneralSettingsCache() {
+  cachedGeneral = null
+  generalCacheExpiry = 0
+}
 
 let cachedPickup: IPickupSettings | null = null
 let cacheExpiry = 0
