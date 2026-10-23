@@ -78,6 +78,7 @@ function onPrint() {
               <th class="w-10 text-center py-2">Plockad</th>
               <th class="py-2">Artikel</th>
               <th class="py-2 font-mono">SKU</th>
+              <th class="text-end py-2">A-pris</th>
               <th class="text-center py-2">Beställt</th>
               <th class="text-center py-2">Plockat</th>
             </tr>
@@ -90,13 +91,47 @@ function onPrint() {
               <td class="py-3">
                 <div class="font-bold">{{ item.name?.sv || item.name?.en || item.name?.ar }}</div>
                 <div class="text-xs text-gray-500 font-sans" dir="rtl">{{ item.name?.ar }}</div>
+                <div v-if="item.discount" class="mt-1">
+                  <span class="text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded font-mono">
+                    Kampanjrabatt -{{ item.discount }}%
+                  </span>
+                </div>
               </td>
               <td class="py-3 font-mono text-xs">{{ item.sku || '-' }}</td>
+              <td class="py-3 font-mono text-xs text-end">
+                <span v-if="item.discount && item.originalUnitPriceMinor" class="line-through text-gray-400 block text-[10px]">
+                  {{ (item.originalUnitPriceMinor / 100).toFixed(2) }}
+                </span>
+                <span :class="{ 'font-bold text-red-700': item.discount }">
+                  {{ (item.unitPriceMinor / 100).toFixed(2) }} {{ order.currency }}
+                </span>
+              </td>
               <td class="text-center py-3 font-mono font-bold">{{ item.quantity }} st</td>
               <td class="text-center py-3 font-mono">______</td>
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Financial Totals Summary on Följesedel -->
+      <div class="flex justify-end pt-2 border-t border-gray-300">
+        <div class="w-64 space-y-1 text-xs">
+          <div class="flex justify-between text-gray-600">
+            <span>Delsumma varor:</span>
+            <span class="font-mono">{{ (order.pricing.itemsTotalMinor / 100).toFixed(2) }} {{ order.currency }}</span>
+          </div>
+          <div class="flex justify-between text-gray-600">
+            <span>Fraktkostnad:</span>
+            <span class="font-mono">{{ (order.pricing.shippingFeeMinor / 100).toFixed(2) }} {{ order.currency }}</span>
+          </div>
+          <div class="border-t border-gray-300 pt-1 flex justify-between font-bold text-sm text-black">
+            <span>Totalt betalt:</span>
+            <span class="font-mono">{{ ((order.pricing.capturedTotalMinor ?? order.pricing.grandTotalMinor) / 100).toFixed(2) }} {{ order.currency }}</span>
+          </div>
+          <div class="text-[10px] text-gray-500 font-mono text-right">
+            Betalning: {{ order.paymentProvider }} ({{ order.paymentStatus }})
+          </div>
+        </div>
       </div>
 
       <!-- Packing Notes / Shortage Adjustments -->

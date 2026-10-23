@@ -83,11 +83,12 @@ async function initializeSession(draft: any) {
 
     if (rawCachedSession) {
       const cached = JSON.parse(rawCachedSession)
-      // Reuse if same provider, currency and storefront language
+      // Reuse if same provider, currency, storefront language, and exact total
       if (
         cached.provider === provider.value &&
         cached.currency === activeCurrency &&
-        cached.locale === locale.value
+        cached.locale === locale.value &&
+        cached.totalMinor === cartStore.grandTotalMinor
       ) {
         sessionData = cached
       }

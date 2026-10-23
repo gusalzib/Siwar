@@ -52,6 +52,7 @@ export interface IOrderItem {
   productId: mongoose.Types.ObjectId
   originalProductId?: mongoose.Types.ObjectId // Set when item has been substituted
   sku?: string
+  imageUrl?: string
   name: {
     ar: string
     sv: string
@@ -60,6 +61,8 @@ export interface IOrderItem {
   quantity: number
   fulfilledQuantity: number // Actually picked and packed quantity
   unitPriceMinor: number
+  originalUnitPriceMinor?: number
+  discount?: number
   momsRate: 12 | 25
   shortageStatus: LineItemShortageStatus
   isPacked?: boolean
@@ -126,6 +129,7 @@ const OrderItemSchema = new Schema<IOrderItem>(
     productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
     originalProductId: { type: Schema.Types.ObjectId, ref: 'Product' },
     sku: { type: String },
+    imageUrl: { type: String },
     name: {
       ar: { type: String, required: true },
       sv: { type: String, required: true },
@@ -134,6 +138,8 @@ const OrderItemSchema = new Schema<IOrderItem>(
     quantity: { type: Number, required: true, min: 1 },
     fulfilledQuantity: { type: Number, required: true, min: 0 },
     unitPriceMinor: { type: Number, required: true, min: 0 },
+    originalUnitPriceMinor: { type: Number },
+    discount: { type: Number },
     momsRate: { type: Number, required: true, enum: [12, 25] },
     shortageStatus: {
       type: String,
