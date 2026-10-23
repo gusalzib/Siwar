@@ -137,12 +137,12 @@ function handleAddToCart(product: any) {
       </div>
     </div>
 
-    <!-- Product Deals Grid: Exactly 5 items per page on desktop -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
+    <!-- Product Deals Grid: Auto-fill grid with minimum card width (wraps rows if width < 220px) -->
+    <div class="deals-grid grid gap-4 sm:gap-5">
       <article
         v-for="product in paginatedDeals"
         :key="product.id"
-        class="card bg-base-100 border border-base-200 hover:border-error/40 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden group rounded-2xl"
+        class="card bg-base-100 border border-base-200 hover:border-error/40 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden group rounded-2xl min-w-0"
       >
         <!-- Thumbnail Image & Badges -->
         <figure class="relative h-48 w-full bg-base-200 overflow-hidden">
@@ -282,3 +282,9 @@ function handleAddToCart(product: any) {
     </div>
   </section>
 </template>
+
+<style scoped>
+.deals-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+}
+</style>
