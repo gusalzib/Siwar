@@ -13,7 +13,7 @@ export default defineEventHandler(async () => {
   })
     .populate('category', 'name slug')
     .sort({ discount: -1, createdAt: -1 })
-    .limit(12)
+    .limit(30)
     .lean()
 
   return rawProducts.map((p) => {

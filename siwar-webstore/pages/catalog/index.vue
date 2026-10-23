@@ -31,6 +31,15 @@ const excludedAllergens = ref<string[]>(
     ? (Array.isArray(route.query.excludeAllergens) ? route.query.excludeAllergens as string[] : String(route.query.excludeAllergens).split(','))
     : []
 )
+const onlyDeals = ref(route.query.hasDiscount === 'true' || route.query.discount === 'true')
+
+// Sync deals filter if route query changes
+watch(
+  () => [route.query.hasDiscount, route.query.discount],
+  ([newHasDiscount, newDiscount]) => {
+    onlyDeals.value = newHasDiscount === 'true' || newDiscount === 'true'
+  }
+)
 
 // Mobile filter drawer state
 const isMobileDrawerOpen = ref(false)
@@ -54,6 +63,7 @@ const { data: catalogData, pending: isLoading } = await useAsyncData(
         brand: route.query.brand || undefined,
         origin: route.query.origin || undefined,
         excludeAllergens: route.query.excludeAllergens || undefined,
+        hasDiscount: route.query.hasDiscount || route.query.discount || (onlyDeals.value ? 'true' : undefined),
       },
     }),
   {
@@ -71,7 +81,7 @@ function handleAddToCart(product: any) {
       productId: product.id || product._id,
       name: product.name,
       thumbnailUrl: primaryImg,
-      price: product.price,
+      price: (product.discount > 0 && product.discountedPrice) ? product.discountedPrice : product.price,
       momsRate: product.momsRate || 12,
       grossWeight: product.grossWeight || 0,
       availableStock: product.availableStock,
@@ -93,12 +103,19 @@ function applyFiltersToUrl(overrides: Record<string, any> = {}) {
     brand: selectedBrands.value.length ? selectedBrands.value.join(',') : undefined,
     origin: selectedOrigins.value.length ? selectedOrigins.value.join(',') : undefined,
     excludeAllergens: excludedAllergens.value.length ? excludedAllergens.value.join(',') : undefined,
+    hasDiscount: onlyDeals.value ? 'true' : undefined,
     page: currentPage.value > 1 ? String(currentPage.value) : undefined,
     ...overrides,
   }
 
   Object.keys(query).forEach((key) => query[key] === undefined && delete query[key])
   router.push({ query })
+}
+
+function toggleOnlyDeals() {
+  onlyDeals.value = !onlyDeals.value
+  currentPage.value = 1
+  applyFiltersToUrl({ page: undefined })
 }
 
 // Multilingual search debounce
@@ -179,6 +196,7 @@ function resetAllFilters() {
   selectedBrands.value = []
   selectedOrigins.value = []
   excludedAllergens.value = []
+  onlyDeals.value = false
   selectedSort.value = 'newest'
   currentPage.value = 1
   router.push({ query: {} })
@@ -238,10 +256,10 @@ function getLocalized(obj?: Record<string, string>): string {
             <Icon name="lucide:sliders-horizontal" class="size-4" />
             <span>{{ t('catalog.filtersTitle') }}</span>
             <span
-              v-if="selectedBrands.length + selectedOrigins.length + excludedAllergens.length + (selectedCategory ? 1 : 0) > 0"
+              v-if="selectedBrands.length + selectedOrigins.length + excludedAllergens.length + (selectedCategory ? 1 : 0) + (onlyDeals ? 1 : 0) > 0"
               class="badge !bg-emerald-600 !text-white badge-xs"
             >
-              {{ selectedBrands.length + selectedOrigins.length + excludedAllergens.length + (selectedCategory ? 1 : 0) }}
+              {{ selectedBrands.length + selectedOrigins.length + excludedAllergens.length + (selectedCategory ? 1 : 0) + (onlyDeals ? 1 : 0) }}
             </span>
           </button>
 
@@ -277,6 +295,23 @@ function getLocalized(obj?: Record<string, string>): string {
               >
                 {{ t('catalog.resetFilters') }}
               </button>
+            </div>
+
+            <!-- Only Deals Filter Toggle -->
+            <div class="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/20 p-3 flex items-center justify-between gap-2 shadow-2xs">
+              <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-rose-700 dark:text-rose-300">
+                <span class="relative flex size-2 shrink-0">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-80" />
+                  <span class="relative inline-flex rounded-full size-2 bg-rose-500" />
+                </span>
+                <span>{{ t('catalog.onlyDeals') }}</span>
+              </label>
+              <input
+                type="checkbox"
+                :checked="onlyDeals"
+                class="toggle toggle-error toggle-sm"
+                @change="toggleOnlyDeals"
+              />
             </div>
 
             <!-- Categories -->
@@ -435,16 +470,36 @@ function getLocalized(obj?: Record<string, string>): string {
                 <Icon name="lucide:image" class="size-10" />
             </div>
 
+            <!-- Bold Attention-Grabbing Discount Tag -->
+            <div v-if="product.discount > 0" class="absolute top-2.5 start-2.5 z-10">
+              <span
+                class="relative inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-600 shadow-md shadow-red-500/40 border border-white/20 select-none overflow-hidden tracking-wide"
+              >
+                <!-- Ambient pulse glow behind -->
+                <span class="absolute inset-0 bg-white/15 animate-pulse pointer-events-none" />
+
+                <!-- Animated live radar dot for eye-catching effect -->
+                <span class="relative flex size-2 shrink-0">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-90" />
+                  <span class="relative inline-flex rounded-full size-2 bg-amber-400" />
+                </span>
+
+                <span class="relative drop-shadow-xs">
+                  {{ t('home.deals.save', { percent: product.discount }) }}
+                </span>
+              </span>
+            </div>
+
             <!-- Inventory Status Badge -->
             <span
                 v-if="product.statusCode === 'OUT_OF_STOCK_ONLINE'"
-                class="badge badge-warning badge-sm absolute top-3 right-3 shadow font-semibold"
+                class="badge badge-warning badge-sm absolute top-3 end-3 shadow font-semibold"
             >
                 {{ t('inventory.OUT_OF_STOCK_ONLINE') }}
             </span>
             <span
                 v-else-if="product.statusCode === 'OUT_OF_STOCK'"
-                class="badge badge-error badge-sm text-white absolute top-3 right-3 shadow font-semibold"
+                class="badge badge-error badge-sm text-white absolute top-3 end-3 shadow font-semibold"
             >
                 {{ t('inventory.OUT_OF_STOCK') }}
             </span>
@@ -466,11 +521,19 @@ function getLocalized(obj?: Record<string, string>): string {
 
                 <!-- Middle: Price & Jämförpris -->
                 <div class="pt-3 border-t border-base-200 mt-4">
-                    <div class="text-lg font-black text-base-content">
-                        {{ (product.price[activeCurrency] / 100).toFixed(2) }} {{ activeCurrency }}
+                    <div v-if="product.discount > 0 && product.discountedPrice" class="flex items-baseline gap-2 flex-wrap">
+                      <span class="text-lg font-black text-error">
+                        {{ ((product.discountedPrice[activeCurrency] ?? product.discountedPrice.SEK ?? 0) / 100).toFixed(2) }} {{ activeCurrency }}
+                      </span>
+                      <span class="text-xs font-semibold text-base-content/50 line-through">
+                        {{ ((product.price[activeCurrency] ?? product.price.SEK ?? 0) / 100).toFixed(2) }} {{ activeCurrency }}
+                      </span>
                     </div>
-                    <div class="text-[11px] text-base-content/60">
-                        {{ calculateComparisonPrice(product.price[activeCurrency], product.netQuantity) }}
+                    <div v-else class="text-lg font-black text-base-content">
+                        {{ ((product.price[activeCurrency] ?? product.price.SEK ?? 0) / 100).toFixed(2) }} {{ activeCurrency }}
+                    </div>
+                    <div class="text-[11px] text-base-content/60 mt-0.5">
+                        {{ calculateComparisonPrice((product.discount > 0 && product.discountedPrice) ? (product.discountedPrice[activeCurrency] ?? product.discountedPrice.SEK) : (product.price[activeCurrency] ?? product.price.SEK), product.netQuantity) }}
                     </div>
                 </div>
 

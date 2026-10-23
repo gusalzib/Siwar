@@ -89,6 +89,17 @@ export default defineEventHandler(async (event) => {
     filter.countryOfOrigin = { $in: origins.map((o) => String(o).trim()) }
   }
 
+  // 6.5. Promotional Deals / Discount Filter (products with discount > 0)
+  if (
+    query.hasDiscount === 'true' ||
+    query.discount === 'true' ||
+    query.onSale === 'true' ||
+    query.deals === 'true' ||
+    Number(query.discount) > 0
+  ) {
+    filter.discount = { $gt: 0 }
+  }
+
   // 7. Sort Mapping
   let sortCriteria: Record<string, 1 | -1> = { createdAt: -1 }
   if (sortParam === 'price_asc') sortCriteria = { 'price.SEK': 1 }
@@ -120,6 +131,13 @@ export default defineEventHandler(async (event) => {
       statusCode = 'OUT_OF_STOCK_ONLINE'
     }
 
+    const discount = p.discount || 0
+    const discountedPrice = discount > 0 ? {
+      SEK: Math.round((p.price?.SEK || 0) * (1 - discount / 100)),
+      EUR: Math.round((p.price?.EUR || 0) * (1 - discount / 100)),
+      USD: Math.round((p.price?.USD || 0) * (1 - discount / 100)),
+    } : null
+
     return {
       id: String(p._id),
       name: p.name,
@@ -130,7 +148,8 @@ export default defineEventHandler(async (event) => {
       allergens: p.allergens,
       primaryImage,
       price: p.price,
-      discount: p.discount || 0,
+      discount,
+      discountedPrice,
       netQuantity: p.netQuantity,
       grossWeight: p.grossWeight ?? (p.netQuantity?.unit === 'g' ? p.netQuantity.value : 0), // Pass grossWeight with fallback to netQuantity if unit is in grams
       momsRate: p.momsRate,
