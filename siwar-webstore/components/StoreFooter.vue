@@ -110,6 +110,13 @@ const company = computed(() => {
                 <span class="text-slate-400 font-mono text-[11px] leading-tight block mt-0.5">
                   {{ formattedHours }}
                 </span>
+                <NuxtLink
+                  :to="localePath('/oppettider')"
+                  class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400 hover:text-amber-300 transition-colors mt-1.5 group"
+                >
+                  <span>{{ t('footer.viewOpeningHoursPage', 'Se alla öppettider & hitta hit') }}</span>
+                  <Icon name="lucide:arrow-right" class="size-3 rtl:rotate-180 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-transform" />
+                </NuxtLink>
               </div>
             </div>
           </div>

@@ -84,6 +84,16 @@ const logout = async () => {
                 {{ t('nav.catalog', 'Sortiment') }}
               </NuxtLink>
             </li>
+            <li>
+              <NuxtLink
+                :to="localePath('/oppettider')"
+                class="font-medium text-base-content"
+                active-class="!bg-brand-600 !text-white font-bold shadow-xs"
+              >
+                <Icon name="lucide:clock" class="h-4 w-4" />
+                {{ t('nav.oppettider', 'Öppettider') }}
+              </NuxtLink>
+            </li>
 
             <!-- Preferences / Quick Settings on Mobile -->
             <div class="divider my-1 border-base-300"></div>
@@ -160,6 +170,14 @@ const logout = async () => {
         >
           <Icon name="lucide:layout-grid" class="h-4 w-4" />
           {{ t('nav.catalog', 'Sortiment') }}
+        </NuxtLink>
+        <NuxtLink
+          :to="localePath('/oppettider')"
+          class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
+          active-class="!bg-brand-600 !text-white font-bold shadow-xs"
+        >
+          <Icon name="lucide:clock" class="h-4 w-4" />
+          {{ t('nav.oppettider', 'Öppettider') }}
         </NuxtLink>
 
         <!-- Admin Management Links -->

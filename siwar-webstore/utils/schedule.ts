@@ -147,6 +147,118 @@ export function formatWeeklySchedule(
   return parts.join(' | ')
 }
 
+export interface IStoreLiveStatus {
+  isOpenNow: boolean
+  todaySchedule: IDaySchedule
+  todayKey: DayOfWeek
+  statusMessageKey: 'openNow' | 'closedNow'
+  detailMessageKey: 'closesAt' | 'opensAt' | 'opensNext' | 'welcomeBack'
+  targetTime?: string
+  targetDay?: DayOfWeek
+}
+
+export function parseTimeToMinutes(timeStr: string): number {
+  if (!timeStr || !timeStr.includes(':')) return 0
+  const [h, m] = timeStr.split(':').map((s) => parseInt(s, 10))
+  return (h || 0) * 60 + (m || 0)
+}
+
+export function getDayOfWeekFromDate(date: Date = new Date()): DayOfWeek {
+  const days = [
+    'sunday',
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+  ] as const
+
+  return days[date.getDay()]!
+}
+
+export function calculateStoreStatus(
+  schedule: IDaySchedule[],
+  date: Date = new Date()
+): IStoreLiveStatus {
+  const normalized = normalizeSchedule(schedule)
+  const todayKey = getDayOfWeekFromDate(date)
+  const todaySchedule = normalized.find((d) => d.day === todayKey) || {
+    day: todayKey,
+    isOpen: false,
+    openTime: '10:00',
+    closeTime: '18:00',
+  }
+
+  const currentMinutes = date.getHours() * 60 + date.getMinutes()
+  const openMinutes = parseTimeToMinutes(todaySchedule.openTime)
+  const closeMinutes = parseTimeToMinutes(todaySchedule.closeTime)
+
+  if (todaySchedule.isOpen && currentMinutes >= openMinutes && currentMinutes < closeMinutes) {
+    return {
+      isOpenNow: true,
+      todaySchedule,
+      todayKey,
+      statusMessageKey: 'openNow',
+      detailMessageKey: 'closesAt',
+      targetTime: todaySchedule.closeTime,
+    }
+  }
+
+  if (todaySchedule.isOpen && currentMinutes < openMinutes) {
+    return {
+      isOpenNow: false,
+      todaySchedule,
+      todayKey,
+      statusMessageKey: 'closedNow',
+      detailMessageKey: 'opensAt',
+      targetTime: todaySchedule.openTime,
+    }
+  }
+
+  const daysOrder: DayOfWeek[] = [
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+    'sunday',
+  ]
+  const todayIndex = daysOrder.indexOf(todayKey)
+  let nextSchedule: IDaySchedule | undefined
+
+  for (let i = 1; i <= 7; i++) {
+    const nextDay = daysOrder[(todayIndex + i) % 7]
+    const sched = normalized.find((d) => d.day === nextDay)
+    if (sched && sched.isOpen) {
+      nextSchedule = sched
+      break
+    }
+  }
+
+  if (nextSchedule) {
+    const isTomorrow = daysOrder[(todayIndex + 1) % 7] === nextSchedule.day
+    return {
+      isOpenNow: false,
+      todaySchedule,
+      todayKey,
+      statusMessageKey: 'closedNow',
+      detailMessageKey: isTomorrow ? 'welcomeBack' : 'opensNext',
+      targetTime: nextSchedule.openTime,
+      targetDay: nextSchedule.day,
+    }
+  }
+
+  return {
+    isOpenNow: false,
+    todaySchedule,
+    todayKey,
+    statusMessageKey: 'closedNow',
+    detailMessageKey: 'closesAt',
+  }
+}
+
 export interface IGeneralSettings {
   storeName: {
     ar: string
