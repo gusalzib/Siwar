@@ -145,6 +145,9 @@
     "productForm": {
       "newTitle": "Create New Product",
       "newSubtitle": "Configure product details, multi-currency prices, and inventory buffers",
+      "editTitle": "Edit Product",
+      "editSubtitle": "Update pricing, stock buffers, descriptions, and media",
+      "loading": "Loading product...",
       "backToList": "Back to Products",
       "tabs": {
         "ar": "Arabic",
@@ -209,7 +212,8 @@
         "nutritionHelp": "Filled in for food products. Leave blank if nutritional values are visible directly on the packaging image."
       },
       "actions": {
-        "submit": "Save Product",
+        "submit": "Create Product",
+        "save": "Save Changes",
         "submitting": "Saving...",
         "cancel": "Cancel"
       },

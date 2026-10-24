@@ -148,6 +148,9 @@
     "productForm": {
       "newTitle": "Skapa ny produkt",
       "newSubtitle": "Fyll i produktinformation, manuella flervalutapriser och lagerbuffert",
+      "editTitle": "Redigera produkt",
+      "editSubtitle": "Uppdatera priser, lagerbuffert, beskrivningar och media",
+      "loading": "Laddar produkt...",
       "backToList": "Tillbaka till produkter",
       "tabs": {
         "ar": "Arabiska",
@@ -212,7 +215,8 @@
         "nutritionHelp": "Fylls i för livsmedel. Lämna tomt om näringsvärden visas direkt på förpackningsbilden."
       },
       "actions": {
-        "submit": "Spara produkt",
+        "submit": "Skapa produkt",
+        "save": "Spara ändringar",
         "submitting": "Sparar...",
         "cancel": "Avbryt"
       },
