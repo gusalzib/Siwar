@@ -28,7 +28,7 @@
     "exploreCatalog": "Explore catalog",
     "subtotal": "Subtotal",
     "moms25": "VAT (25% other/shipping)",
-    "subtotalNet": "Subtotal (excl. VAT)",
+    "subtotalNet": "Subtotal (excl. VAT and Delivery)",
     "shipping": "Shipping",
     "free": "Free",
     "freeShippingReached": "Congratulations! You qualified for free shipping.",
@@ -774,7 +774,8 @@
   "order": {
     "confirmedTitle": "Thank you for your order!",
     "holdNotice": "Your amount has been reserved and will be charged when the order is packed.",
-    "backToHome": "Back to shop"
+    "backToHome": "Back to shop",
+    "printReceipt": "Print receipt"
   },
 
   "orderLookup": {

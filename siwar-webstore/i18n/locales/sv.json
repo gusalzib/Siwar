@@ -28,7 +28,7 @@
     "exploreCatalog": "Utforska sortimentet",
     "subtotal": "Delsumma",
     "moms25": "Moms (25% övrigt/frakt)",
-    "subtotalNet": "Delsumma (exkl. moms)",
+    "subtotalNet": "Delsumma (exkl. moms och frakt)",
     "shipping": "Frakt",
     "free": "Gratis",
     "freeShippingReached": "Grattis! Du har kvalificerat dig för fri frakt.",
@@ -777,7 +777,8 @@
   "order": {
     "confirmedTitle": "Tack för din beställning!",
     "holdNotice": "Ditt belopp har reserverats och dras när ordern packas.",
-    "backToHome": "Tillbaka till butiken"
+    "backToHome": "Tillbaka till butiken",
+    "printReceipt": "Skriv ut"
   },
 
   "orderLookup": {

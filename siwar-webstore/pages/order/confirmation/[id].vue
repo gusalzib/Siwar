@@ -52,7 +52,7 @@ const totalDiscountSavings = computed(() => {
           <Icon name="lucide:arrow-left" class="size-4" />
           <span>{{ t('order.backToHome', 'Tillbaka till butiken') }}</span>
         </NuxtLink>
-        <button type="button" class="btn btn-primary btn-sm text-white gap-2" @click="printReceipt">
+        <button type="button" class="btn btn-primary btn-sm text-white px-3 hover:bg-amber-500 bg-brand-600 gap-2" @click="printReceipt">
           <Icon name="lucide:printer" class="size-4" />
           <span>{{ t('order.printReceipt', 'Skriv ut kvitto') }}</span>
         </button>
