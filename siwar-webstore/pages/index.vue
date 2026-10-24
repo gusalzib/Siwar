@@ -11,6 +11,8 @@ interface CategoryFacet {
   id: string
   name: LocalizedField
   slug: LocalizedField
+  imageUrl?: string | null
+  productCount?: number
 }
 
 interface AllergenFacet {
@@ -135,112 +137,6 @@ function toggleQuickAllergen(allergenCodeOrId: string) {
   const idx = selectedAllergens.value.indexOf(allergenCodeOrId)
   if (idx >= 0) selectedAllergens.value.splice(idx, 1)
   else selectedAllergens.value.push(allergenCodeOrId)
-}
-
-interface CategoryMeta {
-  icon: string
-  bgLight: string
-  bgDark: string
-  textColor: string
-  borderHover: string
-}
-
-function getCategoryMeta(cat: any): CategoryMeta {
-  const slugSv = (cat?.slug?.sv || '').toLowerCase()
-  const slugEn = (cat?.slug?.en || '').toLowerCase()
-  const nameEn = (cat?.name?.en || '').toLowerCase()
-  const nameSv = (cat?.name?.sv || '').toLowerCase()
-  const key = `${slugSv} ${slugEn} ${nameEn} ${nameSv}`
-
-  if (key.includes('krydd') || key.includes('spice') || key.includes('بهارات')) {
-    return {
-      icon: 'lucide:flame',
-      bgLight: 'bg-amber-100',
-      bgDark: 'dark:bg-amber-950/60',
-      textColor: 'text-amber-600 dark:text-amber-400',
-      borderHover: 'hover:border-amber-400/60',
-    }
-  }
-  if (key.includes('efterr') || key.includes('dessert') || key.includes('حلويات') || key.includes('godis') || key.includes('goodies') || key.includes('candy') || key.includes('سكاكر')) {
-    return {
-      icon: 'lucide:cake',
-      bgLight: 'bg-rose-100',
-      bgDark: 'dark:bg-rose-950/60',
-      textColor: 'text-rose-600 dark:text-rose-400',
-      borderHover: 'hover:border-rose-400/60',
-    }
-  }
-  if (key.includes('mejeri') || key.includes('dairy') || key.includes('جبن') || key.includes('لبن')) {
-    return {
-      icon: 'lucide:milk',
-      bgLight: 'bg-sky-100',
-      bgDark: 'dark:bg-sky-950/60',
-      textColor: 'text-sky-600 dark:text-sky-400',
-      borderHover: 'hover:border-sky-400/60',
-    }
-  }
-  if (key.includes('nöt') || key.includes('nut') || key.includes('فستق') || key.includes('مكسرات')) {
-    return {
-      icon: 'lucide:wheat',
-      bgLight: 'bg-yellow-100',
-      bgDark: 'dark:bg-yellow-950/60',
-      textColor: 'text-yellow-700 dark:text-yellow-400',
-      borderHover: 'hover:border-yellow-400/60',
-    }
-  }
-  if (key.includes('kök') || key.includes('kitchen') || key.includes('مطبخ') || key.includes('utrustning')) {
-    return {
-      icon: 'lucide:utensils',
-      bgLight: 'bg-violet-100',
-      bgDark: 'dark:bg-violet-950/60',
-      textColor: 'text-violet-600 dark:text-violet-400',
-      borderHover: 'hover:border-violet-400/60',
-    }
-  }
-  if (key.includes('skafferi') || key.includes('pantry') || key.includes('مؤن')) {
-    return {
-      icon: 'lucide:archive',
-      bgLight: 'bg-emerald-100',
-      bgDark: 'dark:bg-emerald-950/60',
-      textColor: 'text-emerald-600 dark:text-emerald-400',
-      borderHover: 'hover:border-emerald-400/60',
-    }
-  }
-  if (key.includes('konserv') || key.includes('canned') || key.includes('معلب')) {
-    return {
-      icon: 'lucide:box',
-      bgLight: 'bg-orange-100',
-      bgDark: 'dark:bg-orange-950/60',
-      textColor: 'text-orange-600 dark:text-orange-400',
-      borderHover: 'hover:border-orange-400/60',
-    }
-  }
-  if (key.includes('olj') || key.includes('oil') || key.includes('زيت')) {
-    return {
-      icon: 'lucide:droplet',
-      bgLight: 'bg-teal-100',
-      bgDark: 'dark:bg-teal-950/60',
-      textColor: 'text-teal-600 dark:text-teal-400',
-      borderHover: 'hover:border-teal-400/60',
-    }
-  }
-  if (key.includes('kaff') || key.includes('coffee') || key.includes('قهو')) {
-    return {
-      icon: 'lucide:coffee',
-      bgLight: 'bg-amber-100',
-      bgDark: 'dark:bg-amber-950/60',
-      textColor: 'text-amber-800 dark:text-amber-300',
-      borderHover: 'hover:border-amber-600/60',
-    }
-  }
-
-  return {
-    icon: 'lucide:shopping-bag',
-    bgLight: 'bg-primary/10',
-    bgDark: 'dark:bg-primary/20',
-    textColor: 'text-primary',
-    borderHover: 'hover:border-primary/60',
-  }
 }
 </script>
 
@@ -482,51 +378,68 @@ function getCategoryMeta(cat: any): CategoryMeta {
     <section class="max-w-7xl mx-auto px-4 space-y-6">
       <div class="text-center sm:text-start">
         <h2 class="text-2xl sm:text-3xl font-black text-base-content tracking-tight">
-          {{ t('home.categories.heading') }}
+          {{ t('home.categories.heading', 'Utforska våra kategorier') }}
         </h2>
         <p class="text-xs sm:text-sm text-base-content/60 mt-1">
-          {{ t('home.categories.subheading') }}
+          {{ t('home.categories.subheading', 'Hitta dina orientaliska favoriter bland våra noga utvalda råvaror och delikatesser') }}
         </p>
       </div>
 
-      <!-- Category Grid (Locale-Preserving with Elevation & Dynamic Iconography) -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+      <!-- Category Grid (Responsive Dynamic Product Photography) -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-5">
         <NuxtLink
           v-for="cat in facetData?.categories"
           :key="cat.id"
           :to="localePath({ path: '/catalog', query: { category: cat.slug?.[locale] || cat.id } })"
-          :class="[
-            'card bg-base-100 border-2 border-base-200/90 shadow-sm hover:shadow-xl hover:scale-105 transition-all duration-300 group overflow-hidden relative rounded-2xl',
-            getCategoryMeta(cat).borderHover
-          ]"
+          class="card bg-base-100 border border-base-200/90 hover:border-primary/50 shadow-xs hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 rounded-2xl overflow-hidden group flex flex-col justify-between"
         >
-          <div class="card-body p-5 sm:p-6 flex flex-col justify-between h-44 sm:h-48">
-            <div class="flex items-center justify-between">
-              <div
-                :class="[
-                  'rounded-2xl p-3 sm:p-3.5 group-hover:scale-110 transition-transform shadow-xs',
-                  getCategoryMeta(cat).bgLight,
-                  getCategoryMeta(cat).bgDark,
-                  getCategoryMeta(cat).textColor
-                ]"
-              >
-                <Icon :name="getCategoryMeta(cat).icon" class="size-6 sm:size-7" />
+          <!-- Category Image Stage -->
+          <div class="relative aspect-square w-full bg-base-200/40 p-4 sm:p-5 flex items-center justify-center overflow-hidden border-b border-base-200/60">
+            <!-- Dynamic Primary Product Image -->
+            <img
+              v-if="cat.imageUrl"
+              :src="cat.imageUrl"
+              :alt="getLocalized(cat.name)"
+              class="h-full w-full object-contain group-hover:scale-110 transition-transform duration-500 ease-out drop-shadow-xs"
+              loading="lazy"
+            />
+
+            <!-- Fallback Default Emblem when category has no product photos yet -->
+            <div
+              v-else
+              class="h-full w-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-base-200 text-base-content/40 group-hover:text-primary transition-colors p-4 text-center"
+            >
+              <div class="size-12 sm:size-14 rounded-2xl bg-base-100 shadow-xs border border-base-200 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <Icon name="lucide:shopping-bag" class="size-6 sm:size-7" />
               </div>
-              <div class="size-7 rounded-full bg-base-200 flex items-center justify-center text-base-content/40 group-hover:bg-primary group-hover:text-white transition-colors">
-                <Icon
-                  name="lucide:arrow-right"
-                  class="size-3.5 rtl:rotate-180 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5"
-                />
-              </div>
+              <span class="text-[11px] font-black uppercase tracking-widest text-base-content/50">Siwar</span>
             </div>
 
-            <div class="space-y-1">
-              <h3 class="font-black text-sm sm:text-base text-base-content group-hover:text-primary transition line-clamp-1">
+            <!-- Product Count Badge -->
+            <span
+              v-if="cat.productCount"
+              class="badge badge-xs sm:badge-sm bg-base-100/90 dark:bg-base-200/90 backdrop-blur-xs border border-base-300/80 text-base-content/70 font-semibold absolute top-2.5 end-2.5 shadow-xs px-2 py-0.5"
+            >
+              {{ cat.productCount }}
+            </span>
+          </div>
+
+          <!-- Category Label & Exploration CTA -->
+          <div class="p-3.5 sm:p-4 flex items-center justify-between gap-2 bg-base-100">
+            <div class="min-w-0">
+              <h3 class="font-bold text-xs sm:text-sm text-base-content group-hover:text-primary transition-colors truncate">
                 {{ getLocalized(cat.name) }}
               </h3>
-              <p class="text-[11px] sm:text-xs text-base-content/50 font-medium">
-                {{ t('home.categories.explore') }}
+              <p class="text-[11px] text-base-content/50 font-medium truncate mt-0.5">
+                {{ t('home.categories.explore', 'Utforska sortiment') }}
               </p>
+            </div>
+
+            <div class="size-7 sm:size-8 shrink-0 rounded-full bg-base-200/80 group-hover:bg-primary group-hover:text-white flex items-center justify-center text-base-content/50 transition-colors shadow-xs">
+              <Icon
+                name="lucide:arrow-right"
+                class="size-3.5 sm:size-4 rtl:rotate-180 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-transform"
+              />
             </div>
           </div>
         </NuxtLink>

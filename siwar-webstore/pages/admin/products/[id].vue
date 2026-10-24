@@ -434,17 +434,17 @@ async function handleSubmit() {
                   </div>
 
                   <!-- Quick Percentage Presets -->
-                  <div class="flex items-center gap-1 flex-wrap">
+                  <div class="flex items-center gap-1.5 flex-wrap">
                     <button
                       v-for="preset in [0, 10, 15, 20, 25, 50]"
                       :key="preset"
                       type="button"
                       @click="form.discount = preset"
                       :class="[
-                        'btn btn-xs rounded-lg transition-all',
+                        'btn btn-xs rounded-lg transition-all h-7 min-h-0 px-2.5 py-1 text-xs font-medium',
                         form.discount === preset
                           ? 'btn-error text-white font-bold shadow-xs'
-                          : 'btn-ghost border border-base-300 text-base-content/70 hover:text-base-content'
+                          : 'bg-base-200 hover:bg-base-300 border border-base-300 text-base-content hover:text-base-content'
                       ]"
                     >
                       {{ preset === 0 ? t('admin.productForm.fields.discountNone') : `-${preset}%` }}
