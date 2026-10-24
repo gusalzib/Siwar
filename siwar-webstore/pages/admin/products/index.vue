@@ -264,6 +264,12 @@ function getLocalizedText(obj?: Record<string, string>): string {
                 <!-- Multi-Currency Pricing -->
                 <td class="px-4 py-3">
                   <div class="text-xs space-y-0.5 font-mono text-base-content/80">
+                    <div v-if="product.discount > 0" class="mb-1">
+                      <span class="badge badge-error badge-xs text-white font-bold gap-0.5 shadow-xs">
+                        <Icon name="lucide:percent" class="size-2.5" />
+                        -{{ product.discount }}%
+                      </span>
+                    </div>
                     <div>{{ toMajorUnits(product.price?.SEK || 0) }} SEK</div>
                     <div>{{ toMajorUnits(product.price?.EUR || 0) }} EUR</div>
                     <div>{{ toMajorUnits(product.price?.USD || 0) }} USD</div>

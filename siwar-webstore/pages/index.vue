@@ -1,6 +1,7 @@
 <!-- pages/index.vue -->
 <script setup lang="ts">
 import { ref } from 'vue'
+import PromotionalDealsSection from '~/components/PromotionalDealsSection.vue'
 
 interface LocalizedField {
   [key: string]: string
@@ -10,6 +11,8 @@ interface CategoryFacet {
   id: string
   name: LocalizedField
   slug: LocalizedField
+  imageUrl?: string | null
+  productCount?: number
 }
 
 interface AllergenFacet {
@@ -368,43 +371,75 @@ function toggleQuickAllergen(allergenCodeOrId: string) {
       </div>
     </section>
 
-    <!-- 3. Category Cards Showcase Grid -->
+    <!-- 3. Current Deals & Promotional Products Section -->
+    <PromotionalDealsSection />
+
+    <!-- 4. Category Cards Showcase Grid -->
     <section class="max-w-7xl mx-auto px-4 space-y-6">
       <div class="text-center sm:text-start">
         <h2 class="text-2xl sm:text-3xl font-black text-base-content tracking-tight">
-          {{ t('home.categories.heading') }}
+          {{ t('home.categories.heading', 'Utforska våra kategorier') }}
         </h2>
-        <p class="text-sm text-base-content/60 mt-1">
-          {{ t('home.categories.subheading') }}
+        <p class="text-xs sm:text-sm text-base-content/60 mt-1">
+          {{ t('home.categories.subheading', 'Hitta dina orientaliska favoriter bland våra noga utvalda råvaror och delikatesser') }}
         </p>
       </div>
 
-      <!-- Category Grid (Locale-Preserving) -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+      <!-- Category Grid (Responsive Dynamic Product Photography) -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-5">
         <NuxtLink
           v-for="cat in facetData?.categories"
           :key="cat.id"
           :to="localePath({ path: '/catalog', query: { category: cat.slug?.[locale] || cat.id } })"
-          class="card bg-base-100 border border-base-200 hover:border-primary/50 shadow-sm hover:shadow-md transition-all duration-200 group overflow-hidden"
+          class="card bg-base-100 border border-base-200/90 hover:border-primary/50 shadow-xs hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 rounded-2xl overflow-hidden group flex flex-col justify-between"
         >
-          <div class="card-body p-6 flex flex-col justify-between h-44">
-            <div class="flex items-center justify-between">
-              <div class="rounded-2xl bg-primary/10 text-primary p-3 group-hover:scale-110 transition-transform">
-                <Icon name="lucide:shopping-bag" class="size-6" />
+          <!-- Category Image Stage -->
+          <div class="relative aspect-square w-full bg-base-200/40 p-4 sm:p-5 flex items-center justify-center overflow-hidden border-b border-base-200/60">
+            <!-- Dynamic Primary Product Image -->
+            <img
+              v-if="cat.imageUrl"
+              :src="cat.imageUrl"
+              :alt="getLocalized(cat.name)"
+              class="h-full w-full object-contain group-hover:scale-110 transition-transform duration-500 ease-out drop-shadow-xs"
+              loading="lazy"
+            />
+
+            <!-- Fallback Default Emblem when category has no product photos yet -->
+            <div
+              v-else
+              class="h-full w-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-base-200 text-base-content/40 group-hover:text-primary transition-colors p-4 text-center"
+            >
+              <div class="size-12 sm:size-14 rounded-2xl bg-base-100 shadow-xs border border-base-200 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <Icon name="lucide:shopping-bag" class="size-6 sm:size-7" />
               </div>
-              <Icon
-                name="lucide:chevron-right"
-                class="size-5 text-base-content/30 group-hover:text-primary group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition"
-              />
+              <span class="text-[11px] font-black uppercase tracking-widest text-base-content/50">Siwar</span>
             </div>
 
-            <div>
-              <h3 class="font-bold text-base sm:text-lg text-base-content group-hover:text-primary transition line-clamp-1">
+            <!-- Product Count Badge -->
+            <span
+              v-if="cat.productCount"
+              class="badge badge-xs sm:badge-sm bg-base-100/90 dark:bg-base-200/90 backdrop-blur-xs border border-base-300/80 text-base-content/70 font-semibold absolute top-2.5 end-2.5 shadow-xs px-2 py-0.5"
+            >
+              {{ cat.productCount }}
+            </span>
+          </div>
+
+          <!-- Category Label & Exploration CTA -->
+          <div class="p-3.5 sm:p-4 flex items-center justify-between gap-2 bg-base-100">
+            <div class="min-w-0">
+              <h3 class="font-bold text-xs sm:text-sm text-base-content group-hover:text-primary transition-colors truncate">
                 {{ getLocalized(cat.name) }}
               </h3>
-              <p class="text-xs text-base-content/50 mt-1">
-                {{ t('home.categories.explore') }}
+              <p class="text-[11px] text-base-content/50 font-medium truncate mt-0.5">
+                {{ t('home.categories.explore', 'Utforska sortiment') }}
               </p>
+            </div>
+
+            <div class="size-7 sm:size-8 shrink-0 rounded-full bg-base-200/80 group-hover:bg-primary group-hover:text-white flex items-center justify-center text-base-content/50 transition-colors shadow-xs">
+              <Icon
+                name="lucide:arrow-right"
+                class="size-3.5 sm:size-4 rtl:rotate-180 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-transform"
+              />
             </div>
           </div>
         </NuxtLink>

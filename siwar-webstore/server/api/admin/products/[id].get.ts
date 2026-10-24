@@ -49,6 +49,7 @@ export default defineEventHandler(async (event) => {
     barcode: product.barcode || '',
     allergens: (product.allergens || []).map(String),
     images: product.images || [],
+    nutritionTable: product.nutritionTable || undefined,
     isActive: product.isActive,
   }
 })

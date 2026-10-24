@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
       { barcode: { $regex: query, $options: 'i' } },
     ],
   })
-    .select('_id name sku price momsRate stockQuantity')
+    .select('_id name sku price momsRate stockQuantity images')
     .limit(10)
     .lean()
 

@@ -34,11 +34,20 @@ export default defineEventHandler(async (event): Promise<StorefrontProduct> => {
     safetyBuffer: product.safetyBuffer,
   })
 
+  const discount = product.discount || 0
+  const discountedPrice = discount > 0 ? {
+    SEK: Math.round((product.price?.SEK || 0) * (1 - discount / 100)),
+    EUR: Math.round((product.price?.EUR || 0) * (1 - discount / 100)),
+    USD: Math.round((product.price?.USD || 0) * (1 - discount / 100)),
+  } : null
+
   return {
     ...product,
     _id: String(product._id),
     id: String(product._id),
     category: product.category as PopulatedCategory,
     availability,
+    discount,
+    discountedPrice,
   } as unknown as StorefrontProduct
 })

@@ -122,6 +122,7 @@ export default defineEventHandler(async (event) => {
         barcode: body.barcode?.trim() || undefined,
         allergens: Array.isArray(body.allergens) ? body.allergens.filter(isValidObjectId) : [],
         images: Array.isArray(body.images) ? body.images : [],
+        nutritionTable: body.nutritionTable || undefined,
         isActive: body.isActive !== false,
       },
     },

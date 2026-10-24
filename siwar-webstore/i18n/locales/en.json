@@ -6,8 +6,13 @@
   "nav": {
     "home": "Home",
     "catalog": "Product Catalog",
+    "oppettider": "Opening Hours",
     "store": "Store",
     "preferences": "Preferences"
+  },
+  "theme": {
+    "dark": "Dark mode",
+    "light": "Light mode"
   },
   "inventory": {
       "IN_STOCK": "In stock",
@@ -23,7 +28,7 @@
     "exploreCatalog": "Explore catalog",
     "subtotal": "Subtotal",
     "moms25": "VAT (25% other/shipping)",
-    "subtotalNet": "Subtotal (excl. VAT)",
+    "subtotalNet": "Subtotal (excl. VAT and Delivery)",
     "shipping": "Shipping",
     "free": "Free",
     "freeShippingReached": "Congratulations! You qualified for free shipping.",
@@ -140,6 +145,9 @@
     "productForm": {
       "newTitle": "Create New Product",
       "newSubtitle": "Configure product details, multi-currency prices, and inventory buffers",
+      "editTitle": "Edit Product",
+      "editSubtitle": "Update pricing, stock buffers, descriptions, and media",
+      "loading": "Loading product...",
       "backToList": "Back to Products",
       "tabs": {
         "ar": "Arabic",
@@ -172,6 +180,13 @@
         "priceUSD": "Price in USD",
         "currencyNote": "Enter decimal amounts (e.g. 45.50). Stored internally as integer minor units (öre/cents) without forced dynamic conversions.",
         "discount": "Discount (%)",
+        "discountActive": "Discount Active",
+        "discountHelp": "Enter discount percentage (0–100). Products with active discounts show promotional badges and discounted prices on the homepage and catalog.",
+        "discountPreviewTitle": "Discounted Price Preview",
+        "discountPreviewNote": "This is the actual price the customer will pay",
+        "discountNone": "0% (None)",
+        "customerSaves": "Customer saves",
+        "noDiscountNotice": "No active discount. Standard pricing applies.",
         "stockQuantity": "Physical Stock Quantity",
         "safetyBuffer": "Safety Buffer Override",
         "safetyBufferHelp": "Protects physical shelf stock from online overselling. Available Online = Total Stock - Buffer.",
@@ -197,7 +212,8 @@
         "nutritionHelp": "Filled in for food products. Leave blank if nutritional values are visible directly on the packaging image."
       },
       "actions": {
-        "submit": "Save Product",
+        "submit": "Create Product",
+        "save": "Save Changes",
         "submitting": "Saving...",
         "cancel": "Cancel"
       },
@@ -510,6 +526,54 @@
           "cancelDefaultReason": "Cancelled by store administrator"
         }
       }
+    },
+    "general": {
+      "title": "General Store Settings",
+      "subtitle": "Manage company details, opening hours, contact details, and physical store address",
+      "saveButton": "Save Settings",
+      "savedSuccess": "Settings saved successfully!",
+      "saveError": "An error occurred while saving.",
+      "collapseAll": "Collapse all",
+      "expandAll": "Expand all",
+      "sectionsCount": "5 sections",
+      "company": {
+        "sectionTitle": "Company Information & Swedish Accounting Act",
+        "badge": "Org.nr & VAT",
+        "description": "Statutory company registration information displayed in the storefront footer in compliance with Bokföringslagen.",
+        "nameLabel": "Company Legal Name",
+        "orgNumberLabel": "Organization Number (Org.nr)",
+        "vatNumberLabel": "VAT Registration Number (Momsreg.nr)"
+      },
+      "contact": {
+        "sectionTitle": "Customer Service & Contact Details",
+        "badge": "Email & Phone",
+        "description": "Official communication channels for customer inquiries, support, and order questions.",
+        "emailLabel": "Customer Support Email",
+        "phoneLabel": "Phone Number"
+      },
+      "address": {
+        "sectionTitle": "Physical Store Address",
+        "description": "Storefront visiting and collection address in Halmstad, Sweden.",
+        "streetLabel": "Street Address",
+        "postalCodeLabel": "Postal Code",
+        "cityLabel": "City",
+        "syncPickupLabel": "Keep in-store pickup address automatically synchronized with this address"
+      },
+      "schedule": {
+        "sectionTitle": "Weekly Opening Hours",
+        "badge": "Mon–Sun",
+        "description": "Define store opening hours per day of the week. Times are automatically formatted for the footer.",
+        "previewLabel": "Footer live preview:",
+        "open": "Opens",
+        "close": "Closes",
+        "closed": "Closed all day"
+      },
+      "identity": {
+        "sectionTitle": "Store Identity & Tagline (Multilingual)",
+        "description": "Store branding and descriptive tagline presented to customers across the site.",
+        "storeName": "Store Name",
+        "tagline": "Tagline / Store Description"
+      }
     }
   },
 
@@ -547,13 +611,21 @@
       "quickAllergenPrefix": "Quick filter allergen-free:"
     },
     "categories": {
-      "heading": "Shop by Category",
-      "subheading": "Explore authentic pantry essentials and regional delicacies",
-      "explore": "View all in category"
+      "heading": "Explore Our Categories",
+      "subheading": "Find your Middle Eastern favorites among our carefully selected groceries and delicacies",
+      "explore": "Explore range"
+    },
+    "deals": {
+      "badge": "Special Offers",
+      "heading": "Current Deals & Promotions",
+      "subheading": "Discover fantastic discounts on handpicked Middle Eastern delicacies.",
+      "viewAll": "View all deals",
+      "save": "Save {percent}%"
     }
   },
   "catalog": {
     "viewProduct": "View product",
+    "onlyDeals": "Deals & promotions only",
     "title": "Product Catalog",
     "searchPlaceholder": "Search by product name or brand...",
     "filtersTitle": "Filters",
@@ -629,6 +701,30 @@
       "sec3_step3": "Ship the goods back within 14 days of your notification. In accordance with law, return shipping costs are paid by the consumer.",
       "sec4_title": "4. Refunds",
       "sec4_p1": "Upon inspecting eligible non-food returns, refunds are issued within 14 days to the original payment method used during checkout."
+    },
+    "privacy": {
+      "title": "Privacy Policy & GDPR",
+      "metaTitle": "Privacy Policy",
+      "metaDesc": "Information on how Siwar Butik AB processes personal data under the EU GDPR regulation.",
+      "gdprBadge": "General Data Protection Regulation (GDPR)",
+      "sec1_title": "1. Data Controller",
+      "sec1_p1": "Siwar Butik AB, Storgatan 12, 302 43 Halmstad, Sweden, corporate registration number 559123-4567, is the data controller for the processing of your personal data.",
+      "sec1_p2": "We respect your personal privacy and are committed to ensuring high data protection standards in full compliance with the EU GDPR.",
+      "sec2_title": "2. Personal Data We Collect",
+      "sec2_p1": "We collect information you provide directly when placing an order or communicating with customer service:",
+      "sec2_item1": "Full name, shipping address, and billing details",
+      "sec2_item2": "Contact details (email address and mobile phone number for parcel tracking)",
+      "sec2_item3": "Order details (purchased items, order reference numbers, selected currency, and payment identifiers)",
+      "sec3_title": "3. Purpose and Legal Basis",
+      "sec3_p1": "We process your data to fulfill our sales contract with you, deliver ordered products, and provide customer support.",
+      "sec3_p2": "Certain processing is required to comply with statutory accounting laws (Bokföringslagen 1999:1078), requiring financial invoice records to be retained for seven years.",
+      "sec4_title": "4. Third-Party Data Processors",
+      "sec4_p1": "We never sell your personal data. We only share data with essential, trusted processors required for our operations:",
+      "sec4_item1": "Logistics and shipping carriers (e.g., PostNord) to deliver your parcel.",
+      "sec4_item2": "Payment service providers (e.g., Swish and card processors) for secure checkout authorization.",
+      "sec5_title": "5. Your Rights",
+      "sec5_p1": "Under GDPR, you have the right to request a register extract of your personal data free of charge, request rectification of inaccurate data, and under certain circumstances request erasure or restriction of processing.",
+      "sec5_p2": "To exercise your rights, contact us at order{'@'}siwar.se. You also have the right to lodge a complaint with the Swedish Data Protection Authority (Integritetsskyddsmyndigheten, IMY)."
     }
   },
   "checkout": {
@@ -682,6 +778,93 @@
   "order": {
     "confirmedTitle": "Thank you for your order!",
     "holdNotice": "Your amount has been reserved and will be charged when the order is packed.",
-    "backToHome": "Back to shop"
+    "backToHome": "Back to shop",
+    "printReceipt": "Print receipt"
+  },
+
+  "orderLookup": {
+    "title": "Track Your Order",
+    "subtitle": "Enter your order reference number and the email address used at checkout to view status.",
+    "orderNumberLabel": "Order Number",
+    "orderNumberPlaceholder": "e.g., SIW-1049",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "your.email{'@'}example.com",
+    "submitButton": "Search Order",
+    "noticeTitle": "Self-service tracking coming soon",
+    "noticeText": "Our digital order tracking portal is currently being finalized. If you have questions regarding an order, please contact our support at order{'@'}siwar.se."
+  },
+
+  "openingHoursPage": {
+    "metaTitle": "Opening Hours & Store Info",
+    "metaDesc": "Check the regular opening hours, location and contact details for Siwar in Halmstad.",
+    "breadcrumb": "Opening Hours",
+    "badge": "Physical Store in Halmstad",
+    "title": "Store Opening Hours & Visit Info",
+    "subtitle": "Welcome to our store in Halmstad for fresh ingredients, Middle Eastern delicacies, and friendly service.",
+    "status": {
+      "openNow": "Open Now",
+      "closedNow": "Closed Now",
+      "closesAt": "Closes today at {time}",
+      "opensAt": "Opens today at {time}",
+      "opensNext": "Opens {day} at {time}",
+      "welcomeBack": "Welcome back tomorrow at {time}",
+      "today": "Today"
+    },
+    "weeklySchedule": {
+      "title": "Weekly Opening Hours",
+      "description": "Our regular opening hours Monday through Sunday.",
+      "dayHeader": "Day",
+      "hoursHeader": "Hours",
+      "statusHeader": "Status",
+      "openStatus": "Open",
+      "closedStatus": "Closed",
+      "summaryLabel": "Summary:"
+    },
+    "location": {
+      "title": "Find the Store",
+      "description": "Our physical store is centrally located in Halmstad with convenient parking options nearby.",
+      "addressLabel": "Store Address",
+      "openInMaps": "Open in Google Maps",
+      "pickupTitle": "In-Store Pickup (Click & Collect)",
+      "pickupDescription": "Place your order in the webshop and pick it up for free in-store. Orders are packed and usually ready within 2 hours during store opening hours."
+    },
+    "contact": {
+      "title": "Questions before visiting?",
+      "description": "Feel free to get in touch if you have questions about our product range, stock levels, or allergens.",
+      "phoneLabel": "Phone",
+      "emailLabel": "Email",
+      "responseTime": "We reply to emails within 24 hours"
+    },
+    "holidayNotice": {
+      "title": "Public Holiday & Special Hours",
+      "text": "Opening hours may vary on Swedish public holidays (e.g. Midsummer, Christmas, New Year's). Please contact customer service or check our announcements for holiday updates."
+    }
+  },
+
+  "footer": {
+    "taglineFallback": "Your authentic Middle Eastern grocery store in Halmstad",
+    "hoursTitle": "Store Opening Hours",
+    "viewOpeningHoursPage": "View opening hours & directions",
+    "customerService": {
+      "title": "Customer Service",
+      "description": "Have questions about our products or an order? We are here to help.",
+      "orderLookup": "Track Order",
+      "responseNotice": "We normally respond within 24 hours"
+    },
+    "legal": {
+      "title": "Legal & Corporate",
+      "orgNumber": "Org.no",
+      "vatNumber": "VAT reg.no"
+    },
+    "payment": {
+      "title": "Trusted Payment Methods",
+      "subtitle": "Secure payments with encrypted checkout via certified gateways.",
+      "swish": "Swish Commerce",
+      "visa": "Visa",
+      "mastercard": "Mastercard",
+      "sslGuarantee": "256-bit SSL encrypted connection"
+    },
+    "allRightsReserved": "All rights reserved.",
+    "complianceNotice": "Compliant with Swedish Accounting Act (1999:1078) and Price Information Act."
   }
 }

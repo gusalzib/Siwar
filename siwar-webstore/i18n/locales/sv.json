@@ -6,9 +6,14 @@
   "nav": {
       "home": "Hem",
       "catalog": "Produktkatalog",
+      "oppettider": "Öppettider",
       "store": "Butik",
       "preferences": "Inställningar"
     },
+  "theme": {
+    "dark": "Mörkt läge",
+    "light": "Ljust läge"
+  },
   "inventory": {
     "IN_STOCK": "I lager",
     "OUT_OF_STOCK_ONLINE": "Tillfälligt slut online",
@@ -23,7 +28,7 @@
     "exploreCatalog": "Utforska sortimentet",
     "subtotal": "Delsumma",
     "moms25": "Moms (25% övrigt/frakt)",
-    "subtotalNet": "Delsumma (exkl. moms)",
+    "subtotalNet": "Delsumma (exkl. moms och frakt)",
     "shipping": "Frakt",
     "free": "Gratis",
     "freeShippingReached": "Grattis! Du har kvalificerat dig för fri frakt.",
@@ -143,6 +148,9 @@
     "productForm": {
       "newTitle": "Skapa ny produkt",
       "newSubtitle": "Fyll i produktinformation, manuella flervalutapriser och lagerbuffert",
+      "editTitle": "Redigera produkt",
+      "editSubtitle": "Uppdatera priser, lagerbuffert, beskrivningar och media",
+      "loading": "Laddar produkt...",
       "backToList": "Tillbaka till produkter",
       "tabs": {
         "ar": "Arabiska",
@@ -175,6 +183,13 @@
         "priceUSD": "Pris i USD",
         "currencyNote": "Ange belopp med decimaler (t.ex. 45.50). Priserna sparas i minor units (öre/cent) utan automatisk växlingskurs.",
         "discount": "Rabatt (%)",
+        "discountActive": "Kampanjrabatt aktiv",
+        "discountHelp": "Ange rabattprocent (0–100). Produkter med aktiv rabatt visas med kampanjpris och rabattbadge på startsidan och i katalogen.",
+        "discountPreviewTitle": "Förhandsvisning av kampanjpris",
+        "discountPreviewNote": "Detta är det faktiska priset kunden betalar",
+        "discountNone": "0% (Ingen)",
+        "customerSaves": "Kunden sparar",
+        "noDiscountNotice": "Ingen rabatt aktiv. Standardpriser gäller.",
         "stockQuantity": "Fysiskt lagerantal",
         "safetyBuffer": "Säkerhetsbuffert",
         "safetyBufferHelp": "Reserverar detta antal för butikshyllan. Tillgängligt online = Fysiskt lager - Säkerhetsbuffert.",
@@ -200,7 +215,8 @@
         "nutritionHelp": "Fylls i för livsmedel. Lämna tomt om näringsvärden visas direkt på förpackningsbilden."
       },
       "actions": {
-        "submit": "Spara produkt",
+        "submit": "Skapa produkt",
+        "save": "Spara ändringar",
         "submitting": "Sparar...",
         "cancel": "Avbryt"
       },
@@ -514,6 +530,54 @@
           "cancelDefaultReason": "Avbruten av butiksadministratör"
         }
       }
+    },
+    "general": {
+      "title": "Allmänna butiksinställningar",
+      "subtitle": "Hantera företagsinformation, öppettider, kontaktuppgifter och fysisk butiksadress",
+      "saveButton": "Spara inställningar",
+      "savedSuccess": "Inställningarna har sparats framgångsrikt!",
+      "saveError": "Ett fel uppstod vid sparande.",
+      "collapseAll": "Fäll ihop alla",
+      "expandAll": "Fäll ut alla",
+      "sectionsCount": "5 sektioner",
+      "company": {
+        "sectionTitle": "Företagsinformation & Bokföringslagen",
+        "badge": "Org.nr & Moms",
+        "description": "Lagstadgade företagsuppgifter som visas i butikens sidfot för att uppfylla Bokföringslagen och prisinformationslagen.",
+        "nameLabel": "Företagsnamn (Juridiskt)",
+        "orgNumberLabel": "Organisationsnummer (Org.nr)",
+        "vatNumberLabel": "Momsregistreringsnummer (Momsreg.nr)"
+      },
+      "contact": {
+        "sectionTitle": "Kundtjänst & Kontaktuppgifter",
+        "badge": "E-post & Telefon",
+        "description": "Officiella kontaktvägar för kundärenden, orderfrågor och reklamationer.",
+        "emailLabel": "Kundtjänst E-post",
+        "phoneLabel": "Telefonnummer"
+      },
+      "address": {
+        "sectionTitle": "Fysisk Butiksadress",
+        "description": "Besöksadress för butiken och kundutlämning i Halmstad.",
+        "streetLabel": "Gatuadress",
+        "postalCodeLabel": "Postnummer",
+        "cityLabel": "Postort",
+        "syncPickupLabel": "Håll butiksupphämtningsadressen automatiskt synkroniserad med denna adress"
+      },
+      "schedule": {
+        "sectionTitle": "Öppettider (Veckoschema)",
+        "badge": "Mån–Sön",
+        "description": "Definiera butikens öppettider per veckodag. Tiderna formateras automatiskt för sidfoten.",
+        "previewLabel": "Förhandsvisning i sidfot:",
+        "open": "Öppnar",
+        "close": "Stänger",
+        "closed": "Stängt hela dagen"
+      },
+      "identity": {
+        "sectionTitle": "Butiksidentitet & Slogan (Flerspråkig)",
+        "description": "Butikens namn och slogan som presenteras för kunder i sidfot och rubriker.",
+        "storeName": "Butiksnamn",
+        "tagline": "Slogan / Butiksbeskrivning"
+      }
     }
   },
 
@@ -550,13 +614,21 @@
       "quickAllergenPrefix": "Snabbfilter utan:"
     },
     "categories": {
-      "heading": "Handla efter kategori",
-      "subheading": "Utforska vårt breda sortiment av orientaliska råvaror och favoriter",
-      "explore": "Visa alla i kategorin"
+      "heading": "Utforska våra kategorier",
+      "subheading": "Hitta dina orientaliska favoriter bland våra noga utvalda råvaror och delikatesser",
+      "explore": "Utforska sortiment"
+    },
+    "deals": {
+      "badge": "Specialerbjudande",
+      "heading": "Aktuella Kampanjer & Erbjudanden",
+      "subheading": "Upptäck fantastiska prissänkningar på utvalda orientaliska delikatesser.",
+      "viewAll": "Se alla erbjudanden",
+      "save": "Spara {percent}%"
     }
   },
   "catalog": {
     "viewProduct": "Visa produkt",
+    "onlyDeals": "Endast kampanjvaror",
     "title": "Produktsortiment",
     "searchPlaceholder": "Sök efter produkt eller varumärke...",
     "filtersTitle": "Filtrera",
@@ -632,6 +704,30 @@
       "sec3_step3": "Skicka tillbaka varan inom 14 dagar från meddelandet. Returfrakten bekostas av konsumenten.",
       "sec4_title": "4. Återbetalning",
       "sec4_p1": "Vid godkänd retur av icke-livsmedel återbetalar vi varans belopp inom 14 dagar från mottagen retur med samma betalsätt som vid köpet."
+    },
+    "privacy": {
+      "title": "Integritetspolicy & Dataskydd",
+      "metaTitle": "Integritetspolicy",
+      "metaDesc": "Information om hur Siwar Butik AB hanterar personuppgifter i enlighet med GDPR.",
+      "gdprBadge": "Dataskyddsförordningen (GDPR)",
+      "sec1_title": "1. Personuppgiftsansvarig",
+      "sec1_p1": "Siwar Butik AB, Storgatan 12, 302 43 Halmstad, organisationsnummer 559123-4567, är personuppgiftsansvarig för behandlingen av dina personuppgifter.",
+      "sec1_p2": "Vi värnar om din personliga integritet och eftersträvar alltid en hög nivå av dataskydd i enlighet med EU:s dataskyddsförordning (GDPR).",
+      "sec2_title": "2. Vilka personuppgifter vi samlar in",
+      "sec2_p1": "Vi samlar in information som du lämnar till oss vid genomförande av köp eller kontakt med vår kundtjänst:",
+      "sec2_item1": "Namn, leveransadress och faktureringsadress",
+      "sec2_item2": "Kontaktuppgifter (e-postadress och mobilnummer för leveransavisering)",
+      "sec2_item3": "Orderinformation (beställda varor, ordernummer, valuta och betalningsreferens)",
+      "sec3_title": "3. Ändamål och rättslig grund för behandlingen",
+      "sec3_p1": "Vi behandlar dina uppgifter för att kunna fullgöra vårt köpeavtal med dig, leverera beställda produkter och tillhandahålla kundsupport.",
+      "sec3_p2": "Viss behandling sker även för att uppfylla rättsliga förpliktelser enligt Bokföringslagen (1999:1078), vilket kräver att faktura- och bokföringsunderlag sparas i sju år.",
+      "sec4_title": "4. Mottagare och delning med tredje part",
+      "sec4_p1": "Vi säljer aldrig dina personuppgifter vidare till utomstående parter. Vi delar endast uppgifter med pålitliga personuppgiftsbiträden som krävs för verksamheten:",
+      "sec4_item1": "Logistik- och fraktleverantörer (t.ex. PostNord) för att kunna leverera ditt paket.",
+      "sec4_item2": "Betaltjänstleverantörer (t.ex. Swish och kortinlösare) för säker betalningshantering.",
+      "sec5_title": "5. Dina rättigheter",
+      "sec5_p1": "Enligt GDPR har du rätt att kostnadsfritt begära ett registerutdrag över vilka uppgifter vi har lagrade om dig, begära rättelse av felaktiga uppgifter samt under vissa förutsättningar begära radering eller begränsning av behandlingen.",
+      "sec5_p2": "För att utöva dina rättigheter, kontakta oss via order{'@'}siwar.se. Du har även rätt att inge klagomål till Integritetsskyddsmyndigheten (IMY)."
     }
   },
   "checkout": {
@@ -685,6 +781,93 @@
   "order": {
     "confirmedTitle": "Tack för din beställning!",
     "holdNotice": "Ditt belopp har reserverats och dras när ordern packas.",
-    "backToHome": "Tillbaka till butiken"
+    "backToHome": "Tillbaka till butiken",
+    "printReceipt": "Skriv ut"
+  },
+
+  "orderLookup": {
+    "title": "Spåra din beställning",
+    "subtitle": "Ange ditt ordernummer och den e-postadress du använde vid köpet för att se aktuell orderstatus.",
+    "orderNumberLabel": "Ordernummer",
+    "orderNumberPlaceholder": "t.ex. SIW-1049",
+    "emailLabel": "E-postadress",
+    "emailPlaceholder": "din.epost{'@'}exempel.se",
+    "submitButton": "Sök order",
+    "noticeTitle": "Fullständig självbetjäning lanseras inom kort",
+    "noticeText": "Vår digitala orderspårning är under implementering. Har du frågor om en lagd order? Kontakta vår kundtjänst på order{'@'}siwar.se så hjälper vi dig omedelbart."
+  },
+
+  "openingHoursPage": {
+    "metaTitle": "Öppettider & Butiksinformation",
+    "metaDesc": "Se butikens ordinarie öppettider, adress och kontaktuppgifter för Siwar i Halmstad.",
+    "breadcrumb": "Öppettider",
+    "badge": "Fysisk Butik i Halmstad",
+    "title": "Butikens Öppettider & Besöksinformation",
+    "subtitle": "Välkommen in till vår butik i Halmstad för färska råvaror, orientaliska delikatesser och personlig service.",
+    "status": {
+      "openNow": "Öppet just nu",
+      "closedNow": "Stängt just nu",
+      "closesAt": "Stänger idag kl. {time}",
+      "opensAt": "Öppnar idag kl. {time}",
+      "opensNext": "Öppnar {day} kl. {time}",
+      "welcomeBack": "Välkommen åter imorgon kl. {time}",
+      "today": "Idag"
+    },
+    "weeklySchedule": {
+      "title": "Veckans Öppettider",
+      "description": "Våra ordinarie öppettider måndag till söndag.",
+      "dayHeader": "Dag",
+      "hoursHeader": "Öppettider",
+      "statusHeader": "Status",
+      "openStatus": "Öppet",
+      "closedStatus": "Stängt",
+      "summaryLabel": "Sammanfattning:"
+    },
+    "location": {
+      "title": "Hitta till Butiken",
+      "description": "Vår fysiska butik ligger centralt i Halmstad med goda parkeringsmöjligheter i närområdet.",
+      "addressLabel": "Besöksadress",
+      "openInMaps": "Öppna i Google Maps",
+      "pickupTitle": "Hämta i butik (Click & Collect)",
+      "pickupDescription": "Gör din beställning i webbshoppen och hämta kostnadsfritt i butiken. Din order packas och är normalt redo inom 2 timmar under butikens ordinarie öppettider."
+    },
+    "contact": {
+      "title": "Frågor inför ditt besök?",
+      "description": "Kontakta oss gärna om du undrar över sortiment, tillgänglighet eller märkning av allergener.",
+      "phoneLabel": "Telefon",
+      "emailLabel": "E-post",
+      "responseTime": "Vi besvarar e-post inom 24 timmar"
+    },
+    "holidayNotice": {
+      "title": "Avvikande öppettider vid helgdagar",
+      "text": "Under nationella helgdagar (t.ex. midsommar, jul och nyår) kan våra öppettider avvika. Kontakta gärna vår kundtjänst eller följ oss för uppdaterad information."
+    }
+  },
+
+  "footer": {
+    "taglineFallback": "Din orientaliska livsmedelsbutik i Halmstad",
+    "hoursTitle": "Butikens öppettider",
+    "viewOpeningHoursPage": "Se alla öppettider & hitta hit",
+    "customerService": {
+      "title": "Kundservice",
+      "description": "Har du frågor om vårt sortiment eller en pågående order? Vi hjälper dig gärna.",
+      "orderLookup": "Spåra beställning",
+      "responseNotice": "Vi svarar normalt inom 24 timmar"
+    },
+    "legal": {
+      "title": "Juridiskt & Företag",
+      "orgNumber": "Org.nr",
+      "vatNumber": "Momsreg.nr"
+    },
+    "payment": {
+      "title": "Trygga betalsätt",
+      "subtitle": "Säkra betalningar med kryptering via etablerade betallösningar.",
+      "swish": "Swish Handel",
+      "visa": "Visa",
+      "mastercard": "Mastercard",
+      "sslGuarantee": "256-bit SSL-krypterad anslutning"
+    },
+    "allRightsReserved": "Alla rättigheter förbehållna.",
+    "complianceNotice": "Följer Bokföringslagen (1999:1078) och Prisinformationslagen."
   }
 }

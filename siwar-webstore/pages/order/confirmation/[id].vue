@@ -22,6 +22,16 @@ function getLocalizedName(nameObj?: { ar: string; sv: string; en: string }) {
   const cur = locale.value as 'ar' | 'sv' | 'en'
   return nameObj[cur] || nameObj.sv || nameObj.en || nameObj.ar || ''
 }
+
+const totalDiscountSavings = computed(() => {
+  if (!order.value?.items) return 0
+  return order.value.items.reduce((acc: number, it: any) => {
+    const orig = it.originalUnitPriceMinor || it.unitPriceMinor
+    const diff = orig - it.unitPriceMinor
+    const q = it.fulfilledQuantity ?? it.quantity
+    return acc + (diff > 0 ? diff * q : 0)
+  }, 0)
+})
 </script>
 
 <template>
@@ -42,7 +52,7 @@ function getLocalizedName(nameObj?: { ar: string; sv: string; en: string }) {
           <Icon name="lucide:arrow-left" class="size-4" />
           <span>{{ t('order.backToHome', 'Tillbaka till butiken') }}</span>
         </NuxtLink>
-        <button type="button" class="btn btn-primary btn-sm text-white gap-2" @click="printReceipt">
+        <button type="button" class="btn btn-primary btn-sm text-white px-3 hover:bg-amber-500 bg-brand-600 gap-2" @click="printReceipt">
           <Icon name="lucide:printer" class="size-4" />
           <span>{{ t('order.printReceipt', 'Skriv ut kvitto') }}</span>
         </button>
@@ -107,12 +117,24 @@ function getLocalizedName(nameObj?: { ar: string; sv: string; en: string }) {
               <tr v-for="item in order.items" :key="item.productId">
                 <td class="font-sans">
                   <div class="font-bold text-sm text-base-content">{{ getLocalizedName(item.name) }}</div>
-                  <div v-if="item.sku" class="text-[11px] text-base-content/50 font-mono">SKU: {{ item.sku }}</div>
+                  <div class="flex items-center gap-1.5 mt-0.5">
+                    <span v-if="item.sku" class="text-[11px] text-base-content/50 font-mono">SKU: {{ item.sku }}</span>
+                    <span v-if="item.discount" class="badge badge-error badge-xs text-white font-black font-mono">
+                      -{{ item.discount }}%
+                    </span>
+                  </div>
                 </td>
                 <td class="text-center">{{ item.momsRate }}%</td>
                 <td class="text-center font-bold">{{ item.fulfilledQuantity ?? item.quantity }} st</td>
-                <td class="text-end">{{ formatMoney(item.unitPriceMinor, order.currency) }}</td>
-                <td class="text-end font-bold">
+                <td class="text-end">
+                  <div v-if="item.discount && item.originalUnitPriceMinor" class="text-[11px] text-base-content/40 line-through">
+                    {{ formatMoney(item.originalUnitPriceMinor, order.currency) }}
+                  </div>
+                  <div :class="{ 'text-error font-bold': item.discount }">
+                    {{ formatMoney(item.unitPriceMinor, order.currency) }}
+                  </div>
+                </td>
+                <td class="text-end font-bold" :class="{ 'text-error': item.discount }">
                   {{ formatMoney(item.unitPriceMinor * (item.fulfilledQuantity ?? item.quantity), order.currency) }}
                 </td>
               </tr>
@@ -169,6 +191,10 @@ function getLocalizedName(nameObj?: { ar: string; sv: string; en: string }) {
               <div class="flex justify-between text-base-content/70">
                 <span>Delsumma varor:</span>
                 <span class="font-mono">{{ formatMoney(order.pricing.itemsTotalMinor, order.currency) }}</span>
+              </div>
+              <div v-if="totalDiscountSavings > 0" class="flex justify-between text-error font-semibold">
+                <span>Rabatt / Erbjudande:</span>
+                <span class="font-mono">-{{ formatMoney(totalDiscountSavings, order.currency) }}</span>
               </div>
               <div class="flex justify-between text-base-content/70">
                 <span>Fraktkostnad:</span>

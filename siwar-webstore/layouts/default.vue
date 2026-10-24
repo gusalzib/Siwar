@@ -3,6 +3,7 @@
 import { usePreferencesStore, type CurrencyCode } from '~/stores/preferences'
 import { useCartStore, type CartItem } from '~/stores/cart'
 import CartDrawer from '~/components/CartDrawer.vue'
+import StoreFooter from '~/components/StoreFooter.vue'
 
 const { locale, locales, t } = useI18n()
 const localePath = useLocalePath()
@@ -54,7 +55,7 @@ const logout = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-base-200 text-base-content transition-all duration-150 overflow-x-clip">
+  <div class="min-h-screen flex flex-col bg-base-200 text-base-content transition-all duration-150 overflow-x-clip">
     <!-- DaisyUI Navbar -->
     <header class="navbar bg-base-100 shadow-sm sticky top-0 z-50 px-1.5 sm:px-4 gap-1 sm:gap-2">
 
@@ -81,6 +82,16 @@ const logout = async () => {
               >
                 <Icon name="lucide:layout-grid" class="h-4 w-4" />
                 {{ t('nav.catalog', 'Sortiment') }}
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink
+                :to="localePath('/oppettider')"
+                class="font-medium text-base-content"
+                active-class="!bg-brand-600 !text-white font-bold shadow-xs"
+              >
+                <Icon name="lucide:clock" class="h-4 w-4" />
+                {{ t('nav.oppettider', 'Öppettider') }}
               </NuxtLink>
             </li>
 
@@ -159,6 +170,14 @@ const logout = async () => {
         >
           <Icon name="lucide:layout-grid" class="h-4 w-4" />
           {{ t('nav.catalog', 'Sortiment') }}
+        </NuxtLink>
+        <NuxtLink
+          :to="localePath('/oppettider')"
+          class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
+          active-class="!bg-brand-600 !text-white font-bold shadow-xs"
+        >
+          <Icon name="lucide:clock" class="h-4 w-4" />
+          {{ t('nav.oppettider', 'Öppettider') }}
         </NuxtLink>
 
         <!-- Admin Management Links -->
@@ -314,9 +333,13 @@ const logout = async () => {
     </header>
 
     <!-- Main View Slot -->
-    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8 flex-1">
       <slot />
     </main>
+
+    <!-- Global Multi-Column Storefront Footer -->
+    <StoreFooter />
+
     <CartDrawer />
   </div>
 </template>

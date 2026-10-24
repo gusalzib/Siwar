@@ -76,11 +76,13 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const unitPrice = product.price[body.currency] ?? product.price.SEK
+    const baseUnitPrice = product.price[body.currency] ?? product.price.SEK
+    const discount = (product.discount && product.discount > 0) ? product.discount : 0
+    const unitPrice = discount > 0 ? Math.round(baseUnitPrice * (1 - discount / 100)) : baseUnitPrice
     const lineTotal = unitPrice * item.quantity
     grossProductsMinor += lineTotal
 
-    // Corrected: unitPriceMinor receives the single-unit price (unitPrice) rather than the line total
+    // unitPriceMinor receives the effective single-unit price (discounted if applicable)
     calculationLines.push({
       productId: item.productId,
       unitPriceMinor: unitPrice,
@@ -88,14 +90,19 @@ export default defineEventHandler(async (event) => {
       momsRate: product.momsRate as 12 | 25,
     })
 
-    // Added: Construct snapshot conforming to IOrderItem schema (capturing localized names & locked pricing)
+    const primaryImg = product.images?.find((img: any) => img.isPrimary)?.url || product.images?.[0]?.url || ''
+
+    // Snapshot conforming to IOrderItem schema with locked discounted pricing and discount audit
     orderItems.push({
       productId: product._id,
       sku: product.barcode,
+      imageUrl: primaryImg,
       name: product.name,
       quantity: item.quantity,
       fulfilledQuantity: item.quantity, // Default to ordered quantity
       unitPriceMinor: unitPrice,
+      originalUnitPriceMinor: discount > 0 ? baseUnitPrice : undefined,
+      discount: discount > 0 ? discount : undefined,
       momsRate: product.momsRate as 12 | 25,
     })
   }

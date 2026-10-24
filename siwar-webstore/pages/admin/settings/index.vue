@@ -4,6 +4,7 @@ import { ref, computed, watch } from 'vue'
 import CategoryManager from '~/components/admin/settings/CategoryManager.vue'
 import AllergenManager from '~/components/admin/settings/AllergenManager.vue'
 import BannerManager from '~/components/admin/settings/BannerManager.vue'
+import GeneralSettingsManager from '~/components/admin/settings/GeneralSettingsManager.vue'
 
 definePageMeta({
   middleware: 'admin',
@@ -15,9 +16,9 @@ const route = useRoute()
 const router = useRouter()
 
 // Valid tabs
-type SettingsTab = 'categories' | 'allergens' | 'banners'
+type SettingsTab = 'categories' | 'allergens' | 'banners' | 'general'
 
-const validTabs: SettingsTab[] = ['categories', 'allergens', 'banners']
+const validTabs: SettingsTab[] = ['categories', 'allergens', 'banners', 'general']
 
 // Active Tab state synced with URL query (?tab=categories, ?tab=allergens, or ?tab=banners)
 const initialTab = (
@@ -194,6 +195,22 @@ watch(
                   {{ bannersCount }}
                 </span>
               </button>
+
+              <button
+                type="button"
+                :class="[
+                  activeTab === 'general'
+                    ? 'bg-brand-500 text-white font-bold shadow-xs'
+                    : 'text-base-content/80 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                ]"
+                class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all duration-150"
+                @click="setTab('general')"
+              >
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <Icon name="lucide:sliders-horizontal" class="size-4.5 shrink-0" />
+                  <span class="truncate font-medium">{{ t('admin.settings.tabs.general', 'Allmänna') }}</span>
+                </div>
+              </button>
             </div>
           </div>
         </div>
@@ -291,6 +308,27 @@ watch(
                   {{ bannersCount }}
                 </span>
               </button>
+
+              <!-- General Tab -->
+              <button
+                type="button"
+                :class="[
+                  activeTab === 'general'
+                    ? 'bg-brand-500 text-white font-bold shadow-sm'
+                    : 'text-base-content/80 hover:bg-slate-100 dark:hover:bg-zinc-800/80 hover:text-base-content font-medium'
+                ]"
+                class="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm transition-all duration-150 group"
+                @click="setTab('general')"
+              >
+                <div class="flex items-center gap-3 min-w-0">
+                  <Icon
+                    name="lucide:sliders-horizontal"
+                    class="size-5 shrink-0 transition-transform group-hover:scale-110"
+                    :class="activeTab === 'general' ? 'text-white' : 'text-blue-600 dark:text-blue-400'"
+                  />
+                  <span class="truncate">{{ t('admin.settings.tabs.general', 'Allmänna') }}</span>
+                </div>
+              </button>
             </nav>
 
             <!-- Upcoming / Future Tabs Section -->
@@ -320,17 +358,6 @@ watch(
                   {{ t('admin.settings.comingSoon', 'Snart') }}
                 </span>
               </div>
-
-              <!-- General (Upcoming) -->
-              <div class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs text-base-content/50 cursor-not-allowed">
-                <div class="flex items-center gap-3">
-                  <Icon name="lucide:sliders-horizontal" class="size-4.5 opacity-60" />
-                  <span>{{ t('admin.settings.tabs.general', 'Allmänna') }}</span>
-                </div>
-                <span class="badge badge-xs badge-ghost text-[10px] font-bold opacity-60">
-                  {{ t('admin.settings.comingSoon', 'Snart') }}
-                </span>
-              </div>
             </div>
 
           </div>
@@ -353,6 +380,10 @@ watch(
               v-else-if="activeTab === 'banners'"
               key="banners"
               @update:count="bannersCount = $event"
+            />
+            <GeneralSettingsManager
+              v-else-if="activeTab === 'general'"
+              key="general"
             />
           </Transition>
         </main>

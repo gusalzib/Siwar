@@ -188,19 +188,23 @@ function renderItemsTable(order: IOrder, locale: EmailLocale): string {
       const qty = item.fulfilledQuantity ?? item.quantity
       if (qty === 0) return '' // Omit completely dropped shortage lines from final delivery receipt
 
+      const hasDiscount = Boolean(item.discount && item.discount > 0 && item.originalUnitPriceMinor)
+
       return `
       <tr>
         <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: ${align};">
           <strong style="font-size: 14px;">${name}</strong>
           ${item.sku ? `<br><span style="font-size: 11px; color: #6b7280; font-family: monospace;">SKU: ${item.sku}</span>` : ''}
+          ${hasDiscount ? `<br><span style="display: inline-block; font-size: 10px; font-weight: bold; background-color: #fee2e2; color: #dc2626; padding: 1px 6px; border-radius: 4px; margin-top: 3px;">-${item.discount}%</span>` : ''}
         </td>
         <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: center; font-size: 13px;">
           ${qty} st
         </td>
         <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: ${oppAlign}; font-size: 13px; font-family: monospace;">
-          ${formatMoney(item.unitPriceMinor, order.currency)}
+          ${hasDiscount ? `<span style="font-size: 11px; text-decoration: line-through; color: #9ca3af; display: block;">${formatMoney(item.originalUnitPriceMinor!, order.currency)}</span>` : ''}
+          <span style="${hasDiscount ? 'color: #dc2626; font-weight: bold;' : ''}">${formatMoney(item.unitPriceMinor, order.currency)}</span>
         </td>
-        <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: ${oppAlign}; font-size: 13px; font-weight: bold; font-family: monospace;">
+        <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: ${oppAlign}; font-size: 13px; font-weight: bold; font-family: monospace; ${hasDiscount ? 'color: #dc2626;' : ''}">
           ${formatMoney(item.unitPriceMinor * qty, order.currency)}
         </td>
       </tr>
@@ -233,6 +237,7 @@ function renderTotalsAndTax(order: IOrder, locale: EmailLocale): string {
   const labels = {
     ar: {
       subtotal: 'مجموع المنتجات:',
+      discount: 'الخصم والتوفير:',
       shipping: 'الشحن والتوصيل:',
       grandTotal: 'المجموع الكلي:',
       moms12: 'ضريبة 12% (أغذية):',
@@ -241,6 +246,7 @@ function renderTotalsAndTax(order: IOrder, locale: EmailLocale): string {
     },
     sv: {
       subtotal: 'Delsumma varor:',
+      discount: 'Kampanjrabatt:',
       shipping: 'Fraktkostnad:',
       grandTotal: 'Totalt belopp:',
       moms12: 'Moms 12% (livsmedel):',
@@ -249,6 +255,7 @@ function renderTotalsAndTax(order: IOrder, locale: EmailLocale): string {
     },
     en: {
       subtotal: 'Items Subtotal:',
+      discount: 'Promotional Discount:',
       shipping: 'Shipping Fee:',
       grandTotal: 'Grand Total:',
       moms12: 'VAT 12% (Food):',
@@ -259,6 +266,12 @@ function renderTotalsAndTax(order: IOrder, locale: EmailLocale): string {
 
   const totalCharged = order.pricing.capturedTotalMinor ?? order.pricing.grandTotalMinor
   const tax = order.pricing.taxSplit
+  const totalSavingsMinor = order.items.reduce((acc, it) => {
+    const orig = it.originalUnitPriceMinor || it.unitPriceMinor
+    const diff = orig - it.unitPriceMinor
+    const q = it.fulfilledQuantity ?? it.quantity
+    return acc + (diff > 0 ? diff * q : 0)
+  }, 0)
 
   return `
     <div style="border-top: 2px solid #111827; padding-top: 14px; font-size: 14px;">
@@ -267,6 +280,12 @@ function renderTotalsAndTax(order: IOrder, locale: EmailLocale): string {
           <td style="padding: 4px 0; text-align: ${align}; color: #4b5563;">${labels.subtotal}</td>
           <td style="padding: 4px 0; text-align: ${oppAlign}; font-family: monospace;">${formatMoney(order.pricing.itemsTotalMinor, order.currency)}</td>
         </tr>
+        ${totalSavingsMinor > 0 ? `
+        <tr>
+          <td style="padding: 4px 0; text-align: ${align}; color: #16a34a; font-weight: bold;">${labels.discount}</td>
+          <td style="padding: 4px 0; text-align: ${oppAlign}; font-family: monospace; color: #16a34a; font-weight: bold;">-${formatMoney(totalSavingsMinor, order.currency)}</td>
+        </tr>
+        ` : ''}
         <tr>
           <td style="padding: 4px 0; text-align: ${align}; color: #4b5563;">${labels.shipping}</td>
           <td style="padding: 4px 0; text-align: ${oppAlign}; font-family: monospace;">${formatMoney(order.pricing.shippingFeeMinor, order.currency)}</td>
