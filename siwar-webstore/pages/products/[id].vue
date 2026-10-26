@@ -3,13 +3,23 @@
 import { calculateJamforpris, type SupportedUnit } from '~/server/services/pricing.service'
 import type { StorefrontProduct } from '~/types/product'
 import { useCartStore } from '~/stores/cart'
+import { useFavoritesStore } from '~/stores/favorites'
 
 const route = useRoute()
 const { t, locale } = useI18n()
 const preferences = usePreferencesStore()
 const cartStore = useCartStore()
+const favoritesStore = useFavoritesStore()
 
 const productId = route.params.id as string
+
+const effectiveProductId = computed(() => {
+  return String(product.value?.id || (product.value as any)?._id || productId)
+})
+
+onMounted(() => {
+  favoritesStore.hydrateFavorites()
+})
 
 // SSR Data Fetching (NFR-1: TTFB < 200ms)
 const { data: product, error } = await useAsyncData<StorefrontProduct>(
@@ -207,16 +217,31 @@ const localePath = useLocalePath()
             </span>
           </div>
 
+          <!-- Favorite Toggle Button (AC-1) -->
+          <button
+            type="button"
+            :aria-label="favoritesStore.isFavorite(effectiveProductId) ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
+            :title="favoritesStore.isFavorite(effectiveProductId) ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
+            class="absolute top-4 end-4 z-20 btn btn-circle btn-md bg-base-100 hover:bg-base-200 dark:bg-base-200 dark:hover:bg-base-300 border border-base-300 shadow-md transition-all duration-200 active:scale-90"
+            @click.stop.prevent="favoritesStore.toggleFavorite(effectiveProductId)"
+          >
+            <Icon
+              name="lucide:heart"
+              class="size-5 transition-all duration-300"
+              :class="favoritesStore.isFavorite(effectiveProductId) ? 'text-rose-500 fill-rose-500 scale-110' : 'text-base-content/60 hover:text-rose-500 scale-100'"
+            />
+          </button>
+
           <!-- Stock Status Badge -->
           <span
             v-if="product.availability.statusCode === 'OUT_OF_STOCK_ONLINE'"
-            class="badge badge-warning badge-md absolute top-4 end-4 shadow-md font-bold px-3 py-1"
+            class="badge badge-warning badge-md absolute bottom-4 end-4 shadow-md font-bold px-3 py-1"
           >
             {{ t('inventory.OUT_OF_STOCK_ONLINE') }}
           </span>
           <span
             v-else-if="product.availability.statusCode === 'OUT_OF_STOCK'"
-            class="badge badge-error badge-md text-white absolute top-4 end-4 shadow-md font-bold px-3 py-1"
+            class="badge badge-error badge-md text-white absolute bottom-4 end-4 shadow-md font-bold px-3 py-1"
           >
             {{ t('inventory.OUT_OF_STOCK') }}
           </span>
@@ -415,6 +440,24 @@ const localePath = useLocalePath()
             >
               <Icon name="lucide:shopping-cart" class="size-5" />
               <span>{{ product.availability.canAddToCart ? t('cart.add') : t('inventory.' + product.availability.statusCode) }}</span>
+            </button>
+
+            <!-- Secondary Favorite Action Button -->
+            <button
+              type="button"
+              :aria-label="favoritesStore.isFavorite(effectiveProductId) ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
+              :title="favoritesStore.isFavorite(effectiveProductId) ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
+              class="btn btn-md btn-outline border-base-300 hover:border-rose-500 text-base-content hover:text-rose-500 transition-all gap-2"
+              @click="favoritesStore.toggleFavorite(effectiveProductId)"
+            >
+              <Icon
+                name="lucide:heart"
+                class="size-5 transition-transform"
+                :class="favoritesStore.isFavorite(effectiveProductId) ? 'text-rose-500 fill-rose-500' : ''"
+              />
+              <span class="hidden sm:inline font-bold">
+                {{ favoritesStore.isFavorite(effectiveProductId) ? t('favorites.remove', 'Ta bort') : t('favorites.add', 'Spara') }}
+              </span>
             </button>
           </div>
         </div>
