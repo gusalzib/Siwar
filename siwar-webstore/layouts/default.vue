@@ -2,6 +2,7 @@
 <script setup lang="ts">
 import { usePreferencesStore, type CurrencyCode } from '~/stores/preferences'
 import { useCartStore, type CartItem } from '~/stores/cart'
+import { useFavoritesStore } from '~/stores/favorites'
 import CartDrawer from '~/components/CartDrawer.vue'
 import StoreFooter from '~/components/StoreFooter.vue'
 
@@ -10,6 +11,7 @@ const localePath = useLocalePath()
 const switchLocalePath = useSwitchLocalePath()
 const preferences = usePreferencesStore()
 const cartStore = useCartStore()
+const favoritesStore = useFavoritesStore()
 
 // Supported store currencies for AC-1 switching
 const availableCurrencies: CurrencyCode[] = ['SEK', 'EUR', 'USD']
@@ -22,9 +24,10 @@ const currentLocaleName = computed(() => {
   return found?.name || locale.value
 })
 
-// Client-side hydration on initial application mount (AC-3)
+// Client-side hydration on initial application mount (AC-3, Issue 31)
 onMounted(() => {
   cartStore.hydrateCart();
+  favoritesStore.hydrateFavorites();
 })
 
 useHead(() => ({
@@ -92,6 +95,24 @@ const logout = async () => {
               >
                 <Icon name="lucide:clock" class="h-4 w-4" />
                 {{ t('nav.oppettider', 'Öppettider') }}
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink
+                :to="localePath('/favoriter')"
+                class="font-medium text-base-content flex items-center justify-between"
+                active-class="!bg-brand-600 !text-white font-bold shadow-xs"
+              >
+                <span class="flex items-center gap-2">
+                  <Icon name="lucide:heart" class="h-4 w-4 text-rose-500" />
+                  {{ t('nav.favorites', 'Favoriter') }}
+                </span>
+                <span
+                  v-if="favoritesStore.favoriteCount > 0"
+                  class="badge badge-xs bg-rose-500 text-white font-bold border-none"
+                >
+                  {{ favoritesStore.favoriteCount }}
+                </span>
               </NuxtLink>
             </li>
 
@@ -278,6 +299,24 @@ const logout = async () => {
           <Icon name="lucide:sun" class="swap-off h-4 w-4 sm:h-5 sm:w-5" />
           <Icon name="lucide:moon" class="swap-on h-4 w-4 sm:h-5 sm:w-5" />
         </label>
+
+        <!-- Header Favorites Shortcut Icon Button (AC-1) -->
+        <NuxtLink
+          :to="localePath('/favoriter')"
+          class="btn btn-ghost btn-circle btn-sm"
+          :aria-label="t('nav.favorites', 'Favoriter')"
+          :title="t('nav.favorites', 'Favoriter')"
+        >
+          <div class="indicator">
+            <Icon name="lucide:heart" class="size-4 sm:size-5 text-rose-500" />
+            <span
+              v-if="favoritesStore.favoriteCount > 0"
+              class="badge badge-xs sm:badge-sm bg-rose-500 text-white indicator-item font-bold border-none shadow-xs"
+            >
+              {{ favoritesStore.favoriteCount }}
+            </span>
+          </div>
+        </NuxtLink>
 
         <!-- Header Cart Trigger Button -->
         <button
