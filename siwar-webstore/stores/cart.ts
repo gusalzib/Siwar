@@ -247,8 +247,9 @@ export const useCartStore = defineStore('cart', () => {
       const existing = items.value[existingIndex]
       if (!existing) return 'SUCCESS'
 
-      // Update available stock snapshot if passed afresh
+      // Update available stock and price snapshot if passed afresh
       existing.availableStock = item.availableStock
+      existing.price = item.price
 
       const targetQty = existing.quantity + requestedQuantity
 
@@ -386,8 +387,18 @@ export const useCartStore = defineStore('cart', () => {
         }
 
         // Determine live effective price (discountedPrice if active promotion, else base retail price)
-        const liveEffectivePrice: MultiCurrencyPrice = (live.discount && live.discount > 0 && live.discountedPrice)
-          ? live.discountedPrice
+        // Determine live effective price
+        const hasDiscount = Boolean(
+          (live.discount && live.discount > 0) || 
+          live.discountPrice || 
+          live.discountedPrice ||
+          live.isOnSale
+        )
+
+        const resolvedDiscountPrice = live.discountedPrice || live.discountPrice
+
+        const liveEffectivePrice: MultiCurrencyPrice = (hasDiscount && resolvedDiscountPrice)
+          ? resolvedDiscountPrice
           : live.price
 
         if (liveEffectivePrice) {

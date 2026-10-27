@@ -180,6 +180,26 @@ describe('Issue #8: Pinia Cart Store Suite', () => {
       expect(cartStore.shippingMoms25Minor).toBe(0)
       expect(cartStore.grandTotalMinor).toBe(cartStore.cartSubtotalMinor)
     })
+
+    it('does not grant free shipping when discounted product subtotal drops below threshold (e.g. 1000 SEK discounted to 700 SEK)', () => {
+      const expensiveDiscountedItem: Omit<CartItem, 'quantity'> = {
+        productId: 'prod_expensive_discounted',
+        sku: 'EXP-100',
+        name: { ar: 'منتج مخفض', sv: 'Rabatterad produkt', en: 'Discounted Product' },
+        thumbnailUrl: 'https://example.com/item.webp',
+        price: { SEK: 70000, EUR: 6500, USD: 7000 }, // 700.00 SEK (< 899.00 SEK)
+        momsRate: 12,
+        grossWeight: 500,
+        availableStock: 5,
+      }
+      cartStore.addItem(expensiveDiscountedItem, 1)
+
+      expect(cartStore.cartSubtotalMinor).toBe(70000)
+      expect(cartStore.isFreeShippingQualified).toBe(false)
+      expect(cartStore.remainingForFreeShippingMinor).toBe(89900 - 70000)
+      expect(cartStore.shippingFeeMinor).toBe(7700)
+      expect(cartStore.grandTotalMinor).toBe(70000 + 7700)
+    })
   })
 
   // -------------------------------------------------------------------------

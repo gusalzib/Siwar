@@ -77,13 +77,17 @@ function handleAddToCart(product: any) {
   if (!product.canAddToCart) return
 
   const primaryImg = product.primaryImage?.url || ''
+  const resolvedDiscountPrice = product.discountedPrice || product.discountPrice
+  const effectivePrice = (product.discount && product.discount > 0 && resolvedDiscountPrice)
+    ? resolvedDiscountPrice
+    : product.price
 
   cartStore.addItem(
     {
       productId: product.id,
       name: product.name,
       thumbnailUrl: primaryImg,
-      price: product.discountedPrice || product.price,
+      price: effectivePrice,
       momsRate: product.momsRate || 12,
       grossWeight: product.grossWeight || 0,
       availableStock: product.availableStock,

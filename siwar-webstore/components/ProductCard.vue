@@ -70,8 +70,9 @@ function handleAddToCart() {
   if (!props.product.canAddToCart || !productId.value) return
 
   const primaryImg = props.product.primaryImage?.url || props.product.images?.[0]?.url || ''
-  const effectivePrice = (props.product.discount && props.product.discount > 0 && props.product.discountedPrice)
-    ? props.product.discountedPrice
+  const resolvedDiscountPrice = props.product.discountedPrice || (props.product as any).discountPrice
+  const effectivePrice = (props.product.discount && props.product.discount > 0 && resolvedDiscountPrice)
+    ? resolvedDiscountPrice
     : props.product.price
 
   cartStore.addItem(
@@ -208,9 +209,9 @@ function calculateComparisonPrice(
 
       <!-- Middle: Price & Jämförpris -->
       <div class="pt-3 border-t border-base-200 mt-4">
-        <div v-if="product.discount && product.discount > 0 && product.discountedPrice" class="flex items-baseline gap-2 flex-wrap">
+        <div v-if="product.discount && product.discount > 0 && (product.discountedPrice || (product as any).discountPrice)" class="flex items-baseline gap-2 flex-wrap">
           <span class="text-lg font-black text-error">
-            {{ ((product.discountedPrice[activeCurrency] ?? product.discountedPrice.SEK ?? 0) / 100).toFixed(2) }} {{ activeCurrency }}
+            {{ (((product.discountedPrice || (product as any).discountPrice)[activeCurrency] ?? (product.discountedPrice || (product as any).discountPrice).SEK ?? 0) / 100).toFixed(2) }} {{ activeCurrency }}
           </span>
           <span class="text-xs font-semibold text-base-content/50 line-through">
             {{ ((product.price[activeCurrency] ?? product.price.SEK ?? 0) / 100).toFixed(2) }} {{ activeCurrency }}
@@ -222,8 +223,8 @@ function calculateComparisonPrice(
         <div class="text-[11px] text-base-content/60 mt-0.5">
           {{
             calculateComparisonPrice(
-              (product.discount && product.discount > 0 && product.discountedPrice)
-                ? (product.discountedPrice[activeCurrency] ?? product.discountedPrice.SEK ?? 0)
+              (product.discount && product.discount > 0 && (product.discountedPrice || (product as any).discountPrice))
+                ? ((product.discountedPrice || (product as any).discountPrice)[activeCurrency] ?? (product.discountedPrice || (product as any).discountPrice).SEK ?? 0)
                 : (product.price[activeCurrency] ?? product.price.SEK ?? 0),
               product.netQuantity
             )

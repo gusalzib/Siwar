@@ -52,7 +52,8 @@ const selectedQuantity = ref(1)
 const activeCurrency = computed<'SEK' | 'EUR' | 'USD'>(() => preferences.currency || 'SEK')
 
 const hasDiscount = computed(() => {
-  return Boolean(product.value?.discount && product.value.discount > 0 && product.value.discountedPrice)
+  const resolvedDiscountPrice = product.value?.discountedPrice || (product.value as any)?.discountPrice
+  return Boolean(product.value?.discount && product.value.discount > 0 && resolvedDiscountPrice)
 })
 
 // Campaign Deadline Urgency (<= 48h)
@@ -88,8 +89,9 @@ const originalPrice = computed(() => {
 
 const displayPrice = computed(() => {
   if (!product.value) return '0.00'
-  if (hasDiscount.value && product.value.discountedPrice) {
-    const minorPrice = product.value.discountedPrice[activeCurrency.value] ?? product.value.discountedPrice.SEK
+  const resolvedDiscountPrice = product.value.discountedPrice || (product.value as any)?.discountPrice
+  if (hasDiscount.value && resolvedDiscountPrice) {
+    const minorPrice = resolvedDiscountPrice[activeCurrency.value] ?? resolvedDiscountPrice.SEK
     return (minorPrice / 100).toFixed(2)
   }
   const minorPrice = product.value.price?.[activeCurrency.value] ?? product.value.price?.SEK ?? 0
@@ -103,8 +105,9 @@ const comparisonPrice = computed(() => {
   const unit = product.value.netQuantity.unit.toLowerCase() as SupportedUnit
   if (!['g', 'kg', 'ml', 'l'].includes(unit)) return null
 
-  const effectiveMinorPrice = hasDiscount.value && product.value.discountedPrice
-    ? (product.value.discountedPrice[activeCurrency.value] ?? product.value.discountedPrice.SEK)
+  const resolvedDiscountPrice = product.value?.discountedPrice || (product.value as any)?.discountPrice
+  const effectiveMinorPrice = hasDiscount.value && resolvedDiscountPrice
+    ? (resolvedDiscountPrice[activeCurrency.value] ?? resolvedDiscountPrice.SEK)
     : (product.value.price[activeCurrency.value] ?? product.value.price.SEK)
 
   const unitPriceMinor = calculateJamforpris(effectiveMinorPrice, product.value.netQuantity.value, unit)
@@ -157,8 +160,9 @@ function addToCart() {
 
   // 3. Dispatch to Pinia cart store
   const primaryImg = product.value.images?.find((img: any) => img.isPrimary) || product.value.images?.[0]
-  const effectivePrice = hasDiscount.value && product.value.discountedPrice
-    ? product.value.discountedPrice
+  const resolvedDiscountPrice = product.value.discountedPrice || (product.value as any)?.discountPrice
+  const effectivePrice = hasDiscount.value && resolvedDiscountPrice
+    ? resolvedDiscountPrice
     : product.value.price
 
   const status = cartStore.addItem(
