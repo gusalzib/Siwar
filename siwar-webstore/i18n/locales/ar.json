@@ -209,6 +209,14 @@
         "discountNone": "0% (بدون خصم)",
         "customerSaves": "العميل يوفّر",
         "noDiscountNotice": "لا يوجد خصم نشط. الأسعار القياسية هي المطبقة.",
+        "discountStartsAt": "تاريخ بدء الحملة",
+        "discountStartsAtHelp": "اتركه فارغاً للبدء فوراً",
+        "discountExpiresAt": "تاريخ انتهاء الحملة (الموعد النهائي)",
+        "discountExpiresAtHelp": "اتركه فارغاً لتظل سارية حتى إشعار آخر",
+        "clearDate": "مسح",
+        "campaignActive": "نشطة",
+        "campaignScheduled": "مجدولة",
+        "campaignExpired": "منتهية",
         "stockQuantity": "إجمالي المخزون الفعلي",
         "safetyBuffer": "حد أمان المخزون",
         "safetyBufferHelp": "يعزل هذا المقدار عن البيع عبر الإنترنت لحماية مبيعات المتجر الفعلي. المتاح أونلاين = المخزون - الحد.",
@@ -641,8 +649,14 @@
       "heading": "أقوى العروض والخصومات الحالية",
       "subheading": "استمتع بتخفيضات مذهلة على تشكيلة مختارة من ألذ المنتجات والمؤن الشرقية.",
       "viewAll": "عرض جميع العروض",
-      "save": "وفر {percent}%"
+      "save": "وفر {percent}%",
+      "endsSoon": "ينتهي قريباً",
+      "validUntil": "صالح حتى {date}"
     }
+  },
+  "deals": {
+    "endsSoon": "ينتهي قريباً",
+    "validUntil": "صالح حتى {date}"
   },
   "catalog": {
     "viewProduct": "عرض المنتج",
@@ -794,7 +808,9 @@
     "scanSwishQR": "امسح رمز Swish",
     "openSwishApp": "افتح تطبيق Swish",
     "cardPayment": "الدفع بالبطاقة",
-    "stripeTimeoutError": "انتهت مهلة بوابة الدفع"
+    "stripeTimeoutError": "انتهت مهلة بوابة الدفع",
+    "swishSEKOnly": "متوفر فقط للمشتريات التي تتم باستخدام الكرونة السويدية",
+    "priceAdjustedWarning": "تم تحديث سعر عنصر أو أكثر في سلتك لانتهاء فترة العرض الترويجي."
   },
 
   "order": {

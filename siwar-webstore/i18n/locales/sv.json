@@ -211,6 +211,14 @@
         "discountNone": "0% (Ingen)",
         "customerSaves": "Kunden sparar",
         "noDiscountNotice": "Ingen rabatt aktiv. Standardpriser gäller.",
+        "discountStartsAt": "Kampanj startdatum",
+        "discountStartsAtHelp": "Lämna tomt för att starta omedelbart",
+        "discountExpiresAt": "Kampanj slutdatum (Deadline)",
+        "discountExpiresAtHelp": "Lämna tomt för att gälla tillsvidare",
+        "clearDate": "Rensa",
+        "campaignActive": "Aktiv",
+        "campaignScheduled": "Schemalagd",
+        "campaignExpired": "Avslutad",
         "stockQuantity": "Fysiskt lagerantal",
         "safetyBuffer": "Säkerhetsbuffert",
         "safetyBufferHelp": "Reserverar detta antal för butikshyllan. Tillgängligt online = Fysiskt lager - Säkerhetsbuffert.",
@@ -644,8 +652,14 @@
       "heading": "Aktuella Kampanjer & Erbjudanden",
       "subheading": "Upptäck fantastiska prissänkningar på utvalda orientaliska delikatesser.",
       "viewAll": "Se alla erbjudanden",
-      "save": "Spara {percent}%"
+      "save": "Spara {percent}%",
+      "endsSoon": "Slutar snart",
+      "validUntil": "Gäller t.o.m. {date}"
     }
+  },
+  "deals": {
+    "endsSoon": "Slutar snart",
+    "validUntil": "Gäller t.o.m. {date}"
   },
   "catalog": {
     "viewProduct": "Visa produkt",
@@ -796,7 +810,9 @@
     "scanSwishQR": "Skanna Swish QR-kod",
     "openSwishApp": "Öppna Swish",
     "cardPayment": "Kortbetalning",
-    "stripeTimeoutError": "Betalningsportalen timeout"
+    "stripeTimeoutError": "Betalningsportalen timeout",
+    "priceAdjustedWarning": "Priset på en eller flera varor i din varukorg har uppdaterats eftersom kampanjen har avslutats.",
+    "swishSEKOnly": "Endast tillgängligt för köp gjorda med svenska kronor"
   },
 
   "order": {
