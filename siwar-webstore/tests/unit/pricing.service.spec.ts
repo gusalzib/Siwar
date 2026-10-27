@@ -3,6 +3,9 @@ import { describe, it, expect } from 'vitest'
 import {
   calculateJamforpris,
   calculateMomsSplit,
+  isDiscountActive,
+  calculateDiscountedPrice,
+  isDiscountExpiringSoon,
   type LineItemInput,
 } from '../../server/services/pricing.service'
 
@@ -228,3 +231,133 @@ describe('Pricing Service - calculateMomsSplit', () => {
     )
   })
 })
+
+describe('Pricing Service - isDiscountActive (Campaign Scheduling & Invariance)', () => {
+  const referenceTime = new Date('2026-10-27T12:00:00.000Z')
+
+  it('returns false when discount is 0, negative, or undefined', () => {
+    expect(isDiscountActive(0, null, null, referenceTime)).toBe(false)
+    expect(isDiscountActive(-10, null, null, referenceTime)).toBe(false)
+    expect(isDiscountActive(undefined, null, null, referenceTime)).toBe(false)
+    expect(isDiscountActive(null, null, null, referenceTime)).toBe(false)
+  })
+
+  it('returns true when discount > 0 and no date constraints are set', () => {
+    expect(isDiscountActive(20, null, null, referenceTime)).toBe(true)
+    expect(isDiscountActive(15, undefined, undefined, referenceTime)).toBe(true)
+  })
+
+  it('evaluates startsAt: returns false if start date is in the future', () => {
+    const futureStart = new Date('2026-10-27T13:00:00.000Z')
+    expect(isDiscountActive(20, futureStart, null, referenceTime)).toBe(false)
+  })
+
+  it('evaluates startsAt: returns true if start date has arrived or is in past', () => {
+    const pastStart = new Date('2026-10-27T11:00:00.000Z')
+    expect(isDiscountActive(20, pastStart, null, referenceTime)).toBe(true)
+
+    // Exact boundary match (startsAt <= now)
+    expect(isDiscountActive(20, referenceTime, null, referenceTime)).toBe(true)
+  })
+
+  it('evaluates expiresAt: returns false if deadline has passed (AC-1)', () => {
+    const pastDeadline = new Date('2026-10-27T11:59:59.000Z')
+    expect(isDiscountActive(20, null, pastDeadline, referenceTime)).toBe(false)
+
+    // Exact deadline boundary (expiresAt <= now is expired, formula: expiresAt > now)
+    expect(isDiscountActive(20, null, referenceTime, referenceTime)).toBe(false)
+  })
+
+  it('evaluates expiresAt: returns true if deadline is in the future (AC-2)', () => {
+    const futureDeadline = new Date('2026-10-27T12:00:01.000Z')
+    expect(isDiscountActive(20, null, futureDeadline, referenceTime)).toBe(true)
+  })
+
+  it('evaluates window boundaries when both startsAt and expiresAt are provided', () => {
+    const start = new Date('2026-10-27T10:00:00.000Z')
+    const end = new Date('2026-10-27T14:00:00.000Z')
+
+    // Inside window
+    expect(isDiscountActive(20, start, end, new Date('2026-10-27T12:00:00.000Z'))).toBe(true)
+
+    // Before window
+    expect(isDiscountActive(20, start, end, new Date('2026-10-27T09:59:59.000Z'))).toBe(false)
+
+    // After window
+    expect(isDiscountActive(20, start, end, new Date('2026-10-27T14:00:01.000Z'))).toBe(false)
+  })
+})
+
+describe('Pricing Service - calculateDiscountedPrice', () => {
+  const basePrices = { SEK: 10000, EUR: 1000, USD: 1000 } // 100.00 SEK, 10.00 EUR, 10.00 USD
+  const referenceTime = new Date('2026-10-27T12:00:00.000Z')
+
+  it('returns null when discount is inactive or expired', () => {
+    const pastDeadline = new Date('2026-10-27T11:00:00.000Z')
+    const result = calculateDiscountedPrice(basePrices, 20, null, pastDeadline, referenceTime)
+    expect(result).toBeNull()
+  })
+
+  it('calculates 20% discount on 100 SEK to exactly 80 SEK (AC-1)', () => {
+    const futureDeadline = new Date('2026-10-27T15:00:00.000Z')
+    const result = calculateDiscountedPrice(basePrices, 20, null, futureDeadline, referenceTime)
+
+    expect(result).toEqual({
+      SEK: 8000, // 80.00 SEK
+      EUR: 800,  // 8.00 EUR
+      USD: 800,  // 8.00 USD
+    })
+  })
+
+  it('deterministically rounds half-up on fractional minor units', () => {
+    // 45.00 SEK (4,500 öre) at 15% discount -> 4500 * 0.85 = 3825 öre (38.25 SEK)
+    const oddPrices = { SEK: 4500, EUR: 430, USD: 470 }
+    const result = calculateDiscountedPrice(oddPrices, 15, null, null, referenceTime)
+
+    expect(result).toEqual({
+      SEK: 3825,
+      EUR: Math.round(430 * 0.85), // 366 öre
+      USD: Math.round(470 * 0.85), // 400 öre
+    })
+  })
+})
+
+describe('Pricing Service - isDiscountExpiringSoon (Urgent 48-Hour Badge)', () => {
+  const referenceTime = new Date('2026-10-27T12:00:00.000Z')
+
+  it('returns false when expiresAt is null or undefined', () => {
+    expect(isDiscountExpiringSoon(null, referenceTime)).toBe(false)
+    expect(isDiscountExpiringSoon(undefined, referenceTime)).toBe(false)
+  })
+
+  it('returns false when deadline has already expired', () => {
+    const pastDeadline = new Date('2026-10-27T11:59:00.000Z')
+    expect(isDiscountExpiringSoon(pastDeadline, referenceTime)).toBe(false)
+  })
+
+  it('returns true when deadline is within 48 hours in future', () => {
+    // 2 hours in future
+    const in2Hours = new Date('2026-10-27T14:00:00.000Z')
+    expect(isDiscountExpiringSoon(in2Hours, referenceTime)).toBe(true)
+
+    // 47 hours and 59 minutes in future
+    const in47Hours = new Date('2026-10-29T11:59:00.000Z')
+    expect(isDiscountExpiringSoon(in47Hours, referenceTime)).toBe(true)
+  })
+
+  it('returns false when deadline is further out than 48 hours', () => {
+    // 49 hours in future
+    const in49Hours = new Date('2026-10-29T13:00:00.000Z')
+    expect(isDiscountExpiringSoon(in49Hours, referenceTime)).toBe(false)
+
+    // 7 days in future
+    const in7Days = new Date('2026-11-03T12:00:00.000Z')
+    expect(isDiscountExpiringSoon(in7Days, referenceTime)).toBe(false)
+  })
+
+  it('respects a custom thresholdHours parameter', () => {
+    const in10Hours = new Date('2026-10-27T22:00:00.000Z')
+    expect(isDiscountExpiringSoon(in10Hours, referenceTime, 6)).toBe(false)
+    expect(isDiscountExpiringSoon(in10Hours, referenceTime, 12)).toBe(true)
+  })
+})
