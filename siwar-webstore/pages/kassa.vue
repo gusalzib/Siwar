@@ -215,15 +215,24 @@ async function handleProceedToPayment() {
   stockErrorMessage.value = null
 
   try {
-    // 1. Atomic Pre-Checkout Inventory Boundary Check (AC-3 from Issue #4)
+    // 1. Atomic Pre-Checkout Inventory & Price Invariance Boundary Check (AC-3)
+    const activeCurr = preferences.currency || 'SEK'
     const validationPayload = {
       items: cartStore.items.map((item) => ({
         productId: item.productId,
         requestedQuantity: item.quantity,
+        currentPriceMinor: item.price[activeCurr] ?? item.price.SEK,
       })),
+      currency: activeCurr,
     }
 
-    const checkRes = await $fetch<{ isValid: boolean; summaryMessage?: string }>(
+    const checkRes = await $fetch<{
+      isValid: boolean
+      hasAdjustments?: boolean
+      hasPriceAdjustments?: boolean
+      priceAdjustments?: Array<{ productId: string; oldPriceMinor: number; newPriceMinor: number }>
+      summaryMessage?: string
+    }>(
       '/api/checkout/validate-stock',
       {
         method: 'POST',
@@ -237,10 +246,23 @@ async function handleProceedToPayment() {
     })
 
     if (!checkRes.isValid) {
-      stockErrorMessage.value = t(
-        'checkout.stockAdjustedWarning',
-        'Vissa varors lagersaldo ändrades i butiken. Varukorgen har justerats.'
-      )
+      if (checkRes.hasPriceAdjustments && checkRes.priceAdjustments?.length) {
+        for (const adj of checkRes.priceAdjustments) {
+          const item = cartStore.items.find((i) => i.productId === adj.productId)
+          if (item) {
+            item.price[activeCurr] = adj.newPriceMinor
+          }
+        }
+        stockErrorMessage.value = t(
+          'checkout.priceAdjustedWarning',
+          'Priset på en eller flera varor i din varukorg har uppdaterats eftersom kampanjen har avslutats.'
+        )
+      } else {
+        stockErrorMessage.value = t(
+          'checkout.stockAdjustedWarning',
+          'Vissa varors lagersaldo ändrades i butiken. Varukorgen har justerats.'
+        )
+      }
       return
     }
 
