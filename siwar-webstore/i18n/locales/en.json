@@ -8,7 +8,8 @@
     "catalog": "Product Catalog",
     "oppettider": "Opening Hours",
     "store": "Store",
-    "preferences": "Preferences"
+    "preferences": "Preferences",
+    "favorites": "Favorites"
   },
   "theme": {
     "dark": "Dark mode",
@@ -47,6 +48,26 @@
       "OUT_OF_STOCK_ONLINE": "Item is temporarily out of stock online.",
       "INVALID_QUANTITY": "Invalid quantity specified."
     }
+  },
+  "favorites": {
+    "title": "My Favorites",
+    "subtitle": "Your saved favorite products all in one place.",
+    "emptyTitle": "No favorites saved yet",
+    "emptySubtitle": "Bookmark your favorite products by clicking the heart icon while shopping.",
+    "exploreCta": "Explore Catalog",
+    "add": "Add to favorites",
+    "remove": "Remove from favorites",
+    "itemsCount": "{count} saved products",
+    "itemsCountOne": "1 saved product",
+    "clearAll": "Clear all",
+    "clearConfirm": "Are you sure you want to remove all saved favorites?",
+    "clearModalTitle": "Clear all favorites?",
+    "clearModalDesc": "Are you sure you want to remove all your saved favorites? This action cannot be undone.",
+    "clearCancel": "Cancel",
+    "clearConfirmBtn": "Yes, clear all",
+    "outOfStockOnline": "Temporarily out of stock online",
+    "addedToast": "Added to favorites",
+    "removedToast": "Removed from favorites"
   },
   "admin": {
     "nav": {

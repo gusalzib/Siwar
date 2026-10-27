@@ -452,115 +452,11 @@ function getLocalized(obj?: Record<string, string>): string {
 
         <!-- AC-3: SSR Hydrated Product Cards -->
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <article
+          <ProductCard
             v-for="product in catalogData.products"
             :key="product.id"
-            class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition flex flex-col justify-between overflow-hidden group"
-        >
-            <!-- Thumbnail Image & Badges -->
-            <figure class="relative h-48 w-full bg-base-200 overflow-hidden">
-            <img
-                v-if="product.primaryImage?.url"
-                :src="product.primaryImage.url"
-                :alt="product.primaryImage.altText || getLocalized(product.name)"
-                class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
-                loading="lazy"
-            />
-            <div v-else class="flex h-full w-full items-center justify-center text-base-content/30">
-                <Icon name="lucide:image" class="size-10" />
-            </div>
-
-            <!-- Bold Attention-Grabbing Discount Tag -->
-            <div v-if="product.discount > 0" class="absolute top-2.5 start-2.5 z-10">
-              <span
-                class="relative inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-600 shadow-md shadow-red-500/40 border border-white/20 select-none overflow-hidden tracking-wide"
-              >
-                <!-- Ambient pulse glow behind -->
-                <span class="absolute inset-0 bg-white/15 animate-pulse pointer-events-none" />
-
-                <!-- Animated live radar dot for eye-catching effect -->
-                <span class="relative flex size-2 shrink-0">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-90" />
-                  <span class="relative inline-flex rounded-full size-2 bg-amber-400" />
-                </span>
-
-                <span class="relative drop-shadow-xs">
-                  {{ t('home.deals.save', { percent: product.discount }) }}
-                </span>
-              </span>
-            </div>
-
-            <!-- Inventory Status Badge -->
-            <span
-                v-if="product.statusCode === 'OUT_OF_STOCK_ONLINE'"
-                class="badge badge-warning badge-sm absolute top-3 end-3 shadow font-semibold"
-            >
-                {{ t('inventory.OUT_OF_STOCK_ONLINE') }}
-            </span>
-            <span
-                v-else-if="product.statusCode === 'OUT_OF_STOCK'"
-                class="badge badge-error badge-sm text-white absolute top-3 end-3 shadow font-semibold"
-            >
-                {{ t('inventory.OUT_OF_STOCK') }}
-            </span>
-            </figure>
-
-            <!-- Card Content -->
-            <div class="card-body p-4 flex flex-col justify-between flex-1">
-                <!-- Top: Brand, Origin & Product Title -->
-                <div>
-                    <span class="text-xs uppercase tracking-wider text-base-content/50 font-semibold">
-                        {{ product.brand }} <span v-if="product.countryOfOrigin">• {{ product.countryOfOrigin }}</span>
-                    </span>
-                    <h4 class="font-bold text-base text-base-content group-hover:text-primary transition line-clamp-2 mt-1">
-                    <NuxtLink :to="localePath(`/products/${product.id}`)">
-                        {{ getLocalized(product.name) }}
-                    </NuxtLink>
-                    </h4>
-                </div>
-
-                <!-- Middle: Price & Jämförpris -->
-                <div class="pt-3 border-t border-base-200 mt-4">
-                    <div v-if="product.discount > 0 && product.discountedPrice" class="flex items-baseline gap-2 flex-wrap">
-                      <span class="text-lg font-black text-error">
-                        {{ ((product.discountedPrice[activeCurrency] ?? product.discountedPrice.SEK ?? 0) / 100).toFixed(2) }} {{ activeCurrency }}
-                      </span>
-                      <span class="text-xs font-semibold text-base-content/50 line-through">
-                        {{ ((product.price[activeCurrency] ?? product.price.SEK ?? 0) / 100).toFixed(2) }} {{ activeCurrency }}
-                      </span>
-                    </div>
-                    <div v-else class="text-lg font-black text-base-content">
-                        {{ ((product.price[activeCurrency] ?? product.price.SEK ?? 0) / 100).toFixed(2) }} {{ activeCurrency }}
-                    </div>
-                    <div class="text-[11px] text-base-content/60 mt-0.5">
-                        {{ calculateComparisonPrice((product.discount > 0 && product.discountedPrice) ? (product.discountedPrice[activeCurrency] ?? product.discountedPrice.SEK) : (product.price[activeCurrency] ?? product.price.SEK), product.netQuantity) }}
-                    </div>
-                </div>
-
-                <!-- Bottom: Dual Action Row -->
-                <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-base-200">
-                    <!-- View Product (Semantic NuxtLink Button) -->
-                    <NuxtLink
-                        :to="localePath(`/products/${product.id}`)"
-                        class="btn btn-sm btn-outline h-auto min-h-8 py-1.5 leading-tight border-base-content/20 text-base-content hover:bg-base-200 hover:border-base-content/30 gap-1.5 font-semibold transition-all"
-                    >
-                    <Icon name="lucide:eye" class="size-4" />
-                    <span>{{ t('catalog.viewProduct') }}</span>
-                    </NuxtLink>
-
-                    <!-- Add to Cart -->
-                    <button
-                        type="button"
-                        :disabled="!product.canAddToCart"
-                        @click.stop="handleAddToCart(product)"
-                        class="btn btn-sm h-auto min-h-8 py-1.5 leading-tight !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none gap-1.5 font-bold hover:scale-[1.02] transition-all shadow-sm disabled:opacity-50 disabled:hover:scale-100 text-center"
-                      >
-                        <Icon name="lucide:shopping-cart" class="size-4 shrink-0" />
-                        <span>{{ t('cart.add') }}</span>
-                      </button>
-                </div>
-            </div>
-        </article>
+            :product="product"
+          />
         </div>
 
         <!-- Pagination Controls -->

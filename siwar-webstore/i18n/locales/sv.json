@@ -8,7 +8,8 @@
       "catalog": "Produktkatalog",
       "oppettider": "Öppettider",
       "store": "Butik",
-      "preferences": "Inställningar"
+      "preferences": "Inställningar",
+      "favorites": "Favoriter"
     },
   "theme": {
     "dark": "Mörkt läge",
@@ -48,6 +49,26 @@
       "OUT_OF_STOCK_ONLINE": "Varan är tyvärr tillfälligt slut online.",
       "INVALID_QUANTITY": "Ogiltigt antal angivet."
     }
+  },
+  "favorites": {
+    "title": "Mina favoriter",
+    "subtitle": "Dina sparade favoritprodukter på ett och samma ställe.",
+    "emptyTitle": "Inga sparade favoriter än",
+    "emptySubtitle": "Spara dina favoritprodukter genom att klicka på hjärtikonen när du handlar.",
+    "exploreCta": "Utforska sortimentet",
+    "add": "Lägg till i favoriter",
+    "remove": "Ta bort från favoriter",
+    "itemsCount": "{count} sparade produkter",
+    "itemsCountOne": "1 sparad produkt",
+    "clearAll": "Rensa alla",
+    "clearConfirm": "Är du säker på att du vill ta bort alla sparade favoriter?",
+    "clearModalTitle": "Rensa alla favoriter?",
+    "clearModalDesc": "Är du säker på att du vill ta bort alla dina sparade favoriter? Denna åtgärd kan inte ångras.",
+    "clearCancel": "Avbryt",
+    "clearConfirmBtn": "Ja, rensa alla",
+    "outOfStockOnline": "Tillfälligt slut online",
+    "addedToast": "Tillagd i favoriter",
+    "removedToast": "Borttagen från favoriter"
   },
   "admin": {
     "nav": {

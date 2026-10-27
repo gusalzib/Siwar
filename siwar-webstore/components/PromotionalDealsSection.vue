@@ -3,11 +3,13 @@
 import { computed, ref } from 'vue'
 import { useCartStore } from '~/stores/cart'
 import { usePreferencesStore, type CurrencyCode } from '~/stores/preferences'
+import { useFavoritesStore } from '~/stores/favorites'
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const cartStore = useCartStore()
 const preferences = usePreferencesStore()
+const favoritesStore = useFavoritesStore()
 
 // Active Store Currency
 const activeCurrency = computed<CurrencyCode>(() => (preferences.currency || 'SEK') as CurrencyCode)
@@ -177,9 +179,24 @@ function handleAddToCart(product: any) {
             </span>
           </div>
 
+          <!-- Favorite Toggle Button (AC-1) -->
+          <button
+            type="button"
+            :aria-label="favoritesStore.isFavorite(product.id || product._id) ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
+            :title="favoritesStore.isFavorite(product.id || product._id) ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
+            class="absolute top-2.5 end-2.5 z-20 btn btn-circle btn-sm bg-base-100 hover:bg-base-200 dark:bg-base-200 dark:hover:bg-base-300 border border-base-300/80 shadow-md transition-all duration-200 active:scale-90"
+            @click.stop.prevent="favoritesStore.toggleFavorite(product.id || product._id)"
+          >
+            <Icon
+              name="lucide:heart"
+              class="size-4 transition-all duration-300"
+              :class="favoritesStore.isFavorite(product.id || product._id) ? 'text-rose-500 fill-rose-500 scale-110' : 'text-base-content/60 hover:text-rose-500 scale-100'"
+            />
+          </button>
+
           <!-- Inventory Status Badge -->
-          <div v-if="!product.canAddToCart" class="absolute top-2.5 end-2.5 z-10">
-            <span class="badge badge-warning badge-sm shadow font-semibold">
+          <div v-if="!product.canAddToCart" class="absolute bottom-2.5 end-2.5 z-10 pointer-events-none">
+            <span class="badge badge-warning badge-sm shadow-md font-semibold">
               {{ t('inventory.OUT_OF_STOCK_ONLINE', 'Slut i webblager') }}
             </span>
           </div>
