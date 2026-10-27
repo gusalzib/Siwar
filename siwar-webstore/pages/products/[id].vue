@@ -55,6 +55,31 @@ const hasDiscount = computed(() => {
   return Boolean(product.value?.discount && product.value.discount > 0 && product.value.discountedPrice)
 })
 
+// Campaign Deadline Urgency (<= 48h)
+const isExpiringSoon = computed<boolean>(() => {
+  if (!hasDiscount.value || !product.value?.discountExpiresAt) return false
+  const expiry = new Date(product.value.discountExpiresAt)
+  if (Number.isNaN(expiry.getTime())) return false
+  const diffMs = expiry.getTime() - Date.now()
+  return diffMs > 0 && diffMs <= 48 * 60 * 60 * 1000
+})
+
+// Formatted Campaign Deadline in Customer Locale (Single Product Page only)
+const formattedExpiryDate = computed<string | null>(() => {
+  if (!hasDiscount.value || !product.value?.discountExpiresAt) return null
+  const expiry = new Date(product.value.discountExpiresAt)
+  if (Number.isNaN(expiry.getTime())) return null
+
+  const activeLocale = locale.value === 'ar' ? 'ar-EG' : locale.value === 'en' ? 'en-US' : 'sv-SE'
+  return new Intl.DateTimeFormat(activeLocale, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(expiry)
+})
+
 const originalPrice = computed(() => {
   if (!product.value?.price) return '0.00'
   const minorPrice = product.value.price[activeCurrency.value] ?? product.value.price.SEK
@@ -206,14 +231,22 @@ const localePath = useLocalePath()
             <span class="text-sm">{{ t(  'admin.products.noImage') }}</span>
           </div>
 
-          <!-- Bold Attention-Grabbing Discount Tag -->
-          <div v-if="hasDiscount" class="absolute top-4 start-4 z-10">
+          <!-- Bold Attention-Grabbing Discount Tag & Urgent Expiry Badge -->
+          <div v-if="hasDiscount" class="absolute top-4 start-4 z-10 flex flex-col items-start gap-1.5">
             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-black bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white shadow-lg shadow-red-500/30 border border-white/20 tracking-wide uppercase">
               <span class="relative flex size-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-90" />
                 <span class="relative inline-flex rounded-full size-2 bg-amber-400" />
               </span>
               <span>{{ t('home.deals.save', { percent: product.discount }) }}</span>
+            </span>
+
+            <span
+              v-if="isExpiringSoon"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-black bg-amber-400 dark:bg-amber-400 shadow-sm border border-amber-500/30 select-none tracking-tight"
+            >
+              <Icon name="lucide:clock" class="size-3.5 shrink-0 text-black" />
+              <span>{{ t('deals.endsSoon', 'Slutar snart') }}</span>
             </span>
           </div>
 
@@ -300,12 +333,28 @@ const localePath = useLocalePath()
                 <span class="badge badge-error text-white font-bold text-xs shadow-xs">
                   -{{ product.discount }}%
                 </span>
+                <!-- Urgent Expiry Badge (Impending Deadline <= 48h) -->
+                <span
+                  v-if="isExpiringSoon"
+                  class="badge bg-amber-400 dark:bg-amber-400 border border-amber-500/40 text-black font-bold text-xs shadow-xs gap-1"
+                >
+                  <Icon name="lucide:clock" class="size-3 text-black" />
+                  {{ t('deals.endsSoon', 'Slutar snart') }}
+                </span>
               </div>
               <div v-else class="text-3xl font-black text-base-content">
                 {{ displayPrice }} {{ activeCurrency }}
               </div>
               <div v-if="comparisonPrice" class="text-xs text-base-content/70 mt-1">
                 {{ t(  'admin.products.jamforpris') }}: <span class="font-semibold">{{ comparisonPrice }}</span>
+              </div>
+              <!-- Specific End Date in Active Locale Format (Single Product Page only) -->
+              <div
+                v-if="formattedExpiryDate"
+                class="text-xs font-semibold text-amber-700 dark:text-amber-400 mt-2 flex items-center gap-1.5"
+              >
+                <Icon name="lucide:calendar-clock" class="size-3.5 shrink-0" />
+                <span>{{ t('deals.validUntil', { date: formattedExpiryDate }) }}</span>
               </div>
             </div>
             <span class="text-xs text-base-content/50">
