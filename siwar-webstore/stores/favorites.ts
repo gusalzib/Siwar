@@ -51,6 +51,10 @@ export const useFavoritesStore = defineStore('favorites', () => {
         console.error('Failed to hydrate favorites from localStorage:', err)
       } finally {
         isHydrated.value = true
+        // AC-3: Automatically verify and prune any archived (isActive: false) or deleted product IDs
+        if (favoriteIds.value.length > 0) {
+          verifyActiveFavorites()
+        }
       }
     }
   }
@@ -176,6 +180,40 @@ export const useFavoritesStore = defineStore('favorites', () => {
     saveToStorage()
   }
 
+  /**
+   * AC-3: Synchronize store with an array of verified active product IDs.
+   * Prunes any stored ID that is not in the active list (e.g. archived or deleted products).
+   */
+  function syncActiveFavorites(activeIds: string[]): void {
+    const activeSet = new Set(activeIds.map((id) => String(id).trim()))
+    const cleaned = favoriteIds.value.filter((id) => activeSet.has(id))
+    if (cleaned.length !== favoriteIds.value.length) {
+      favoriteIds.value = cleaned
+      saveToStorage()
+    }
+  }
+
+  /**
+   * AC-3: Background verification: queries /api/products/batch to check if any
+   * currently saved favorite IDs have been archived (isActive: false) or deleted.
+   * Automatically syncs and updates the store and localStorage.
+   */
+  async function verifyActiveFavorites(): Promise<void> {
+    if (!isClient() || favoriteIds.value.length === 0) return
+    try {
+      const data = await $fetch<any[]>('/api/products/batch', {
+        method: 'POST',
+        body: { ids: favoriteIds.value },
+      })
+      if (Array.isArray(data)) {
+        const activeIds = data.map((p) => String(p.id || p._id))
+        syncActiveFavorites(activeIds)
+      }
+    } catch {
+      // Gracefully ignore network errors so offline/flaky connections don't wipe items
+    }
+  }
+
   // Reactive Getters
   const favoriteCount = computed<number>(() => favoriteIds.value.length)
   const favorites = computed<string[]>(() => [...favoriteIds.value])
@@ -190,6 +228,8 @@ export const useFavoritesStore = defineStore('favorites', () => {
     addFavorite,
     removeFavorite,
     clearFavorites,
+    syncActiveFavorites,
+    verifyActiveFavorites,
     hydrateFavorites,
   }
 })

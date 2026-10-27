@@ -119,4 +119,43 @@ describe('Issue #31: Pinia Guest Favorites Store Suite', () => {
       )
     })
   })
+
+  describe('AC-3: Removed or Archived Product Resilience', () => {
+    it('prunes archived or deleted product IDs when syncActiveFavorites is called', async () => {
+      favoritesStore.addFavorite('prod_active1')
+      favoritesStore.addFavorite('prod_archived')
+      favoritesStore.addFavorite('prod_active2')
+      expect(favoritesStore.favoriteCount).toBe(3)
+
+      // Only prod_active1 and prod_active2 were returned as active by the backend
+      favoritesStore.syncActiveFavorites(['prod_active1', 'prod_active2'])
+
+      expect(favoritesStore.favoriteCount).toBe(2)
+      expect(favoritesStore.isFavorite('prod_active1')).toBe(true)
+      expect(favoritesStore.isFavorite('prod_active2')).toBe(true)
+      expect(favoritesStore.isFavorite('prod_archived')).toBe(false)
+      expect(favoritesStore.favorites).toEqual(['prod_active1', 'prod_active2'])
+
+      await nextTick()
+      expect(localStorage.setItem).toHaveBeenCalledWith(
+        'siwar_guest_favorites',
+        JSON.stringify(['prod_active1', 'prod_active2'])
+      )
+    })
+
+    it('prunes all favorites if all saved products were archived', async () => {
+      favoritesStore.addFavorite('prod_archived1')
+      favoritesStore.addFavorite('prod_archived2')
+      expect(favoritesStore.favoriteCount).toBe(2)
+
+      favoritesStore.syncActiveFavorites([])
+
+      expect(favoritesStore.favoriteCount).toBe(0)
+      expect(favoritesStore.favorites).toEqual([])
+      expect(localStorage.setItem).toHaveBeenCalledWith(
+        'siwar_guest_favorites',
+        JSON.stringify([])
+      )
+    })
+  })
 })

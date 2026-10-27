@@ -26,7 +26,12 @@ async function fetchFavoriteProducts() {
       method: 'POST',
       body: { ids },
     })
-    products.value = Array.isArray(data) ? data : []
+    const activeProducts = Array.isArray(data) ? data : []
+    products.value = activeProducts
+
+    // AC-3: Automatically prune archived or deleted product IDs from localStorage and store
+    const activeIds = activeProducts.map((p) => String(p.id || p._id))
+    favoritesStore.syncActiveFavorites(activeIds)
   } catch (err) {
     console.error('Failed to load favorite products:', err)
     products.value = []
@@ -254,8 +259,8 @@ useSeoMeta({
               </button>
             </div>
           </div>
-          <form method="dialog" class="modal-backdrop bg-black/60">
-            <button type="submit" @click="closeClearModal">close</button>
+          <form method="dialog" class="modal-backdrop bg-black/60 backdrop-blur-xs" @click="closeClearModal">
+            <button type="button" class="sr-only">close</button>
           </form>
         </dialog>
       </Teleport>
