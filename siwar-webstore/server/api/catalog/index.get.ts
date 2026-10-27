@@ -2,6 +2,8 @@
 import { type QueryFilter, Types } from 'mongoose'
 import { Product, type IProduct } from '~/server/models/Product'
 import { Category } from '~/server/models/Category'
+import '~/server/models/Allergens'
+import { calculateDiscountedPrice, isDiscountActive } from '~/server/services/pricing.service'
 
 /**
  * Route: GET /api/catalog
@@ -89,7 +91,7 @@ export default defineEventHandler(async (event) => {
     filter.countryOfOrigin = { $in: origins.map((o) => String(o).trim()) }
   }
 
-  // 6.5. Promotional Deals / Discount Filter (products with discount > 0)
+  // 6.5. Promotional Deals / Discount Filter (products with discount > 0 and within active promotion window per AC-4)
   if (
     query.hasDiscount === 'true' ||
     query.discount === 'true' ||
@@ -97,7 +99,13 @@ export default defineEventHandler(async (event) => {
     query.deals === 'true' ||
     Number(query.discount) > 0
   ) {
+    const now = new Date()
     filter.discount = { $gt: 0 }
+    const discountWindowConditions = [
+      { $or: [{ discountStartsAt: null }, { discountStartsAt: { $lte: now } }] },
+      { $or: [{ discountExpiresAt: null }, { discountExpiresAt: { $gt: now } }] },
+    ]
+    filter.$and = filter.$and ? [...filter.$and, ...discountWindowConditions] : discountWindowConditions
   }
 
   // 7. Sort Mapping
@@ -117,6 +125,8 @@ export default defineEventHandler(async (event) => {
       .lean(),
   ])
 
+  const now = new Date()
+
   // 9. Format response payload with comparison prices and safety buffer availability
   const products = rawProducts.map((p) => {
     const buffer = p.safetyBuffer ?? 0
@@ -131,12 +141,11 @@ export default defineEventHandler(async (event) => {
       statusCode = 'OUT_OF_STOCK_ONLINE'
     }
 
-    const discount = p.discount || 0
-    const discountedPrice = discount > 0 ? {
-      SEK: Math.round((p.price?.SEK || 0) * (1 - discount / 100)),
-      EUR: Math.round((p.price?.EUR || 0) * (1 - discount / 100)),
-      USD: Math.round((p.price?.USD || 0) * (1 - discount / 100)),
-    } : null
+    const hasActiveDiscount = isDiscountActive(p.discount, p.discountStartsAt, p.discountExpiresAt, now)
+    const discount = hasActiveDiscount ? (p.discount || 0) : 0
+    const discountedPrice = hasActiveDiscount
+      ? calculateDiscountedPrice(p.price, p.discount, p.discountStartsAt, p.discountExpiresAt, now)
+      : null
 
     return {
       id: String(p._id),
@@ -149,6 +158,8 @@ export default defineEventHandler(async (event) => {
       primaryImage,
       price: p.price,
       discount,
+      discountStartsAt: p.discountStartsAt || null,
+      discountExpiresAt: p.discountExpiresAt || null,
       discountedPrice,
       netQuantity: p.netQuantity,
       grossWeight: p.grossWeight ?? (p.netQuantity?.unit === 'g' ? p.netQuantity.value : 0), // Pass grossWeight with fallback to netQuantity if unit is in grams
