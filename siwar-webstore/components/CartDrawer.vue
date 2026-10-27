@@ -1,6 +1,6 @@
 <!-- components/CartDrawer.vue -->
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useCartStore, type CartItem } from '~/stores/cart'
 import { usePreferencesStore } from '~/stores/preferences'
 
@@ -8,6 +8,16 @@ const cartStore = useCartStore()
 const preferences = usePreferencesStore()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
+
+// When the drawer opens, refresh cart prices and stock from the server (Issue 31)
+watch(
+  () => cartStore.isDrawerOpen,
+  (isOpen) => {
+    if (isOpen) {
+      cartStore.refreshCartPricesAndStock()
+    }
+  }
+)
 
 // Localized toast notification for inventory boundary breaches (AC-1)
 const warningMessage = ref<string | null>(null)
@@ -131,7 +141,7 @@ function proceedToCheckout() {
           </p>
           <button
             type="button"
-            class="btn btn-primary btn-sm mt-6 text-white"
+            class="btn btn-primary btn-sm mt-6 text-black dark:text-white"
             @click="closeDrawer(); navigateTo(localePath('/catalog'))"
           >
             {{ t('cart.exploreCatalog', 'Utforska sortimentet') }}

@@ -73,7 +73,12 @@ export const useCartStore = defineStore('cart', () => {
         console.error('Failed to hydrate cart from localStorage:', err)
       } finally {
         isHydrated.value = true
+        if (items.value.length > 0) {
+          refreshCartPricesAndStock()
+        }
       }
+    } else if (isClient() && isHydrated.value && items.value.length > 0) {
+      refreshCartPricesAndStock()
     }
   }
 
@@ -338,7 +343,88 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   function toggleDrawer(open?: boolean): void {
-    isDrawerOpen.value = typeof open === 'boolean' ? open : !isDrawerOpen.value
+    const nextState = typeof open === 'boolean' ? open : !isDrawerOpen.value
+    isDrawerOpen.value = nextState
+    if (nextState && items.value.length > 0) {
+      refreshCartPricesAndStock()
+    }
+  }
+
+  /**
+   * Refreshes cart item prices, active discount status, and live available stock
+   * against the database via /api/products/batch.
+   * Ensures that if a discount starts or expires while items are in the cart,
+   * prices and totals update reactively immediately on page load, refresh, or opening the cart.
+   */
+  async function refreshCartPricesAndStock(): Promise<void> {
+    if (!isClient() || items.value.length === 0 || typeof $fetch === 'undefined') return
+
+    try {
+      const productIds = items.value.map((i) => i.productId)
+      const freshProducts = await $fetch<any[]>('/api/products/batch', {
+        method: 'POST',
+        body: { ids: productIds },
+      })
+
+      if (!Array.isArray(freshProducts)) return
+
+      const productMap = new Map<string, any>(
+        freshProducts.map((p) => [String(p.id || p._id), p])
+      )
+
+      let hasMutated = false
+
+      for (const item of items.value) {
+        const live = productMap.get(item.productId)
+        if (!live) {
+          // If the product was archived or deleted, mark availableStock as 0
+          if (item.availableStock !== 0) {
+            item.availableStock = 0
+            hasMutated = true
+          }
+          continue
+        }
+
+        // Determine live effective price (discountedPrice if active promotion, else base retail price)
+        const liveEffectivePrice: MultiCurrencyPrice = (live.discount && live.discount > 0 && live.discountedPrice)
+          ? live.discountedPrice
+          : live.price
+
+        if (liveEffectivePrice) {
+          const priceChanged =
+            item.price.SEK !== liveEffectivePrice.SEK ||
+            item.price.EUR !== liveEffectivePrice.EUR ||
+            item.price.USD !== liveEffectivePrice.USD
+
+          if (priceChanged) {
+            item.price = {
+              SEK: liveEffectivePrice.SEK,
+              EUR: liveEffectivePrice.EUR,
+              USD: liveEffectivePrice.USD,
+            }
+            hasMutated = true
+          }
+        }
+
+        // Synchronize available stock snapshot
+        if (typeof live.availableStock === 'number' && item.availableStock !== live.availableStock) {
+          item.availableStock = live.availableStock
+          hasMutated = true
+        }
+
+        // Clamp quantity if live stock is below current cart quantity
+        if (typeof live.availableStock === 'number' && item.quantity > live.availableStock) {
+          item.quantity = Math.max(0, live.availableStock)
+          hasMutated = true
+        }
+      }
+
+      if (hasMutated && isHydrated.value) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items.value))
+      }
+    } catch {
+      // Gracefully ignore network errors on refresh so offline/flaky connections don't wipe cart
+    }
   }
 
   return {
@@ -362,6 +448,7 @@ export const useCartStore = defineStore('cart', () => {
     grandTotalMinor,
     // Actions
     hydrateCart,
+    refreshCartPricesAndStock,
     addItem,
     incrementQuantity,
     decrementQuantity,
