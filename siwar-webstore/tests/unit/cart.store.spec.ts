@@ -218,4 +218,71 @@ describe('Issue #8: Pinia Cart Store Suite', () => {
       expect(cartStore.totalItemCount).toBe(3)
     })
   })
+
+  describe('Live Cart Price & Stock Refresh (Issue 31)', () => {
+    it('updates item price when promotion becomes active', async () => {
+      cartStore.addItem(foodItem, 2)
+      expect(cartStore.items[0]?.price?.SEK).toBe(5000)
+
+      const mockBatchResponse = [
+        {
+          id: 'prod_tahini',
+          discount: 20,
+          discountedPrice: { SEK: 4000, EUR: 400, USD: 440 },
+          price: { SEK: 5000, EUR: 500, USD: 550 },
+          availableStock: 4,
+        },
+      ]
+      vi.stubGlobal('$fetch', vi.fn().mockResolvedValue(mockBatchResponse))
+
+      await cartStore.refreshCartPricesAndStock()
+
+      expect(cartStore.items[0]?.price?.SEK).toBe(4000)
+      expect(cartStore.items[0]?.price?.EUR).toBe(400)
+      expect(cartStore.cartSubtotalMinor).toBe(8000)
+    })
+
+    it('reverts item price when promotion expires', async () => {
+      cartStore.addItem({
+        ...foodItem,
+        price: { SEK: 4000, EUR: 400, USD: 440 },
+      }, 1)
+
+      const mockBatchResponse = [
+        {
+          id: 'prod_tahini',
+          discount: 0,
+          discountedPrice: null,
+          price: { SEK: 5000, EUR: 500, USD: 550 },
+          availableStock: 4,
+        },
+      ]
+      vi.stubGlobal('$fetch', vi.fn().mockResolvedValue(mockBatchResponse))
+
+      await cartStore.refreshCartPricesAndStock()
+
+      expect(cartStore.items[0]?.price?.SEK).toBe(5000)
+      expect(cartStore.cartSubtotalMinor).toBe(5000)
+    })
+
+    it('clamps item quantity if available stock drops', async () => {
+      cartStore.addItem(foodItem, 3)
+
+      const mockBatchResponse = [
+        {
+          id: 'prod_tahini',
+          discount: 0,
+          discountedPrice: null,
+          price: { SEK: 5000, EUR: 500, USD: 550 },
+          availableStock: 1,
+        },
+      ]
+      vi.stubGlobal('$fetch', vi.fn().mockResolvedValue(mockBatchResponse))
+
+      await cartStore.refreshCartPricesAndStock()
+
+      expect(cartStore.items[0]?.quantity).toBe(1)
+      expect(cartStore.items[0]?.availableStock).toBe(1)
+    })
+  })
 })

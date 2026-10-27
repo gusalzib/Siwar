@@ -181,3 +181,116 @@ export function calculateMomsSplit(
     moms25: moms25tier
   }
 }
+
+/**
+ * 4. Campaign Scheduling & Time-Window Validation (FR-1, FR-6, FR-12)
+ */
+
+export interface MultiCurrencyPrices {
+  SEK: number
+  EUR: number
+  USD: number
+}
+
+/**
+ * Evaluates whether a product's promotional discount is currently active based on
+ * the campaign time window formula:
+ *
+ * Is Discount Active <=> discount > 0 AND (startsAt <= now) AND (expiresAt is null OR expiresAt > now)
+ *
+ * @param discount - Discount percentage (e.g. 15 for 15% off)
+ * @param startsAt - Campaign start timestamp (defaults to active if null or omitted)
+ * @param expiresAt - Campaign expiration timestamp (indefinite if null or omitted)
+ * @param referenceDate - Comparison timestamp (defaults to current time new Date())
+ * @returns boolean indicating if promotional price applies
+ */
+export function isDiscountActive(
+  discount?: number | null,
+  startsAt?: Date | string | null,
+  expiresAt?: Date | string | null,
+  referenceDate: Date = new Date()
+): boolean {
+  const numericDiscount = Number(discount)
+  if (!numericDiscount || Number.isNaN(numericDiscount) || numericDiscount <= 0) {
+    return false
+  }
+
+  const nowMs = referenceDate.getTime()
+
+  // Evaluate startsAt window boundary
+  if (startsAt) {
+    const startDate = startsAt instanceof Date ? startsAt : new Date(startsAt)
+    if (!Number.isNaN(startDate.getTime()) && startDate.getTime() > nowMs) {
+      return false
+    }
+  }
+
+  // Evaluate expiresAt window boundary
+  if (expiresAt) {
+    const expiryDate = expiresAt instanceof Date ? expiresAt : new Date(expiresAt)
+    if (!Number.isNaN(expiryDate.getTime()) && expiryDate.getTime() <= nowMs) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Calculates discounted minor prices for all supported currencies when a promotion is active.
+ * Automatically returns null if the discount is inactive or expired.
+ *
+ * @param price - Base retail prices in minor currency units (SEK, EUR, USD)
+ * @param discount - Discount percentage
+ * @param startsAt - Scheduled campaign start date
+ * @param expiresAt - Scheduled campaign expiration deadline
+ * @param referenceDate - Current evaluation timestamp
+ * @returns MultiCurrencyPrices or null if promotion is expired / inactive
+ */
+export function calculateDiscountedPrice(
+  price: MultiCurrencyPrices,
+  discount?: number | null,
+  startsAt?: Date | string | null,
+  expiresAt?: Date | string | null,
+  referenceDate: Date = new Date()
+): MultiCurrencyPrices | null {
+  if (!isDiscountActive(discount, startsAt, expiresAt, referenceDate)) {
+    return null
+  }
+
+  const numericDiscount = Number(discount)
+  const multiplier = 1 - numericDiscount / 100
+
+  return {
+    SEK: Math.round((price?.SEK || 0) * multiplier),
+    EUR: Math.round((price?.EUR || 0) * multiplier),
+    USD: Math.round((price?.USD || 0) * multiplier),
+  }
+}
+
+/**
+ * Checks whether an active discount is approaching its scheduled deadline
+ * (within threshold hours, e.g. 48 hours for urgent "Slutar snart" badge).
+ *
+ * @param expiresAt - Scheduled campaign expiration timestamp
+ * @param referenceDate - Current evaluation timestamp
+ * @param thresholdHours - Urgency threshold in hours (defaults to 48)
+ * @returns boolean indicating if urgent expiry badge should be displayed
+ */
+export function isDiscountExpiringSoon(
+  expiresAt?: Date | string | null,
+  referenceDate: Date = new Date(),
+  thresholdHours: number = 48
+): boolean {
+  if (!expiresAt) return false
+
+  const expiryDate = expiresAt instanceof Date ? expiresAt : new Date(expiresAt)
+  if (Number.isNaN(expiryDate.getTime())) return false
+
+  const nowMs = referenceDate.getTime()
+  const expiryMs = expiryDate.getTime()
+  const diffMs = expiryMs - nowMs
+
+  // Urgent if still in future but within the threshold window
+  return diffMs > 0 && diffMs <= thresholdHours * 60 * 60 * 1000
+}

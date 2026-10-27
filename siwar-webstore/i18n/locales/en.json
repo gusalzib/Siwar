@@ -208,6 +208,14 @@
         "discountNone": "0% (None)",
         "customerSaves": "Customer saves",
         "noDiscountNotice": "No active discount. Standard pricing applies.",
+        "discountStartsAt": "Campaign Start Date",
+        "discountStartsAtHelp": "Leave empty to start immediately",
+        "discountExpiresAt": "Campaign End Date (Deadline)",
+        "discountExpiresAtHelp": "Leave empty for indefinite duration",
+        "clearDate": "Clear",
+        "campaignActive": "Active",
+        "campaignScheduled": "Scheduled",
+        "campaignExpired": "Expired",
         "stockQuantity": "Physical Stock Quantity",
         "safetyBuffer": "Safety Buffer Override",
         "safetyBufferHelp": "Protects physical shelf stock from online overselling. Available Online = Total Stock - Buffer.",
@@ -641,8 +649,14 @@
       "heading": "Current Deals & Promotions",
       "subheading": "Discover fantastic discounts on handpicked Middle Eastern delicacies.",
       "viewAll": "View all deals",
-      "save": "Save {percent}%"
+      "save": "Save {percent}%",
+      "endsSoon": "Ends soon",
+      "validUntil": "Valid until {date}"
     }
+  },
+  "deals": {
+    "endsSoon": "Ends soon",
+    "validUntil": "Valid until {date}"
   },
   "catalog": {
     "viewProduct": "View product",
@@ -773,8 +787,6 @@
     "momsIncluded": "VAT included",
     "inclusiveMoms": "Inclusive of VAT and shipping",
     "proceedToPayment": "Proceed to Payment",
-    "stockAdjustedWarning": "Stock levels changed in-store. Your cart has been updated.",
-    "genericError": "An unexpected error occurred. Please try again.",
     "validation": {
       "nameRequired": "Please enter your full name.",
       "emailRequired": "Enter a valid email address.",
@@ -793,7 +805,11 @@
     "scanSwishQR": "Scan Swish QR-code",
     "openSwishApp": "Open Swish",
     "cardPayment": "Card Payment",
-    "stripeTimeoutError": "Payment gateway timed out"
+    "stripeTimeoutError": "Payment gateway timed out",
+    "stockAdjustedWarning": "Some item quantities changed in store. Your cart has been adjusted.",
+    "priceAdjustedWarning": "The price of one or more items in your cart has been updated because the promotion has ended.",
+    "genericError": "An unexpected error occurred. Please try again.",
+    "swishSEKOnly": "Only available for purchases made with Swedish Krona"
   },
 
   "order": {

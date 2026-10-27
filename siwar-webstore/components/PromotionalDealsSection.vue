@@ -57,6 +57,15 @@ function getLocalized(obj?: Record<string, string>): string {
   return obj[locale.value] || obj.sv || obj.en || obj.ar || ''
 }
 
+// Campaign Urgency helper (Impending Deadline <= 48h)
+function isProductExpiringSoon(expiresAt?: string | Date | null): boolean {
+  if (!expiresAt) return false
+  const expiry = new Date(expiresAt)
+  if (Number.isNaN(expiry.getTime())) return false
+  const diffMs = expiry.getTime() - Date.now()
+  return diffMs > 0 && diffMs <= 48 * 60 * 60 * 1000
+}
+
 // Price formatter for minor units (öre/cents)
 function formatPrice(priceObj?: Record<CurrencyCode, number>): string {
   if (!priceObj) return ''
@@ -159,8 +168,8 @@ function handleAddToCart(product: any) {
             <Icon name="lucide:image" class="size-10" />
           </div>
 
-          <!-- Bold Attention-Grabbing Discount Tag (Requirements 3 & 4) -->
-          <div class="absolute top-2.5 start-2.5 z-10">
+          <!-- Bold Attention-Grabbing Discount Tag & Urgent Expiry Badge (Requirements 3 & 4) -->
+          <div class="absolute top-2.5 start-2.5 z-10 flex flex-col items-start gap-1">
             <span
               class="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-600 shadow-md shadow-red-500/40 border border-white/20 select-none overflow-hidden tracking-wide"
             >
@@ -176,6 +185,15 @@ function handleAddToCart(product: any) {
               <span class="relative drop-shadow-xs">
                 {{ t('home.deals.save', { percent: product.discount }) }}
               </span>
+            </span>
+
+            <!-- Urgent Expiry Badge (Impending Deadline <= 48h) -->
+            <span
+              v-if="isProductExpiringSoon(product.discountExpiresAt)"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold text-black bg-amber-400 dark:bg-amber-400 shadow-sm border border-amber-500/30 select-none tracking-tight"
+            >
+              <Icon name="lucide:clock" class="size-3 shrink-0 text-black" />
+              <span>{{ t('deals.endsSoon', 'Slutar snart') }}</span>
             </span>
           </div>
 

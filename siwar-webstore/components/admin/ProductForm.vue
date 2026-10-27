@@ -39,6 +39,8 @@ const form = ref({
     USD: '',
   },
   discount: 0,
+  discountStartsAt: '',
+  discountExpiresAt: '',
   stockQuantity: 0,
   safetyBuffer: 5, // Default baseline buffer
   netQuantity: {
@@ -73,6 +75,14 @@ function getLocalizedText(obj?: Record<string, string>): string {
   return obj[locale.value] || obj['sv'] || obj['en'] || obj['ar'] || ''
 }
 
+function toDatetimeLocalString(date?: string | Date | null): string {
+  if (!date) return ''
+  const d = new Date(date)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 // ---------------------------------------------------------------------------
 // Hydrate Existing Product Data (Edit Mode)
 // ---------------------------------------------------------------------------
@@ -93,6 +103,8 @@ onMounted(async () => {
           USD: toMajorUnits(existing.price?.USD ?? 0),
         },
         discount: existing.discount ?? 0,
+        discountStartsAt: toDatetimeLocalString(existing.discountStartsAt),
+        discountExpiresAt: toDatetimeLocalString(existing.discountExpiresAt),
         stockQuantity: existing.stockQuantity ?? 0,
         safetyBuffer: existing.safetyBuffer ?? 3,
         netQuantity: existing.netQuantity || { value: 0, unit: 'g' },
@@ -141,8 +153,24 @@ const discountedPricePreview = computed(() => {
     return (price * (discount / 100)).toFixed(2)
   }
 
+  const now = new Date()
+  let scheduleStatus: 'active' | 'scheduled' | 'expired' = 'active'
+  if (form.value.discountStartsAt) {
+    const s = new Date(form.value.discountStartsAt)
+    if (!Number.isNaN(s.getTime()) && s > now) {
+      scheduleStatus = 'scheduled'
+    }
+  }
+  if (form.value.discountExpiresAt) {
+    const e = new Date(form.value.discountExpiresAt)
+    if (!Number.isNaN(e.getTime()) && e <= now) {
+      scheduleStatus = 'expired'
+    }
+  }
+
   return {
     discount,
+    scheduleStatus,
     SEK: calculateDiscounted(form.value.prices.SEK),
     EUR: calculateDiscounted(form.value.prices.EUR),
     USD: calculateDiscounted(form.value.prices.USD),
@@ -233,6 +261,8 @@ async function handleSubmit() {
         USD: toMinorUnits(form.value.prices.USD),
       },
       discount: Number(form.value.discount) || 0,
+      discountStartsAt: form.value.discountStartsAt ? new Date(form.value.discountStartsAt).toISOString() : null,
+      discountExpiresAt: form.value.discountExpiresAt ? new Date(form.value.discountExpiresAt).toISOString() : null,
       stockQuantity: Number(form.value.stockQuantity),
       safetyBuffer: Number(form.value.safetyBuffer),
       netQuantity: {
@@ -566,6 +596,61 @@ async function handleSubmit() {
                   </div>
                 </div>
 
+                <!-- Campaign Scheduling & Deadline Fields (FR-1, FR-6, FR-12) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  <!-- Discount Start Date -->
+                  <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-base-content flex items-center justify-between">
+                      <span class="flex items-center gap-1.5">
+                        <Icon name="lucide:calendar-clock" class="size-3.5 text-primary" />
+                        {{ t('admin.productForm.fields.discountStartsAt', 'Kampanj startdatum') }}
+                      </span>
+                      <button
+                        v-if="form.discountStartsAt"
+                        type="button"
+                        class="text-[11px] text-base-content/50 hover:text-error underline"
+                        @click="form.discountStartsAt = ''"
+                      >
+                        {{ t('admin.productForm.fields.clearDate', 'Rensa') }}
+                      </button>
+                    </label>
+                    <input
+                      v-model="form.discountStartsAt"
+                      type="datetime-local"
+                      class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 transition-colors w-full text-xs font-mono"
+                    />
+                    <p class="text-[11px] text-base-content/50">
+                      {{ t('admin.productForm.fields.discountStartsAtHelp', 'Lämna tomt för att starta omedelbart') }}
+                    </p>
+                  </div>
+
+                  <!-- Discount Expiration Deadline -->
+                  <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-base-content flex items-center justify-between">
+                      <span class="flex items-center gap-1.5">
+                        <Icon name="lucide:timer" class="size-3.5 text-error" />
+                        {{ t('admin.productForm.fields.discountExpiresAt', 'Kampanj slutdatum (Deadline)') }}
+                      </span>
+                      <button
+                        v-if="form.discountExpiresAt"
+                        type="button"
+                        class="text-[11px] text-base-content/50 hover:text-error underline"
+                        @click="form.discountExpiresAt = ''"
+                      >
+                        {{ t('admin.productForm.fields.clearDate', 'Rensa') }}
+                      </button>
+                    </label>
+                    <input
+                      v-model="form.discountExpiresAt"
+                      type="datetime-local"
+                      class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 transition-colors w-full text-xs font-mono"
+                    />
+                    <p class="text-[11px] text-base-content/50">
+                      {{ t('admin.productForm.fields.discountExpiresAtHelp', 'Lämna tomt för att gälla tillsvidare') }}
+                    </p>
+                  </div>
+                </div>
+
                 <!-- Live Discounted Price Preview Card -->
                 <div
                   v-if="discountedPricePreview"
@@ -578,6 +663,25 @@ async function handleSubmit() {
                       </span>
                       <span class="text-xs font-bold uppercase tracking-wider text-error">
                         {{ t('admin.productForm.fields.discountPreviewTitle') }}
+                      </span>
+                      <!-- Campaign Status Badge -->
+                      <span
+                        v-if="discountedPricePreview.scheduleStatus === 'active'"
+                        class="badge badge-sm badge-success text-white font-bold"
+                      >
+                        {{ t('admin.productForm.fields.campaignActive', 'Aktiv') }}
+                      </span>
+                      <span
+                        v-else-if="discountedPricePreview.scheduleStatus === 'scheduled'"
+                        class="badge badge-sm badge-warning text-black font-bold"
+                      >
+                        {{ t('admin.productForm.fields.campaignScheduled', 'Schemalagd') }}
+                      </span>
+                      <span
+                        v-else-if="discountedPricePreview.scheduleStatus === 'expired'"
+                        class="badge badge-sm badge-neutral font-bold"
+                      >
+                        {{ t('admin.productForm.fields.campaignExpired', 'Avslutad') }}
                       </span>
                     </div>
                     <span class="text-[11px] text-base-content/60 font-medium">

@@ -1,6 +1,9 @@
 // server/api/products/batch.get.ts
 import { isValidObjectId, Types } from 'mongoose'
 import { Product } from '~/server/models/Product'
+import '~/server/models/Category'
+import '~/server/models/Allergens'
+import { calculateDiscountedPrice, isDiscountActive } from '~/server/services/pricing.service'
 import type { PopulatedCategory, PopulatedAllergen } from '~/types/product'
 
 export default defineEventHandler(async (event) => {
@@ -30,6 +33,7 @@ export default defineEventHandler(async (event) => {
     .populate<{ allergens: PopulatedAllergen[] }>('allergens', 'code name')
     .lean()
 
+  const now = new Date()
   const productMap = new Map<string, any>()
 
   for (const p of rawProducts) {
@@ -44,12 +48,11 @@ export default defineEventHandler(async (event) => {
       statusCode = 'OUT_OF_STOCK_ONLINE'
     }
 
-    const discount = p.discount || 0
-    const discountedPrice = discount > 0 ? {
-      SEK: Math.round((p.price?.SEK || 0) * (1 - discount / 100)),
-      EUR: Math.round((p.price?.EUR || 0) * (1 - discount / 100)),
-      USD: Math.round((p.price?.USD || 0) * (1 - discount / 100)),
-    } : null
+    const hasActiveDiscount = isDiscountActive(p.discount, p.discountStartsAt, p.discountExpiresAt, now)
+    const discount = hasActiveDiscount ? (p.discount || 0) : 0
+    const discountedPrice = hasActiveDiscount
+      ? calculateDiscountedPrice(p.price, p.discount, p.discountStartsAt, p.discountExpiresAt, now)
+      : null
 
     const formattedProduct = {
       id: String(p._id),
@@ -64,6 +67,8 @@ export default defineEventHandler(async (event) => {
       images: p.images,
       price: p.price,
       discount,
+      discountStartsAt: p.discountStartsAt || null,
+      discountExpiresAt: p.discountExpiresAt || null,
       discountedPrice,
       netQuantity: p.netQuantity,
       grossWeight: p.grossWeight ?? (p.netQuantity?.unit === 'g' ? p.netQuantity.value : 0),

@@ -1,7 +1,10 @@
 // server/api/products/[id].get.ts
 import { isValidObjectId } from 'mongoose'
 import { Product } from '~/server/models/Product'
+import '~/server/models/Category'
+import '~/server/models/Allergens'
 import { getProductAvailability } from '~/server/services/inventory.service'
+import { calculateDiscountedPrice, isDiscountActive } from '~/server/services/pricing.service'
 import type { PopulatedCategory, StorefrontProduct, PopulatedAllergen } from '~/types/product'
 
 export default defineEventHandler(async (event): Promise<StorefrontProduct> => {
@@ -34,12 +37,17 @@ export default defineEventHandler(async (event): Promise<StorefrontProduct> => {
     safetyBuffer: product.safetyBuffer,
   })
 
-  const discount = product.discount || 0
-  const discountedPrice = discount > 0 ? {
-    SEK: Math.round((product.price?.SEK || 0) * (1 - discount / 100)),
-    EUR: Math.round((product.price?.EUR || 0) * (1 - discount / 100)),
-    USD: Math.round((product.price?.USD || 0) * (1 - discount / 100)),
-  } : null
+  const now = new Date()
+  const hasActiveDiscount = isDiscountActive(
+    product.discount,
+    product.discountStartsAt,
+    product.discountExpiresAt,
+    now
+  )
+  const discount = hasActiveDiscount ? (product.discount || 0) : 0
+  const discountedPrice = hasActiveDiscount
+    ? calculateDiscountedPrice(product.price, product.discount, product.discountStartsAt, product.discountExpiresAt, now)
+    : null
 
   return {
     ...product,
@@ -48,6 +56,8 @@ export default defineEventHandler(async (event): Promise<StorefrontProduct> => {
     category: product.category as PopulatedCategory,
     availability,
     discount,
+    discountStartsAt: product.discountStartsAt || null,
+    discountExpiresAt: product.discountExpiresAt || null,
     discountedPrice,
   } as unknown as StorefrontProduct
 })

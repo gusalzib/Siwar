@@ -155,6 +155,30 @@ describe('Admin Product Endpoints - Acceptance Criteria & Invariants', () => {
       expect(response.statusCode).toBe(201)
       expect(mockState.status).toBe(201)
     })
+
+    // AC-2 (Admin Discount Deadline Configuration)
+    it('persists discountStartsAt and discountExpiresAt as Date instances (AC-2)', async () => {
+      const startIso = '2026-10-27T08:00:00.000Z'
+      const endIso = '2026-10-31T23:59:59.000Z'
+
+      mockState.body = {
+        ...validBasePayload,
+        price: { SEK: 4900, EUR: 430, USD: 470 },
+        discount: 15,
+        discountStartsAt: startIso,
+        discountExpiresAt: endIso,
+      }
+
+      const response = await createProductHandler(dummyEvent)
+      expect(response.statusCode).toBe(201)
+      expect(mockProductModel).toHaveBeenCalledWith(
+        expect.objectContaining({
+          discount: 15,
+          discountStartsAt: new Date(startIso),
+          discountExpiresAt: new Date(endIso),
+        })
+      )
+    })
   })
 
   // -------------------------------------------------------------------------

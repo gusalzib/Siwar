@@ -14,6 +14,8 @@ interface ProductProps {
   images?: Array<{ url: string; altText?: string }>
   price: Record<string, any>
   discount?: number
+  discountStartsAt?: Date | string | null
+  discountExpiresAt?: Date | string | null
   discountedPrice?: Record<string, any> | null
   statusCode?: string
   canAddToCart?: boolean
@@ -36,6 +38,17 @@ const preferences = usePreferencesStore()
 
 // Active Store Currency
 const activeCurrency = computed<CurrencyCode>(() => (preferences.currency || 'SEK') as CurrencyCode)
+
+// Campaign Urgency (Deadline <= 48 hours)
+const isExpiringSoon = computed<boolean>(() => {
+  if (!props.product.discount || props.product.discount <= 0 || !props.product.discountExpiresAt) {
+    return false
+  }
+  const expiry = new Date(props.product.discountExpiresAt)
+  if (Number.isNaN(expiry.getTime())) return false
+  const diffMs = expiry.getTime() - Date.now()
+  return diffMs > 0 && diffMs <= 48 * 60 * 60 * 1000
+})
 
 // Micro-animation trigger for favorite toggle
 const isAnimating = ref(false)
@@ -121,8 +134,8 @@ function calculateComparisonPrice(
         </div>
       </NuxtLink>
 
-      <!-- Bold Discount Tag -->
-      <div v-if="product.discount && product.discount > 0" class="absolute top-2.5 start-2.5 z-10 pointer-events-none">
+      <!-- Bold Discount Tag & Urgent Expiry Badge -->
+      <div v-if="product.discount && product.discount > 0" class="absolute top-2.5 start-2.5 z-10 pointer-events-none flex flex-col items-start gap-1">
         <span
           class="relative inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-600 shadow-md shadow-red-500/40 border border-white/20 select-none overflow-hidden tracking-wide"
         >
@@ -134,6 +147,15 @@ function calculateComparisonPrice(
           <span class="relative drop-shadow-xs">
             {{ t('home.deals.save', { percent: product.discount }) }}
           </span>
+        </span>
+
+        <!-- Urgent Expiry Badge (Impending Deadline <= 48h) -->
+        <span
+          v-if="isExpiringSoon"
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold text-black bg-amber-400 dark:bg-amber-400 shadow-sm border border-amber-500/30 select-none tracking-tight"
+        >
+          <Icon name="lucide:clock" class="size-3 shrink-0 text-black" />
+          <span>{{ t('deals.endsSoon', 'Slutar snart') }}</span>
         </span>
       </div>
 

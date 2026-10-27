@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto'
 import { Product } from '../../models/Product'
 // Added: Import Order model to pre-register draft orders in MongoDB
 import { Order } from '../../models/Order'
-import { calculateMomsSplit } from '../../services/pricing.service'
+import { calculateMomsSplit, isDiscountActive } from '../../services/pricing.service'
 // Added: Import evaluateCheckoutStock to validate cart availability against safety buffers before payment
 import { evaluateCheckoutStock } from '../../services/inventory.service'
 import { getPaymentGateway } from '../../services/payments'
@@ -61,7 +61,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // 3. Authoritative line calculations & Tax Splits
+  // 3. Authoritative line calculations & Tax Splits (AC-1 & AC-3 Active Window Evaluation)
+  const now = new Date()
   let grossProductsMinor = 0
   const calculationLines = []
   // Added: Snapshot order items array to persist directly in the Order document
@@ -77,7 +78,13 @@ export default defineEventHandler(async (event) => {
     }
 
     const baseUnitPrice = product.price[body.currency] ?? product.price.SEK
-    const discount = (product.discount && product.discount > 0) ? product.discount : 0
+    const isPromoActive = isDiscountActive(
+      product.discount,
+      product.discountStartsAt,
+      product.discountExpiresAt,
+      now
+    )
+    const discount = isPromoActive ? (product.discount || 0) : 0
     const unitPrice = discount > 0 ? Math.round(baseUnitPrice * (1 - discount / 100)) : baseUnitPrice
     const lineTotal = unitPrice * item.quantity
     grossProductsMinor += lineTotal
