@@ -82,6 +82,18 @@ function getLocalizedText(obj?: Record<string, string>): string {
   if (!obj) return ''
   return obj[locale.value] || obj['sv'] || obj['en'] || obj['ar'] || ''
 }
+
+// Determines if discount badge should be shown (active or scheduled only, never expired)
+function isDiscountActiveOrScheduled(product: any): boolean {
+  if (product.showDiscountBadge !== undefined) {
+    return Boolean(product.showDiscountBadge)
+  }
+  if (!product.discount || product.discount <= 0) return false
+  if (product.discountExpiresAt && new Date(product.discountExpiresAt) <= new Date()) {
+    return false
+  }
+  return true
+}
 </script>
 
 <template>
@@ -263,9 +275,19 @@ function getLocalizedText(obj?: Record<string, string>): string {
 
                 <!-- Multi-Currency Pricing -->
                 <td class="px-4 py-3">
-                  <div class="text-xs space-y-0.5 font-mono text-base-content/80">
-                    <div v-if="product.discount > 0" class="mb-1">
-                      <span class="badge badge-error badge-xs text-white font-bold gap-0.5 shadow-xs">
+                  <div class="text-xs space-y-0.5">
+                    <div v-if="isDiscountActiveOrScheduled(product)" class="mb-1 flex items-center gap-1 flex-wrap">
+                      <span
+                        v-if="product.discountStatus === 'scheduled'"
+                        class="badge badge-warning badge-xs text-black font-bold gap-0.5 shadow-xs"
+                      >
+                        <Icon name="lucide:clock" class="size-2.5 text-black" />
+                        -{{ product.discount }}% ({{ t('admin.productForm.fields.campaignScheduled', 'Schemalagd') }})
+                      </span>
+                      <span
+                        v-else
+                        class="badge badge-error badge-xs text-white font-bold gap-0.5 shadow-xs"
+                      >
                         <Icon name="lucide:percent" class="size-2.5" />
                         -{{ product.discount }}%
                       </span>
