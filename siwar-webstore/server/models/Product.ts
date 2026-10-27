@@ -76,6 +76,12 @@ export interface IProduct {
   // Optional promotional discount percentage (e.g., 10 for 10% off)
   discount?: number
 
+  // Optional scheduled start timestamp for promotional pricing (defaults to creation time)
+  discountStartsAt?: Date | null
+
+  // Optional scheduled expiration timestamp for promotional pricing (null means indefinite until revoked)
+  discountExpiresAt?: Date | null
+
   // Total physical inventory recorded in the store/warehouse
   stockQuantity: number
 
@@ -162,6 +168,14 @@ const ProductSchema = new Schema<IProduct>(
       min: 0,
       max: 100,
       default: 0,
+    },
+    discountStartsAt: {
+      type: Date,
+      default: Date.now,
+    },
+    discountExpiresAt: {
+      type: Date,
+      default: null,
     },
     stockQuantity: {
       type: Number,

@@ -40,6 +40,8 @@ export interface StorefrontProduct {
     USD: number
   }
   discount?: number
+  discountStartsAt?: Date | string | null
+  discountExpiresAt?: Date | string | null
   discountedPrice?: {
     SEK: number
     EUR: number
