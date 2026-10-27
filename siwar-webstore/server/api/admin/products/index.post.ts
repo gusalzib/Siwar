@@ -124,6 +124,12 @@ export default defineEventHandler(async (event) => {
       USD,
     },
     discount: Number(body.discount) || 0,
+    discountStartsAt: body.discountStartsAt && !Number.isNaN(new Date(body.discountStartsAt).getTime())
+      ? new Date(body.discountStartsAt)
+      : new Date(),
+    discountExpiresAt: body.discountExpiresAt && !Number.isNaN(new Date(body.discountExpiresAt).getTime())
+      ? new Date(body.discountExpiresAt)
+      : null,
     stockQuantity,
     safetyBuffer,
     netQuantity: {

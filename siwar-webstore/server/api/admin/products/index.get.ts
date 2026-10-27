@@ -110,6 +110,35 @@ export default defineEventHandler(async (event) => {
     const effectiveBuffer = p.safetyBuffer ?? 0
     const availableStock = Math.max(0, p.stockQuantity - effectiveBuffer)
 
+    // Evaluate discount campaign schedule status
+    const now = new Date()
+    const discount = p.discount || 0
+    let discountStatus: 'active' | 'scheduled' | 'expired' | 'none' = 'none'
+
+    if (discount > 0) {
+      const isExpired = Boolean(
+        p.discountExpiresAt &&
+        !Number.isNaN(new Date(p.discountExpiresAt).getTime()) &&
+        new Date(p.discountExpiresAt).getTime() <= now.getTime()
+      )
+      const isScheduled = Boolean(
+        !isExpired &&
+        p.discountStartsAt &&
+        !Number.isNaN(new Date(p.discountStartsAt).getTime()) &&
+        new Date(p.discountStartsAt).getTime() > now.getTime()
+      )
+
+      if (isExpired) {
+        discountStatus = 'expired'
+      } else if (isScheduled) {
+        discountStatus = 'scheduled'
+      } else {
+        discountStatus = 'active'
+      }
+    }
+
+    const showDiscountBadge = discountStatus === 'active' || discountStatus === 'scheduled'
+
     // Return sanitized, flat properties expected by the Vue table component
     return {
       id: String(p._id),
@@ -118,7 +147,11 @@ export default defineEventHandler(async (event) => {
       category: p.category,
       images: p.images,
       price: p.price,
-      discount: p.discount || 0,
+      discount,
+      discountStartsAt: p.discountStartsAt || null,
+      discountExpiresAt: p.discountExpiresAt || null,
+      discountStatus,
+      showDiscountBadge,
       stockQuantity: p.stockQuantity,
       safetyBuffer: p.safetyBuffer,
       availableStock,

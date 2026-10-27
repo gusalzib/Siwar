@@ -40,6 +40,8 @@ export default defineEventHandler(async (event) => {
     category: String(product.category),
     price: product.price,
     discount: product.discount ?? 0,
+    discountStartsAt: product.discountStartsAt || null,
+    discountExpiresAt: product.discountExpiresAt || null,
     stockQuantity: product.stockQuantity,
     safetyBuffer: product.safetyBuffer,
     netQuantity: product.netQuantity,
