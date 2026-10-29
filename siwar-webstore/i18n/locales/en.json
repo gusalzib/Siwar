@@ -565,7 +565,7 @@
       "saveError": "An error occurred while saving.",
       "collapseAll": "Collapse all",
       "expandAll": "Expand all",
-      "sectionsCount": "5 sections",
+      "sectionsCount": "6 sections",
       "company": {
         "sectionTitle": "Company Information & Swedish Accounting Act",
         "badge": "Org.nr & VAT",
@@ -603,6 +603,24 @@
         "description": "Store branding and descriptive tagline presented to customers across the site.",
         "storeName": "Store Name",
         "tagline": "Tagline / Store Description"
+      },
+      "social": {
+        "sectionTitle": "Social Media Links",
+        "badge": "Links & Icons",
+        "description": "Manage the store's official social media channels displayed in the footer and contact page.",
+        "addLink": "Add Social Link",
+        "noLinks": "No social media links added yet. Click above to add your first channel.",
+        "platformLabel": "Platform",
+        "urlLabel": "Web Address (URL)",
+        "urlPlaceholder": "Enter valid URL...",
+        "invalidUrl": "Please enter a valid URL (must begin with https:// or http://)",
+        "activeLabel": "Active",
+        "inactiveLabel": "Inactive",
+        "remove": "Remove",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "selectPlatform": "Select platform...",
+        "invalidUrlError": "Please correct invalid social media URLs before saving."
       }
     }
   },
@@ -935,6 +953,10 @@
       "visa": "Visa",
       "mastercard": "Mastercard",
       "sslGuarantee": "256-bit SSL encrypted connection"
+    },
+    "social": {
+      "title": "Follow Us",
+      "subtitle": "Stay updated on new arrivals and special offers"
     },
     "allRightsReserved": "All rights reserved.",
     "complianceNotice": "Compliant with Swedish Accounting Act (1999:1078) and Price Information Act."

@@ -569,7 +569,7 @@
       "saveError": "Ett fel uppstod vid sparande.",
       "collapseAll": "Fäll ihop alla",
       "expandAll": "Fäll ut alla",
-      "sectionsCount": "5 sektioner",
+      "sectionsCount": "6 sektioner",
       "company": {
         "sectionTitle": "Företagsinformation & Bokföringslagen",
         "badge": "Org.nr & Moms",
@@ -607,6 +607,24 @@
         "description": "Butikens namn och slogan som presenteras för kunder i sidfot och rubriker.",
         "storeName": "Butiksnamn",
         "tagline": "Slogan / Butiksbeskrivning"
+      },
+      "social": {
+        "sectionTitle": "Sociala medier & Kanaler",
+        "badge": "Länkar & Ikoner",
+        "description": "Hantera butikens officiella länkar till sociala medier som visas i sidfoten och på kontaktsidan.",
+        "addLink": "Lägg till social kanal",
+        "noLinks": "Inga sociala medier tillagda än. Klicka ovan för att lägga till din första länk.",
+        "platformLabel": "Plattform",
+        "urlLabel": "Webbadress (URL)",
+        "urlPlaceholder": "Ange giltig webbadress...",
+        "invalidUrl": "Ange en giltig URL (måste börja med https:// eller http://)",
+        "activeLabel": "Aktiv",
+        "inactiveLabel": "Inaktiv",
+        "remove": "Ta bort",
+        "moveUp": "Flytta upp",
+        "moveDown": "Flytta ner",
+        "selectPlatform": "Välj plattform...",
+        "invalidUrlError": "Vänligen korrigera ogiltiga webbadresser för sociala medier innan du sparar."
       }
     }
   },
@@ -938,6 +956,10 @@
       "visa": "Visa",
       "mastercard": "Mastercard",
       "sslGuarantee": "256-bit SSL-krypterad anslutning"
+    },
+    "social": {
+      "title": "Följ oss",
+      "subtitle": "Håll dig uppdaterad om nya varor och erbjudanden"
     },
     "allRightsReserved": "Alla rättigheter förbehållna.",
     "complianceNotice": "Följer Bokföringslagen (1999:1078) och Prisinformationslagen."
