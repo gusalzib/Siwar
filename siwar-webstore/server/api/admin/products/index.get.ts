@@ -19,6 +19,8 @@ import { Product, type IProduct } from '~/server/models/Product'
  * - ?stockStatus=low|out   -> Filter by buffer cut-off or zero inventory
  * - ?missingTranslations=true -> Filter products lacking AR, SV, or EN copy
  * - ?search=text           -> Case-insensitive search on name or brand
+ * - ?isArchived=true|false|all -> Filter by soft-archival active status
+ * - ?hasDiscount=true      -> Filter by promotional discount
  */
 export default defineEventHandler(async (event) => {
   // 1. Extract query parameters from the request URL (e.g. ?category=123&search=tea)
@@ -27,6 +29,8 @@ export default defineEventHandler(async (event) => {
   const stockStatus = query.stockStatus ? String(query.stockStatus) : 'all'
   const missingTranslations = query.missingTranslations === 'true'
   const search = query.search ? String(query.search).trim() : ''
+  const isArchived = query.isArchived !== undefined ? String(query.isArchived).toLowerCase() : 'all'
+  const hasDiscount = query.hasDiscount ? String(query.hasDiscount).toLowerCase() : ''
 
   // 2. Initialize a dynamic MongoDB filter object.
   // FilterQuery<IProduct> tells TypeScript that every key added to this object
@@ -81,6 +85,18 @@ export default defineEventHandler(async (event) => {
 
     // Merge search filter with existing filters using $and so they do not overwrite each other
     filter.$and = filter.$and ? [...filter.$and, searchFilter] : [searchFilter]
+  }
+
+  // --- Filter 5: By Soft-Archival Status (isArchived) ---
+  if (isArchived === 'true') {
+    filter.isActive = false
+  } else if (isArchived === 'false') {
+    filter.isActive = true
+  }
+
+  // --- Filter 6: By Promotional Discount (hasDiscount) ---
+  if (hasDiscount === 'true') {
+    filter.discount = { $gt: 0 }
   }
 
   // 3. Execute MongoDB Query

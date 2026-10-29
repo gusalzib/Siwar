@@ -25,6 +25,7 @@ export default defineEventHandler(async () => {
       pickupHours: pickup.pickupHours,
       instructions: pickup.instructions,
     },
+    socialLinks: (general.socialLinks || []).slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
     paymentMethods: ['swish', 'visa', 'mastercard'],
   }
 })
