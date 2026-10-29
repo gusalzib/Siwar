@@ -8,6 +8,14 @@ import {
   formatWeeklySchedule,
   normalizeSchedule,
 } from '~/utils/schedule'
+import {
+  type ISocialLink,
+  type SocialPlatform,
+  SOCIAL_PLATFORM_OPTIONS,
+  getSocialPlatformIcon,
+  getSocialPlatformOption,
+  isValidSocialUrl,
+} from '~/utils/social'
 
 const { t, locale } = useI18n()
 
@@ -26,6 +34,7 @@ interface GeneralForm {
   contact: { email: string; phone: string }
   address: { street: string; postalCode: string; city: string; country: string }
   schedule: IDaySchedule[]
+  socialLinks: ISocialLink[]
 }
 
 const form = ref<GeneralForm>({
@@ -51,6 +60,7 @@ const form = ref<GeneralForm>({
     country: 'Sverige',
   },
   schedule: DEFAULT_WEEKLY_SCHEDULE.map((d) => ({ ...d })),
+  socialLinks: [],
 })
 
 function populateForm(data: any) {
@@ -82,6 +92,14 @@ function populateForm(data: any) {
       country: data.address?.country || 'Sverige',
     },
     schedule: normalizeSchedule(data.schedule),
+    socialLinks: Array.isArray(data.socialLinks)
+      ? data.socialLinks.map((item: any, idx: number) => ({
+          platform: item.platform || 'instagram',
+          url: item.url || '',
+          isActive: typeof item.isActive === 'boolean' ? item.isActive : true,
+          sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : idx,
+        }))
+      : [],
   }
 }
 
@@ -104,12 +122,68 @@ function getDayLabel(dayKey: string) {
   return (DAY_LABELS[currentLang] as any)?.[dayKey] || DAY_LABELS.sv[dayKey as keyof typeof DAY_LABELS.sv] || dayKey
 }
 
+function getPlatformIcon(platform: SocialPlatform): string {
+  return getSocialPlatformIcon(platform)
+}
+
+function getPlatformPlaceholder(platform: SocialPlatform): string {
+  const opt = getSocialPlatformOption(platform)
+  return opt ? opt.placeholder : 'https://...'
+}
+
+function isValidUrl(url: string): boolean {
+  return isValidSocialUrl(url)
+}
+
+function addSocialLink(platform: SocialPlatform = 'instagram') {
+  form.value.socialLinks.push({
+    platform,
+    url: '',
+    isActive: true,
+    sortOrder: form.value.socialLinks.length,
+  })
+}
+
+function removeSocialLink(index: number) {
+  form.value.socialLinks.splice(index, 1)
+  form.value.socialLinks.forEach((item, idx) => {
+    item.sortOrder = idx
+  })
+}
+
+function moveSocialLink(index: number, direction: 'up' | 'down') {
+  if (direction === 'up' && index > 0) {
+    const item = form.value.socialLinks.splice(index, 1)[0]!
+    form.value.socialLinks.splice(index - 1, 0, item)
+  } else if (direction === 'down' && index < form.value.socialLinks.length - 1) {
+    const item = form.value.socialLinks.splice(index, 1)[0]!
+    form.value.socialLinks.splice(index + 1, 0, item)
+  }
+  form.value.socialLinks.forEach((item, idx) => {
+    item.sortOrder = idx
+  })
+}
+
 async function handleSave() {
+  // Validate social media link URLs (any non-empty URL must be valid, or empty URLs must be fixed)
+  const invalidLink = form.value.socialLinks.find((l) => !isValidSocialUrl(l.url))
+  if (invalidLink) {
+    errorMessage.value = t('admin.general.social.invalidUrlError', 'Vänligen korrigera ogiltiga webbadresser för sociala medier innan du sparar.')
+    openSections.value.social = true
+    return
+  }
+
   isSaving.value = true
   errorMessage.value = ''
   successMessage.value = ''
 
   try {
+    // Normalize sortOrder & trim URLs
+    form.value.socialLinks.forEach((item, idx) => {
+      item.sortOrder = idx
+      item.url = item.url.trim()
+    })
+
     await $fetch('/api/admin/settings/general', {
       method: 'PUT',
       body: {
@@ -137,6 +211,7 @@ const openSections = ref<Record<string, boolean>>({
   address: true,
   schedule: true,
   identity: true,
+  social: true,
 })
 
 const allExpanded = computed(() => Object.values(openSections.value).every(Boolean))
@@ -198,7 +273,7 @@ function toggleAll() {
     <!-- Sections Toolbar (Count & Collapse/Expand All) -->
     <div class="flex items-center justify-between px-1">
       <span class="text-xs text-base-content/60 font-bold uppercase tracking-wider">
-        {{ t('admin.general.sectionsCount', '5 sektioner') }}
+        {{ t('admin.general.sectionsCount', '6 sektioner') }}
       </span>
       <button
         type="button"
@@ -627,6 +702,183 @@ function toggleAll() {
                   type="text"
                   class="input input-bordered h-9 border-2 border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-medium w-full"
                 />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 6. Social Media Links & Channels -->
+      <div
+        class="collapse collapse-arrow bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 rounded-2xl shadow-xs transition-colors"
+        :class="openSections.social ? 'collapse-open' : 'collapse-close'"
+      >
+        <div
+          role="button"
+          tabindex="0"
+          :aria-expanded="openSections.social"
+          class="collapse-title flex items-center gap-3 font-bold text-base text-base-content px-5 py-4 cursor-pointer select-none hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 transition-colors"
+          @click="toggleSection('social')"
+          @keydown.enter.prevent="toggleSection('social')"
+          @keydown.space.prevent="toggleSection('social')"
+        >
+          <div class="size-8 rounded-xl bg-pink-100 dark:bg-pink-950/70 text-pink-700 dark:text-pink-300 flex items-center justify-center shrink-0">
+            <Icon name="lucide:share-2" class="size-4.5" />
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 flex-1 min-w-0">
+            <span class="truncate">{{ t('admin.general.social.sectionTitle', 'Sociala medier & Kanaler') }}</span>
+            <span class="badge badge-sm badge-ghost text-[10px] font-mono font-bold">
+              {{ form.socialLinks.length }} {{ form.socialLinks.length === 1 ? 'kanal' : 'kanaler' }}
+            </span>
+          </div>
+        </div>
+        <div
+          v-show="openSections.social"
+          class="collapse-content px-5 pb-6 space-y-4 border-t border-slate-100 dark:border-zinc-800/80 pt-4"
+        >
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <p class="text-xs text-base-content/60 leading-relaxed max-w-xl">
+              {{ t('admin.general.social.description', 'Hantera butikens officiella länkar till sociala medier som visas i sidfoten och på kontaktsidan.') }}
+            </p>
+
+            <!-- Dropdown to Add Social Link from in-memory options -->
+            <div class="dropdown dropdown-end">
+              <div tabindex="0" role="button" class="btn bg-brand-500 hover:bg-brand-600 text-white font-bold btn-sm rounded-xl gap-2 shadow-xs shrink-0">
+                <Icon name="lucide:plus" class="size-4" />
+                <span>{{ t('admin.general.social.addLink', 'Lägg till social kanal') }}</span>
+                <Icon name="lucide:chevron-down" class="size-3.5 opacity-70" />
+              </div>
+              <ul tabindex="0" class="dropdown-content z-20 menu p-2 shadow-xl bg-white dark:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-700 rounded-2xl w-56 space-y-1 mt-1">
+                <li v-for="option in SOCIAL_PLATFORM_OPTIONS" :key="option.platform">
+                  <button
+                    type="button"
+                    class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-slate-100 dark:hover:bg-zinc-700 text-base-content"
+                    @click="addSocialLink(option.platform)"
+                  >
+                    <Icon :name="option.icon" class="size-4.5 shrink-0" />
+                    <span>{{ option.label }}</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Empty state when no links added -->
+          <div v-if="form.socialLinks.length === 0" class="text-center py-8 px-4 border-2 border-dashed border-slate-200 dark:border-zinc-700 rounded-2xl">
+            <div class="size-12 rounded-2xl bg-slate-100 dark:bg-zinc-800 text-base-content/50 flex items-center justify-center mx-auto mb-3">
+              <Icon name="lucide:share-2" class="size-6" />
+            </div>
+            <p class="text-xs font-medium text-base-content/70 max-w-md mx-auto">
+              {{ t('admin.general.social.noLinks', 'Inga sociala medier tillagda än. Klicka ovan för att lägga till din första länk.') }}
+            </p>
+          </div>
+
+          <!-- List of Social Media Cards -->
+          <div v-else class="space-y-3">
+            <div
+              v-for="(link, index) in form.socialLinks"
+              :key="index"
+              class="card bg-slate-50 dark:bg-zinc-800/60 border-2 border-slate-200 dark:border-zinc-700/80 rounded-2xl p-3 sm:p-4 transition-all"
+              :class="{ 'opacity-60': !link.isActive }"
+            >
+              <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                
+                <!-- Platform Selector with Icon preview -->
+                <div class="w-full lg:w-56 shrink-0">
+                  <label class="label py-0.5">
+                    <span class="label-text font-bold text-[11px] text-base-content/70">
+                      {{ t('admin.general.social.platformLabel', 'Plattform') }}
+                    </span>
+                  </label>
+                  <div class="relative flex items-center">
+                    <div class="absolute start-3 pointer-events-none flex items-center justify-center">
+                      <Icon :name="getPlatformIcon(link.platform)" class="size-4.5" />
+                    </div>
+                    <select
+                      v-model="link.platform"
+                      class="select select-bordered select-sm ps-10 h-10 w-full text-xs font-bold border-2 border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-base-content rounded-xl"
+                    >
+                      <option v-for="opt in SOCIAL_PLATFORM_OPTIONS" :key="opt.platform" :value="opt.platform">
+                        {{ opt.label }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- URL Input with Validation Indicator -->
+                <div class="flex-1 min-w-0">
+                  <label class="label py-0.5 flex justify-between items-center">
+                    <span class="label-text font-bold text-[11px] text-base-content/70">
+                      {{ t('admin.general.social.urlLabel', 'Webbadress (URL)') }} *
+                    </span>
+                    <span v-if="link.url && !isValidUrl(link.url)" class="text-[11px] text-error font-semibold flex items-center gap-1">
+                      <Icon name="lucide:alert-circle" class="size-3" />
+                      {{ t('admin.general.social.invalidUrl', 'Ogiltig URL') }}
+                    </span>
+                  </label>
+                  <div class="relative">
+                    <input
+                      v-model="link.url"
+                      type="url"
+                      required
+                      :placeholder="getPlatformPlaceholder(link.platform)"
+                      class="input input-bordered h-10 w-full text-xs font-mono font-semibold border-2 bg-white dark:bg-zinc-800 text-base-content rounded-xl ps-9"
+                      :class="link.url && !isValidUrl(link.url) ? 'border-error focus:border-error' : 'border-slate-300 dark:border-zinc-700'"
+                    />
+                    <Icon name="lucide:link" class="absolute start-3 top-3 size-4 text-base-content/40" />
+                  </div>
+                </div>
+
+                <!-- Actions: Toggle isActive, Reorder, Remove -->
+                <div class="flex items-center justify-between lg:justify-end gap-3 pt-2 lg:pt-5 border-t lg:border-t-0 border-slate-200 dark:border-zinc-700/60 shrink-0">
+                  
+                  <!-- Active / Inactive Toggle -->
+                  <div class="flex items-center gap-2">
+                    <input
+                      v-model="link.isActive"
+                      type="checkbox"
+                      class="toggle toggle-sm toggle-success"
+                      :title="link.isActive ? t('admin.general.social.activeLabel', 'Aktiv') : t('admin.general.social.inactiveLabel', 'Inaktiv')"
+                    />
+                    <span class="text-xs font-bold" :class="link.isActive ? 'text-success' : 'text-base-content/40'">
+                      {{ link.isActive ? t('admin.general.social.activeLabel', 'Aktiv') : t('admin.general.social.inactiveLabel', 'Inaktiv') }}
+                    </span>
+                  </div>
+
+                  <!-- Reorder Controls -->
+                  <div class="join border border-slate-300 dark:border-zinc-700 rounded-lg">
+                    <button
+                      type="button"
+                      :disabled="index === 0"
+                      class="btn btn-ghost btn-xs join-item px-1.5 text-base-content/70 hover:text-base-content disabled:opacity-30"
+                      :title="t('admin.general.social.moveUp', 'Flytta upp')"
+                      @click="moveSocialLink(index, 'up')"
+                    >
+                      <Icon name="lucide:chevron-up" class="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      :disabled="index === form.socialLinks.length - 1"
+                      class="btn btn-ghost btn-xs join-item px-1.5 text-base-content/70 hover:text-base-content disabled:opacity-30"
+                      :title="t('admin.general.social.moveDown', 'Flytta ner')"
+                      @click="moveSocialLink(index, 'down')"
+                    >
+                      <Icon name="lucide:chevron-down" class="size-3.5" />
+                    </button>
+                  </div>
+
+                  <!-- Remove Button -->
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-sm text-error hover:bg-error/10 rounded-xl px-2.5"
+                    :title="t('admin.general.social.remove', 'Ta bort')"
+                    @click="removeSocialLink(index)"
+                  >
+                    <Icon name="lucide:trash-2" class="size-4" />
+                  </button>
+                </div>
+
               </div>
             </div>
           </div>
