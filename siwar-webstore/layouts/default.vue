@@ -64,8 +64,8 @@ const logout = async () => {
 
       <!-- Left: Brand Logo & Mobile Navigation Trigger -->
       <div class="flex items-center gap-0.5 sm:gap-1 shrink-0">
-        <!-- Mobile Hamburger Menu (Only visible on screens < 1024px) -->
-        <div class="dropdown lg:hidden">
+        <!-- Mobile Hamburger Menu (Only visible on screens < 1280px) -->
+        <div class="dropdown xl:hidden">
           <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm">
             <Icon name="lucide:menu" class="h-5 w-5" />
           </div>
@@ -192,8 +192,8 @@ const logout = async () => {
         </NuxtLink>
       </div>
 
-      <!-- Center: Desktop Navigation Links (Visible on screens >= 1024px) -->
-      <nav class="hidden lg:flex items-center justify-center gap-1 xl:gap-2 flex-1 min-w-0 px-2">
+      <!-- Center: Desktop Navigation Links (Visible on screens >= 1280px) -->
+      <nav class="hidden xl:flex items-center justify-center gap-1 xl:gap-2 flex-1 min-w-0 px-2">
         <NuxtLink
           :to="localePath('/catalog')"
           class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
