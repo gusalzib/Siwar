@@ -194,6 +194,10 @@ export default defineEventHandler(async (event) => {
       order.fulfillmentStatus = 'DISPATCHED'
       order.paymentStatus = releasedAmount > 0 ? 'PARTIALLY_CAPTURED' : 'CAPTURED'
       order.dispatchedAt = new Date()
+      if (body.trackingCode) {
+        order.trackingCode = body.trackingCode
+        order.carrier = 'PostNord'
+      }
     }
 
     // Rebalance inventory for removed/reduced items
