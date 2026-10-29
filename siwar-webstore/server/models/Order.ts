@@ -115,6 +115,8 @@ export interface IOrder extends Document {
   pricing: IOrderPricing
   inventoryDecremented: boolean
   confirmationEmailSent?: boolean
+  trackingCode?: string
+  carrier?: string
   authorizedAt?: Date
   paidAt?: Date
   packedAt?: Date
@@ -249,6 +251,8 @@ const OrderSchema = new Schema<IOrder>(
     },
     inventoryDecremented: { type: Boolean, default: false },
     confirmationEmailSent: { type: Boolean, default: false },
+    trackingCode: { type: String },
+    carrier: { type: String },
     authorizedAt: { type: Date },
     paidAt: { type: Date },
     packedAt: { type: Date },
