@@ -42,8 +42,8 @@ const formattedHoursSummary = computed(() => {
 const storeAddress = computed(() => {
   const addr = storeInfo.value?.address || DEFAULT_GENERAL_CONFIG.address
   return {
-    street: addr.street || 'Storgatan 12',
-    postalCode: addr.postalCode || '302 43',
+    street: addr.street || 'Åttingsstigen 41',
+    postalCode: addr.postalCode || '302 54',
     city: addr.city || 'Halmstad',
     country: addr.country || 'Sverige',
   }
