@@ -68,6 +68,12 @@ const company = computed(() => {
     vatNumber: storeInfo.value?.company?.vatNumber || DEFAULT_GENERAL_CONFIG.company.vatNumber,
   }
 })
+
+// Active social media links check
+const hasActiveSocial = computed(() => {
+  return Array.isArray(storeInfo.value?.socialLinks) &&
+    storeInfo.value.socialLinks.some((l: any) => l && l.isActive !== false && typeof l.url === 'string' && l.url.trim().length > 0)
+})
 </script>
 
 <template>
@@ -89,6 +95,14 @@ const company = computed(() => {
           <p class="text-xs text-slate-400 leading-relaxed font-medium">
             {{ storeTagline }}
           </p>
+
+          <!-- Social Media Links Elements -->
+          <div v-if="hasActiveSocial" class="pt-1">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+              {{ t('footer.social.title', 'Följ oss') }}
+            </span>
+            <SocialMediaShelf :links="storeInfo?.socialLinks || []" size="sm" />
+          </div>
 
           <div class="space-y-2.5 pt-2 border-t border-slate-800/80 text-xs">
             <!-- Physical Address -->
