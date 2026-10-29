@@ -9,7 +9,8 @@
       "oppettider": "Öppettider",
       "store": "Butik",
       "preferences": "Inställningar",
-      "favorites": "Favoriter"
+      "favorites": "Favoriter",
+      "trackOrder": "Spåra order"
     },
   "theme": {
     "dark": "Mörkt läge",
@@ -770,8 +771,10 @@
     "subtitle": "Slutför ditt köp snabbt och säkert.",
     "fulfillmentMethod": "Leveranssätt",
     "parcelDelivery": "Postombud / Paket",
+    "delivery": "Postombud / Paket",
     "parcelDeliveryDesc": "1–3 vardagar via PostNord",
     "inStorePickup": "Hämta i butik",
+    "pickup": "Hämta i butik",
     "inStorePickupDesc": "Klar inom 2 timmar (0 kr)",
     "recipientHeading": "Mottagaruppgifter",
     "fullName": "För- och efternamn",
@@ -819,19 +822,51 @@
     "confirmedTitle": "Tack för din beställning!",
     "holdNotice": "Ditt belopp har reserverats och dras när ordern packas.",
     "backToHome": "Tillbaka till butiken",
-    "printReceipt": "Skriv ut"
+    "printReceipt": "Skriv ut kvitto",
+    "milestones": {
+      "title": "Orderstatus & Följesedel",
+      "pendingPacking": "Mottagen",
+      "pendingPackingDesc": "Vi har tagit emot din order och förbereder packning.",
+      "packed": "Färdigpackad",
+      "packedDescDelivery": "Ditt paket är färdigpackat och inväntar upphämtning av PostNord.",
+      "packedDescPickup": "Ditt paket är färdigpackat och redo att hämtas i vår butik!",
+      "dispatched": "Skickad / Hämtad",
+      "dispatchedDescDelivery": "Paketet har lämnats över till PostNord och är på väg till dig.",
+      "dispatchedDescPickup": "Ordern har hämtats i butik.",
+      "cancelled": "Avbruten",
+      "cancelledDesc": "Denna order har avbrutits."
+    },
+    "tracking": {
+      "title": "Försändelseinformation",
+      "carrier": "Transportör",
+      "kolliId": "Kolli-ID / Försändelse-ID",
+      "trackButton": "Spåra försändelse hos PostNord",
+      "waitingNotice": "Spårningslänk blir aktiv så snart paketet har skannats av PostNord."
+    },
+    "pickup": {
+      "title": "Instruktioner för upphämtning i butik",
+      "readyBadge": "Redo för avhämtning",
+      "preparingBadge": "Förbereds i butik",
+      "location": "Plats: {address}",
+      "bringInstructions": "Vänligen uppge ordernummer {orderRef} och visa upp legitimation vid uthämtning.",
+      "viewHours": "Se butikens öppettider & karta"
+    }
   },
 
   "orderLookup": {
     "title": "Spåra din beställning",
-    "subtitle": "Ange ditt ordernummer och den e-postadress du använde vid köpet för att se aktuell orderstatus.",
+    "subtitle": "Ange ditt ordernummer och den e-postadress eller det mobilnummer du använde vid köpet för att se aktuell orderstatus.",
     "orderNumberLabel": "Ordernummer",
-    "orderNumberPlaceholder": "t.ex. SIW-1049",
-    "emailLabel": "E-postadress",
-    "emailPlaceholder": "din.epost{'@'}exempel.se",
-    "submitButton": "Sök order",
-    "noticeTitle": "Fullständig självbetjäning lanseras inom kort",
-    "noticeText": "Vår digitala orderspårning är under implementering. Har du frågor om en lagd order? Kontakta vår kundtjänst på order{'@'}siwar.se så hjälper vi dig omedelbart."
+    "orderNumberPlaceholder": "t.ex. ORD-566294",
+    "emailOrPhoneLabel": "E-postadress eller mobilnummer",
+    "emailOrPhonePlaceholder": "din.epost{'@'}exempel.se eller 0701234567",
+    "submitButton": "Spåra order",
+    "searching": "Söker order...",
+    "errorGeneric": "Ordern kunde inte hittas med angivna uppgifter.",
+    "errorRateLimit": "För många förfrågningar. Vänligen vänta en stund innan du försöker igen.",
+    "errorMissingFields": "Vänligen fyll i både ordernummer och e-post eller mobilnummer.",
+    "noticeTitle": "Hjälp med din beställning",
+    "noticeText": "Har du frågor om din order eller hittar du inte din bekräftelse? Kontakta vår kundtjänst på order{'@'}siwar.se så hjälper vi dig gärna."
   },
 
   "openingHoursPage": {

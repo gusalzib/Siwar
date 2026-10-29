@@ -9,7 +9,8 @@
     "oppettider": "Opening Hours",
     "store": "Store",
     "preferences": "Preferences",
-    "favorites": "Favorites"
+    "favorites": "Favorites",
+    "trackOrder": "Track Order"
   },
   "theme": {
     "dark": "Dark mode",
@@ -767,8 +768,10 @@
     "subtitle": "Complete your purchase quickly and securely.",
     "fulfillmentMethod": "Delivery Method",
     "parcelDelivery": "Parcel Delivery",
+    "delivery": "Parcel Delivery",
     "parcelDeliveryDesc": "1–3 business days via PostNord",
     "inStorePickup": "In-Store Pickup",
+    "pickup": "In-Store Pickup",
     "inStorePickupDesc": "Ready within 2 hours (0 SEK)",
     "recipientHeading": "Recipient Details",
     "fullName": "Full Name",
@@ -816,19 +819,51 @@
     "confirmedTitle": "Thank you for your order!",
     "holdNotice": "Your amount has been reserved and will be charged when the order is packed.",
     "backToHome": "Back to shop",
-    "printReceipt": "Print receipt"
+    "printReceipt": "Print receipt",
+    "milestones": {
+      "title": "Order Status & Fulfillment",
+      "pendingPacking": "Received",
+      "pendingPackingDesc": "We have received your order and are preparing packing.",
+      "packed": "Packed",
+      "packedDescDelivery": "Your order is packed and awaiting courier pickup by PostNord.",
+      "packedDescPickup": "Your order is packed and ready for pickup at our store!",
+      "dispatched": "Dispatched / Collected",
+      "dispatchedDescDelivery": "Your parcel has been handed over to PostNord and is on its way to you.",
+      "dispatchedDescPickup": "Order has been collected at the store.",
+      "cancelled": "Cancelled",
+      "cancelledDesc": "This order has been cancelled."
+    },
+    "tracking": {
+      "title": "Shipment Information",
+      "carrier": "Carrier",
+      "kolliId": "Tracking Number (Kolli-ID)",
+      "trackButton": "Track on PostNord",
+      "waitingNotice": "Tracking link will become active once scanned by PostNord."
+    },
+    "pickup": {
+      "title": "In-Store Pickup Instructions",
+      "readyBadge": "Ready for Pickup",
+      "preparingBadge": "Being Prepared",
+      "location": "Location: {address}",
+      "bringInstructions": "Please present order reference {orderRef} and a valid ID when picking up.",
+      "viewHours": "View store opening hours & map"
+    }
   },
 
   "orderLookup": {
     "title": "Track Your Order",
-    "subtitle": "Enter your order reference number and the email address used at checkout to view status.",
+    "subtitle": "Enter your order reference number and the email address or phone number used at checkout to view live status.",
     "orderNumberLabel": "Order Number",
-    "orderNumberPlaceholder": "e.g., SIW-1049",
-    "emailLabel": "Email Address",
-    "emailPlaceholder": "your.email{'@'}example.com",
-    "submitButton": "Search Order",
-    "noticeTitle": "Self-service tracking coming soon",
-    "noticeText": "Our digital order tracking portal is currently being finalized. If you have questions regarding an order, please contact our support at order{'@'}siwar.se."
+    "orderNumberPlaceholder": "e.g. ORD-566294",
+    "emailOrPhoneLabel": "Email Address or Mobile Phone",
+    "emailOrPhonePlaceholder": "your.email{'@'}example.com or +46701234567",
+    "submitButton": "Track Order",
+    "searching": "Searching order...",
+    "errorGeneric": "No order found with the provided details.",
+    "errorRateLimit": "Too many requests. Please wait a moment before trying again.",
+    "errorMissingFields": "Please provide both order reference and email or mobile phone.",
+    "noticeTitle": "Need help with your order?",
+    "noticeText": "Have questions about your order or cannot find your confirmation? Contact our support at order{'@'}siwar.se and we will gladly assist you."
   },
 
   "openingHoursPage": {
