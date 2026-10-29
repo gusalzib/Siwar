@@ -11,6 +11,7 @@ const route = useRoute()
 const localePath = useLocalePath()
 const orderId = route.params.id as string
 const { data: order, pending, error } = await useFetch<any>(`/api/admin/orders/${orderId}`)
+const { data: storeInfo } = await useFetch<any>('/api/settings', { lazy: true })
 
 function onPrint() {
   window.print()
@@ -37,7 +38,9 @@ function onPrint() {
       <div class="flex justify-between items-start border-b-2 border-black pb-4">
         <div>
           <h1 class="text-2xl font-black tracking-tight">SIWAR PACKSEDEL</h1>
-          <p class="text-xs text-gray-600">Storgatan 12, Halmstad | order@siwar.se</p>
+          <p class="text-xs text-gray-600">
+            {{ storeInfo?.address?.street || 'Åttingsstigen 41' }}, {{ storeInfo?.address?.city || 'Halmstad' }} | {{ storeInfo?.contact?.email || 'orders@siwar.se' }}
+          </p>
         </div>
         <div class="text-right">
           <div class="text-xl font-bold font-mono">{{ order.orderReference }}</div>

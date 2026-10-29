@@ -314,8 +314,8 @@ export const DEFAULT_GENERAL_CONFIG: IGeneralSettings = {
     phone: '+46 35 123 456',
   },
   address: {
-    street: 'Storgatan 12',
-    postalCode: '302 43',
+    street: 'Åttingsstigen 41',
+    postalCode: '302 54',
     city: 'Halmstad',
     country: 'Sverige',
   },

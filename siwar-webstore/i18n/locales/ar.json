@@ -9,7 +9,8 @@
       "oppettider": "أوقات العمل",
       "store": "المتجر",
       "preferences": "التفضيلات",
-      "favorites": "المفضلة"
+      "favorites": "المفضلة",
+      "trackOrder": "تتبع طلبك"
     },
   "theme": {
     "dark": "الوضع الداكن",
@@ -768,8 +769,10 @@
     "subtitle": "أكمل طلبك بسرعة وأمان.",
     "fulfillmentMethod": "طريقة الاستلام",
     "parcelDelivery": "توصيل طرود",
+    "delivery": "توصيل طرود",
     "parcelDeliveryDesc": "خلال 1–3 أيام عمل عبر PostNord",
     "inStorePickup": "استلام من المتجر",
+    "pickup": "استلام من المتجر",
     "inStorePickupDesc": "جاهز خلال ساعتين (مجاناً)",
     "recipientHeading": "بيانات المستلم",
     "fullName": "الاسم الكامل",
@@ -817,19 +820,51 @@
     "confirmedTitle": "شكراً لطلبك!",
     "holdNotice": "تم حجز المبلغ وسيتم تحصيله عند تجهيز الطلب وشحنه.",
     "backToHome": "العودة إلى المتجر",
-    "printReceipt": "اطبع الوصل"
+    "printReceipt": "طباعة الإيصال",
+    "milestones": {
+      "title": "حالة الطلب ومراحل التجهيز",
+      "pendingPacking": "تم الاستلام",
+      "pendingPackingDesc": "استلمنا طلبك وجارٍ تحضيره للتجهيز والتغليف.",
+      "packed": "تم التغليف",
+      "packedDescDelivery": "تم تغليف طردك وهو بانتظار استلام مندوب شركة النقل (PostNord).",
+      "packedDescPickup": "طلبك جاهز تماماً للاستلام الآن من متجرنا!",
+      "dispatched": "تم الشحن / الاستلام",
+      "dispatchedDescDelivery": "تم تسليم الشحنة لشركة النقل (PostNord) وهي في طريقها إليك.",
+      "dispatchedDescPickup": "تم استلام الطلب من المتجر بنجاح.",
+      "cancelled": "ملغي",
+      "cancelledDesc": "تم إلغاء هذا الطلب."
+    },
+    "tracking": {
+      "title": "معلومات الشحنة والتتبع",
+      "carrier": "شركة الشحن",
+      "kolliId": "رقم التتبع (Kolli-ID)",
+      "trackButton": "تتبع الشحنة عبر PostNord",
+      "waitingNotice": "سيتم تفعيل رابط التتبع فور مسح الشحنة لدى PostNord."
+    },
+    "pickup": {
+      "title": "تعليمات الاستلام من المتجر",
+      "readyBadge": "جاهز للاستلام",
+      "preparingBadge": "قيد التجهيز في المتجر",
+      "location": "العنوان: {address}",
+      "bringInstructions": "يرجى إبراز رقم الطلب {orderRef} وهوية شخصية صالحة عند الاستلام.",
+      "viewHours": "عرض أوقات العمل والخريطة"
+    }
   },
 
   "orderLookup": {
     "title": "تتبع حالة طلبك",
-    "subtitle": "أدخل رقم الطلب والبريد الإلكتروني المستخدم عند الشراء لمعرفة حالة التجهيز والشحن.",
+    "subtitle": "أدخل رقم الطلب والبريد الإلكتروني أو رقم الهاتف المستخدم عند الشراء لمعرفة حالة التجهيز والشحن.",
     "orderNumberLabel": "رقم الطلب",
-    "orderNumberPlaceholder": "مثال: SIW-1049",
-    "emailLabel": "البريد الإلكتروني",
-    "emailPlaceholder": "your.email{'@'}example.com",
-    "submitButton": "بحث عن الطلب",
-    "noticeTitle": "خدمة التتبع الذاتي ستتاح قريباً",
-    "noticeText": "بوابة تتبع الطلبات قيد الإعداد النهائي. إذا كانت لديك أي استفسارات بخصوص طلبك، تواصل فوراً مع خدمة العملاء عبر order{'@'}siwar.se وسيسعدنا مساعدتك."
+    "orderNumberPlaceholder": "مثال: ORD-566294",
+    "emailOrPhoneLabel": "البريد الإلكتروني أو رقم الهاتف",
+    "emailOrPhonePlaceholder": "your.email{'@'}example.com أو 0701234567",
+    "submitButton": "تتبع الطلب",
+    "searching": "جارٍ البحث...",
+    "errorGeneric": "تعذر العثور على الطلب بالبيانات المدخلة.",
+    "errorRateLimit": "محاولات كثيرة جداً. يرجى الانتظار دقيقة قبل المحاولة مجدداً.",
+    "errorMissingFields": "يرجى إدخال كل من رقم الطلب والبريد الإلكتروني أو رقم الهاتف.",
+    "noticeTitle": "هل تحتاج مساعدة في طلبك؟",
+    "noticeText": "إذا كانت لديك أي استفسارات بخصوص طلبك، تواصل فوراً مع خدمة العملاء عبر order{'@'}siwar.se وسيسعدنا مساعدتك."
   },
 
   "openingHoursPage": {

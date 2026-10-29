@@ -5,9 +5,68 @@ import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const { t, locale } = useI18n()
+const localePath = useLocalePath()
 const orderId = route.params.id as string
 
 const { data: order, pending, error } = await useFetch<any>(`/api/orders/${orderId}`)
+
+// Fetch dynamic store settings from DB
+const { data: storeInfo } = await useFetch<any>('/api/settings', {
+  lazy: true,
+})
+
+const storeName = computed(() => {
+  if (storeInfo.value?.storeName) {
+    const cur = (locale.value === 'ar' || locale.value === 'en') ? locale.value : 'sv'
+    return storeInfo.value.storeName[cur] || storeInfo.value.storeName.sv || storeInfo.value.storeName.en || 'SIWAR'
+  }
+  return 'SIWAR'
+})
+
+const storeCompany = computed(() => {
+  const comp = storeInfo.value?.company
+  return {
+    name: comp?.name || 'Siwar Butik AB',
+    orgNumber: comp?.orgNumber || '559123-4567',
+    vatNumber: comp?.vatNumber || 'SE559123456701',
+  }
+})
+
+const storeContact = computed(() => {
+  const cont = storeInfo.value?.contact
+  return {
+    email: cont?.email || 'orders@siwar.se',
+    phone: cont?.phone || '+46 720 457 454',
+  }
+})
+
+const storeAddress = computed(() => {
+  const addr = storeInfo.value?.address
+  return {
+    street: addr?.street || 'Åttingsstigen 41',
+    postalCode: addr?.postalCode || '302 54',
+    city: addr?.city || 'Halmstad',
+    country: addr?.country || 'Sverige',
+  }
+})
+
+const formattedReceiptAddress = computed(() => {
+  return `${storeAddress.value.street}, ${storeAddress.value.postalCode} ${storeAddress.value.city}`
+})
+
+const pickupAddress = computed(() => {
+  const pAddr = storeInfo.value?.pickup?.address || storeInfo.value?.address
+  return {
+    street: pAddr?.street || storeAddress.value.street,
+    postalCode: pAddr?.postalCode || storeAddress.value.postalCode,
+    city: pAddr?.city || storeAddress.value.city,
+    country: pAddr?.country || storeAddress.value.country,
+  }
+})
+
+const formattedPickupAddress = computed(() => {
+  return `${pickupAddress.value.street}, ${pickupAddress.value.postalCode} ${pickupAddress.value.city}`
+})
 
 function formatMoney(amountMinor: number, currency = 'SEK') {
   return `${(amountMinor / 100).toFixed(2)} ${currency}`
@@ -22,6 +81,18 @@ function getLocalizedName(nameObj?: { ar: string; sv: string; en: string }) {
   const cur = locale.value as 'ar' | 'sv' | 'en'
   return nameObj[cur] || nameObj.sv || nameObj.en || nameObj.ar || ''
 }
+
+const milestoneStep = computed(() => {
+  if (!order.value) return 1
+  if (order.value.fulfillmentStatus === 'DISPATCHED') return 3
+  if (order.value.fulfillmentStatus === 'PACKED') return 2
+  return 1
+})
+
+const postNordTrackingUrl = computed(() => {
+  if (!order.value?.trackingCode) return ''
+  return `https://www.postnord.se/vara-verktyg/spara-brev-paket-och-pall?shipmentId=${encodeURIComponent(order.value.trackingCode)}`
+})
 
 const totalDiscountSavings = computed(() => {
   if (!order.value?.items) return 0
@@ -48,14 +119,202 @@ const totalDiscountSavings = computed(() => {
     <div v-else class="max-w-3xl mx-auto space-y-6 print:m-0 print:p-0 print:max-w-full">
       <!-- Screen-Only Actions -->
       <div class="flex items-center justify-between no-print">
-        <NuxtLink to="/" class="btn btn-ghost btn-sm gap-2">
-          <Icon name="lucide:arrow-left" class="size-4" />
+        <NuxtLink :to="localePath('/')" class="btn btn-ghost btn-sm gap-2">
+          <Icon name="lucide:arrow-left" class="size-4 rtl:rotate-180" />
           <span>{{ t('order.backToHome', 'Tillbaka till butiken') }}</span>
         </NuxtLink>
-        <button type="button" class="btn btn-primary btn-sm text-white px-3 hover:bg-amber-500 bg-brand-600 gap-2" @click="printReceipt">
+        <button type="button" class="btn btn-sm text-white px-4 bg-brand-600 hover:bg-brand-700 font-bold border-none shadow-xs gap-2 rounded-xl" @click="printReceipt">
           <Icon name="lucide:printer" class="size-4" />
           <span>{{ t('order.printReceipt', 'Skriv ut kvitto') }}</span>
         </button>
+      </div>
+
+      <!-- Live Fulfillment Timeline & Carrier Tracking (no-print) -->
+      <div class="card bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 shadow-md rounded-3xl p-6 sm:p-8 space-y-6 no-print">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-zinc-800 pb-4">
+          <div class="flex items-center gap-3">
+            <div class="size-11 rounded-2xl bg-brand-100 dark:bg-brand-950/70 text-brand-700 dark:text-brand-300 flex items-center justify-center shrink-0 shadow-xs">
+              <Icon :name="order.customer.fulfillmentMethod === 'DELIVERY' ? 'lucide:truck' : 'lucide:store'" class="size-6" />
+            </div>
+            <div>
+              <h2 class="text-base sm:text-lg font-black text-base-content tracking-tight">
+                {{ t('order.milestones.title', 'Orderstatus & Följesedel') }}
+              </h2>
+              <p class="text-xs text-base-content/70">
+                {{ order.customer.fulfillmentMethod === 'DELIVERY' ? (t('checkout.delivery') || 'Hemleverans / Ombud') : (t('checkout.pickup') || 'Hämta i butik') }}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <span
+              class="badge font-bold font-mono text-xs py-2.5 px-3 border-none"
+              :class="{
+                'badge-warning text-zinc-900': order.fulfillmentStatus === 'PENDING_PACKING',
+                'bg-blue-600 text-white': order.fulfillmentStatus === 'PACKED',
+                'badge-success text-white': order.fulfillmentStatus === 'DISPATCHED',
+                'badge-error text-white': order.fulfillmentStatus === 'CANCELLED',
+              }"
+            >
+              <template v-if="order.fulfillmentStatus === 'PENDING_PACKING'">
+                {{ t('order.milestones.pendingPacking', 'Mottagen') }}
+              </template>
+              <template v-else-if="order.fulfillmentStatus === 'PACKED'">
+                {{ t('order.milestones.packed', 'Färdigpackad') }}
+              </template>
+              <template v-else-if="order.fulfillmentStatus === 'DISPATCHED'">
+                {{ t('order.milestones.dispatched', 'Skickad / Hämtad') }}
+              </template>
+              <template v-else>
+                {{ t('order.milestones.cancelled', 'Avbruten') }}
+              </template>
+            </span>
+          </div>
+        </div>
+
+        <!-- 3-Step Milestone Stepper -->
+        <div class="relative py-2">
+          <div class="grid grid-cols-3 gap-2 relative z-10 text-center">
+            <!-- Step 1: Mottagen -->
+            <div class="flex flex-col items-center space-y-2">
+              <div
+                class="size-10 rounded-full flex items-center justify-center text-sm font-bold transition-all shadow-sm"
+                :class="milestoneStep >= 1 ? 'bg-brand-600 text-white' : 'bg-slate-200 dark:bg-zinc-800 text-slate-500'"
+              >
+                <Icon name="lucide:check" class="size-5 text-white" />
+              </div>
+              <div>
+                <div class="text-xs font-bold text-base-content">
+                  {{ t('order.milestones.pendingPacking', 'Mottagen') }}
+                </div>
+                <div v-if="order.createdAt" class="text-[10px] text-base-content/60 font-mono mt-0.5">
+                  {{ new Date(order.createdAt).toLocaleDateString(locale === 'ar' ? 'ar-SA' : locale === 'en' ? 'en-US' : 'sv-SE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: Färdigpackad -->
+            <div class="flex flex-col items-center space-y-2">
+              <div
+                class="size-10 rounded-full flex items-center justify-center text-sm font-bold transition-all shadow-sm"
+                :class="milestoneStep >= 2 ? 'bg-brand-600 text-white' : 'bg-slate-200 dark:bg-zinc-800 text-slate-500 border border-slate-300 dark:border-zinc-700'"
+              >
+                <Icon v-if="milestoneStep >= 2" name="lucide:check" class="size-5 text-white" />
+                <span v-else>2</span>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-base-content">
+                  {{ t('order.milestones.packed', 'Färdigpackad') }}
+                </div>
+                <div v-if="order.packedAt" class="text-[10px] text-base-content/60 font-mono mt-0.5">
+                  {{ new Date(order.packedAt).toLocaleDateString(locale === 'ar' ? 'ar-SA' : locale === 'en' ? 'en-US' : 'sv-SE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Skickad / Hämtad -->
+            <div class="flex flex-col items-center space-y-2">
+              <div
+                class="size-10 rounded-full flex items-center justify-center text-sm font-bold transition-all shadow-sm"
+                :class="milestoneStep >= 3 ? 'bg-brand-600 text-white' : 'bg-slate-200 dark:bg-zinc-800 text-slate-500 border border-slate-300 dark:border-zinc-700'"
+              >
+                <Icon v-if="milestoneStep >= 3" name="lucide:check" class="size-5 text-white" />
+                <span v-else>3</span>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-base-content">
+                  {{ order.customer.fulfillmentMethod === 'DELIVERY' ? t('order.milestones.dispatched', 'Skickad') : t('order.milestones.dispatched', 'Hämtad') }}
+                </div>
+                <div v-if="order.dispatchedAt" class="text-[10px] text-base-content/60 font-mono mt-0.5">
+                  {{ new Date(order.dispatchedAt).toLocaleDateString(locale === 'ar' ? 'ar-SA' : locale === 'en' ? 'en-US' : 'sv-SE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Bar Line -->
+          <div class="absolute top-7 start-12 end-12 h-1 bg-slate-200 dark:bg-zinc-800 -z-0">
+            <div
+              class="h-full bg-brand-500 transition-all duration-500"
+              :style="{ width: milestoneStep === 1 ? '15%' : milestoneStep === 2 ? '50%' : '100%' }"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Carrier Tracking Block (Delivery) -->
+        <div
+          v-if="order.customer.fulfillmentMethod === 'DELIVERY'"
+          class="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/60 space-y-3"
+        >
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="text-xs font-bold text-base-content/60 uppercase tracking-wider">
+                {{ t('order.tracking.carrier', 'Transportör') }}: PostNord
+              </div>
+              <div v-if="order.trackingCode" class="mt-1 flex items-center gap-2">
+                <span class="text-xs font-semibold text-base-content/70">{{ t('order.tracking.kolliId', 'Kolli-ID') }}:</span>
+                <span class="font-mono font-bold text-sm text-base-content bg-white dark:bg-zinc-700 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-zinc-600 shadow-2xs">
+                  {{ order.trackingCode }}
+                </span>
+              </div>
+              <div v-else class="text-xs text-base-content/70 mt-1">
+                {{ t('order.tracking.waitingNotice', 'Spårningslänk blir aktiv så snart paketet har skannats av PostNord.') }}
+              </div>
+            </div>
+
+            <div v-if="order.trackingCode">
+              <a
+                :href="postNordTrackingUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn bg-brand-600 hover:bg-brand-700 text-white font-bold btn-sm gap-2 rounded-xl border-none shadow-xs"
+              >
+                <Icon name="lucide:external-link" class="size-4 text-white" />
+                <span>{{ t('order.tracking.trackButton', 'Spåra försändelse hos PostNord') }}</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- In-Store Pickup Block (Store Pickup) -->
+        <div
+          v-else-if="order.customer.fulfillmentMethod === 'PICKUP'"
+          class="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/60 space-y-3"
+        >
+          <div class="flex items-start gap-3">
+            <div class="size-9 rounded-xl bg-brand-100 dark:bg-brand-950/80 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 mt-0.5">
+              <Icon name="lucide:map-pin" class="size-5" />
+            </div>
+            <div class="space-y-1.5 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-sm font-bold text-base-content">
+                  {{ t('order.pickup.title', 'Instruktioner för upphämtning i butik') }}
+                </h3>
+                <span
+                  class="badge badge-xs font-bold border-none"
+                  :class="milestoneStep >= 2 ? 'badge-success text-white' : 'badge-warning text-zinc-900'"
+                >
+                  {{ milestoneStep >= 2 ? t('order.pickup.readyBadge', 'Redo för avhämtning') : t('order.pickup.preparingBadge', 'Förbereds i butik') }}
+                </span>
+              </div>
+              <p class="text-xs text-base-content/70">
+                {{ t('order.pickup.location', { address: formattedPickupAddress }, `Plats: ${formattedPickupAddress}`) }}
+              </p>
+              <p class="text-xs text-base-content/80 font-medium">
+                {{ t('order.pickup.bringInstructions', { orderRef: order.orderReference }) }}
+              </p>
+              <div class="pt-1">
+                <NuxtLink
+                  :to="localePath('/oppettider')"
+                  class="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline"
+                >
+                  <Icon name="lucide:clock" class="size-3.5" />
+                  <span>{{ t('order.pickup.viewHours', 'Se butikens öppettider & karta') }}</span>
+                </NuxtLink>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Receipt Container (Auditable & Printable) -->
@@ -63,9 +322,9 @@ const totalDiscountSavings = computed(() => {
         <!-- Store Header & Order Reference -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-base-200 pb-6">
           <div>
-            <h1 class="text-3xl font-black tracking-tight text-base-content">SIWAR</h1>
-            <p class="text-xs text-base-content/60 font-mono mt-0.5">Org.nr: 559123-4567 | momsreg: SE559123456701</p>
-            <p class="text-xs text-base-content/60">Storgatan 12, 302 43 Halmstad</p>
+            <h1 class="text-3xl font-black tracking-tight text-base-content uppercase">{{ storeCompany.name || storeName }}</h1>
+            <p class="text-xs text-base-content/60 font-mono mt-0.5">Org.nr: {{ storeCompany.orgNumber }} | momsreg: {{ storeCompany.vatNumber }}</p>
+            <p class="text-xs text-base-content/60">{{ formattedReceiptAddress }}</p>
           </div>
           <div class="sm:text-right">
             <span class="badge badge-success text-white font-mono font-bold text-xs">
@@ -96,7 +355,7 @@ const totalDiscountSavings = computed(() => {
               <div class="font-mono">{{ order.customer.address.postalCode }} {{ order.customer.address.city }}</div>
             </div>
             <div v-else class="text-xs text-base-content/60">
-              Hämtas personligen i butik (Halmstad)
+              Hämtas personligen i butik ({{ storeAddress.city }})
             </div>
           </div>
         </div>
@@ -217,7 +476,7 @@ const totalDiscountSavings = computed(() => {
         <!-- Footer Notice -->
         <div class="border-t border-base-200 pt-4 text-center text-xs text-base-content/50">
           <p>Kvitto genererat elektroniskt och är giltigt som bokföringsunderlag.</p>
-          <p>Vid frågor kontakta kundservice på order@siwar.se</p>
+          <p>Vid frågor kontakta kundservice på {{ storeContact.email }}</p>
         </div>
       </div>
     </div>
