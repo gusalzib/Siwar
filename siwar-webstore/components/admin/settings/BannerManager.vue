@@ -14,6 +14,62 @@ const { data: banners, pending: isLoading, refresh } = await useFetch<any[]>('/a
 // Fetch categories for destination category selector
 const { data: categories } = await useFetch<any[]>('/api/admin/categories')
 
+// Fetch store settings for carousel interval
+const { data: storeSettings, refresh: refreshSettings } = await useFetch<any>('/api/settings')
+
+// Slideshow transition timing state
+const initialIntervalMs = computed(() => {
+  return (banners.value as any)?.carouselIntervalMs || storeSettings.value?.carouselIntervalMs || 5000
+})
+
+const carouselIntervalSeconds = ref<number>(Math.round(initialIntervalMs.value / 1000))
+const isSavingInterval = ref(false)
+const intervalSavedFeedback = ref(false)
+
+watch(initialIntervalMs, (newVal) => {
+  if (newVal) {
+    carouselIntervalSeconds.value = Math.round(newVal / 1000)
+  }
+})
+
+async function handleIntervalChange() {
+  let val = Number(carouselIntervalSeconds.value)
+  if (isNaN(val) || val <= 0) val = 5
+
+  let ms: number
+  if (val >= 2000) {
+    ms = Math.min(30000, val)
+    carouselIntervalSeconds.value = Math.round(ms / 1000)
+  } else if (val >= 2 && val <= 30) {
+    ms = val * 1000
+    carouselIntervalSeconds.value = val
+  } else if (val < 2) {
+    ms = 2000
+    carouselIntervalSeconds.value = 2
+  } else {
+    ms = 30000
+    carouselIntervalSeconds.value = 30
+  }
+
+  isSavingInterval.value = true
+  try {
+    await $fetch('/api/admin/settings/banners', {
+      method: 'PUT',
+      body: { carouselIntervalMs: ms },
+    })
+    intervalSavedFeedback.value = true
+    successMessage.value = t('admin.banners.timerSaved', 'Bildväxlingstid sparad!')
+    setTimeout(() => {
+      intervalSavedFeedback.value = false
+    }, 2000)
+    await refreshSettings()
+  } catch (err: any) {
+    errorMessage.value = err?.data?.statusMessage || 'Kunde inte spara växlingstid.'
+  } finally {
+    isSavingInterval.value = false
+  }
+}
+
 // Watch count to notify parent
 watch(
   banners,
@@ -448,7 +504,10 @@ async function handleSubmit() {
 
     await $fetch('/api/admin/settings/banners', {
       method: 'PUT',
-      body: { banners: sanitizedList },
+      body: {
+        banners: sanitizedList,
+        carouselIntervalMs: carouselIntervalSeconds.value * 1000,
+      },
     })
 
     successMessage.value = t('admin.banners.success', 'Banners har sparats!')
@@ -550,30 +609,66 @@ async function moveBanner(index: number, direction: 'up' | 'down') {
           </button>
         </div>
 
-        <!-- Filter Bar -->
-        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center gap-3">
-          <div class="relative w-full sm:max-w-md">
-            <input
-              v-model="searchQuery"
-              type="text"
-              :placeholder="t('admin.banners.searchPlaceholder', 'Filtrera banners efter titel eller länk...')"
-              class="input w-full pl-9 pr-8 h-10 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 text-sm shadow-xs"
-            />
-            <Icon
-              name="lucide:search"
-              class="absolute left-3 top-3 size-4 text-base-content/60 rtl:left-auto rtl:right-3"
-            />
-            <button
-              v-if="searchQuery"
-              type="button"
-              class="absolute right-2.5 top-2.5 size-5 flex items-center justify-center text-base-content/50 hover:text-base-content rtl:right-auto rtl:left-2.5"
-              @click="searchQuery = ''"
-            >
-              <Icon name="lucide:x" class="size-3.5" />
-            </button>
+        <!-- Filter Bar & Slideshow Timer -->
+        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-3">
+          <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-1">
+            <div class="relative w-full sm:max-w-md">
+              <input
+                v-model="searchQuery"
+                type="text"
+                :placeholder="t('admin.banners.searchPlaceholder', 'Filtrera banners efter titel eller länk...')"
+                class="input w-full pl-9 pr-8 h-10 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 text-sm shadow-xs"
+              />
+              <Icon
+                name="lucide:search"
+                class="absolute left-3 top-3 size-4 text-base-content/60 rtl:left-auto rtl:right-3"
+              />
+              <button
+                v-if="searchQuery"
+                type="button"
+                class="absolute right-2.5 top-2.5 size-5 flex items-center justify-center text-base-content/50 hover:text-base-content rtl:right-auto rtl:left-2.5"
+                @click="searchQuery = ''"
+              >
+                <Icon name="lucide:x" class="size-3.5" />
+              </button>
+            </div>
+
+            <!-- Slideshow Timer Control (Right next to search field) -->
+            <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
+              <div class="inline-flex items-center gap-2 px-3 h-10 rounded-xl border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content text-xs shadow-xs">
+                <Icon name="lucide:timer" class="size-4 text-brand-500 shrink-0" />
+                <label for="carousel-interval-input" class="font-bold text-xs whitespace-nowrap text-base-content/80">
+                  {{ t('admin.banners.slideshowTimer', 'Bildväxling:') }}
+                </label>
+                <input
+                  id="carousel-interval-input"
+                  v-model.number="carouselIntervalSeconds"
+                  type="number"
+                  min="2"
+                  max="30"
+                  step="1"
+                  class="w-14 h-7 text-center font-mono font-bold bg-slate-100 dark:bg-zinc-700 rounded-lg border border-slate-200 dark:border-zinc-600 text-xs focus:outline-brand-500"
+                  :title="t('admin.banners.timerTooltip', 'Tid i sekunder innan nästa bild visas (2–30 sek)')"
+                  @change="handleIntervalChange"
+                  @keydown.enter.prevent="handleIntervalChange"
+                />
+                <span class="text-[11px] font-semibold text-base-content/60">s</span>
+                <button
+                  type="button"
+                  class="btn btn-xs btn-ghost text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/40 rounded-lg ml-0.5 font-bold"
+                  :disabled="isSavingInterval"
+                  :title="t('common.save', 'Spara')"
+                  @click="handleIntervalChange"
+                >
+                  <span v-if="isSavingInterval" class="loading loading-spinner loading-xs" />
+                  <Icon v-else-if="intervalSavedFeedback" name="lucide:check" class="size-3.5 text-success" />
+                  <span v-else>{{ t('admin.banners.saveTimer', 'Spara') }}</span>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div v-if="searchQuery" class="text-xs font-semibold text-base-content/70">
+          <div v-if="searchQuery" class="text-xs font-semibold text-base-content/70 shrink-0">
             {{ filteredBanners.length }} / {{ banners?.length || 0 }}
           </div>
         </div>
