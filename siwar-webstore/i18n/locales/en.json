@@ -10,7 +10,9 @@
     "store": "Store",
     "preferences": "Preferences",
     "favorites": "Favorites",
-    "trackOrder": "Track Order"
+    "trackOrder": "Track Order",
+    "about": "About Us",
+    "contact": "Contact"
   },
   "theme": {
     "dark": "Dark mode",
@@ -661,7 +663,8 @@
     "categories": {
       "heading": "Explore Our Categories",
       "subheading": "Find your Middle Eastern favorites among our carefully selected groceries and delicacies",
-      "explore": "Explore range"
+      "explore": "Explore range",
+      "viewAll": "View all categories"
     },
     "deals": {
       "badge": "Special Offers",
@@ -762,7 +765,7 @@
       "metaDesc": "Information on how Siwar Butik AB processes personal data under the EU GDPR regulation.",
       "gdprBadge": "General Data Protection Regulation (GDPR)",
       "sec1_title": "1. Data Controller",
-      "sec1_p1": "Siwar Butik AB, Storgatan 12, 302 43 Halmstad, Sweden, corporate registration number 559123-4567, is the data controller for the processing of your personal data.",
+      "sec1_p1": "Siwar Butik AB, Åttingsstigen 41, 302 54 Halmstad, Sweden, corporate registration number 559123-4567, is the data controller for the processing of your personal data.",
       "sec1_p2": "We respect your personal privacy and are committed to ensuring high data protection standards in full compliance with the EU GDPR.",
       "sec2_title": "2. Personal Data We Collect",
       "sec2_p1": "We collect information you provide directly when placing an order or communicating with customer service:",
@@ -964,5 +967,134 @@
     },
     "allRightsReserved": "All rights reserved.",
     "complianceNotice": "Compliant with Swedish Accounting Act (1999:1078) and Price Information Act."
+  },
+
+  "aboutPage": {
+    "metaTitle": "About Us – Our Story & Heritage",
+    "metaDesc": "Get to know Siwar Butik in Halmstad. Discover authentic Middle Eastern specialty groceries, aromatic spices, sweets, and Mediterranean delicacies.",
+    "badge": "Our Story & Heritage",
+    "title": "Authentic Flavors from the Orient in Halmstad",
+    "subtitle": "Since the beginning, our vision has been simple: to offer the finest Middle Eastern and Mediterranean specialties with genuine passion for food traditions, craftsmanship, and the highest quality ingredients.",
+    "story": {
+      "title": "A vibrant gathering place for culinary joy and community",
+      "p1": "Siwar was born out of a love for the rich cultural heritage and generous flavors that define Middle Eastern and Mediterranean cuisine. In our store, you'll discover everything from sun-ripened olives, crunchy nuts, and daily-fresh baklava to carefully curated spices, tahini, and premium basmati rice sourced from trusted producers.",
+      "p2": "We believe food unites people and connects cultures. Our devoted team is always here to guide you toward the perfect ingredients for beloved family recipes, whether you're simmering a savory stew with sumac and za'atar or welcoming guests with aromatic cardamom coffee and sweet dates."
+    },
+    "pillars": {
+      "p1": {
+        "title": "Handpicked & Authentic",
+        "desc": "We import specialty foods directly from reputable artisans in the Middle East and Mediterranean."
+      },
+      "p2": {
+        "title": "Fresh Spices & Ingredients",
+        "desc": "Freshly ground spices, aromatic dried herbs, pulses, and daily specialties for an authentic culinary experience."
+      },
+      "p3": {
+        "title": "Warm & Personal Hospitality",
+        "desc": "We take pride in being a warm community hub in Halmstad where every guest is welcomed with care and expertise."
+      }
+    },
+    "gallery": {
+      "badge": "Storefront Experience",
+      "title": "Welcome to our store in Halmstad",
+      "desc": "Explore our vibrant store aisles, aromatic spice markets, and gourmet Mediterranean shelves. Click any photo to expand.",
+      "clickToExpand": "Click to expand",
+      "close": "Close",
+      "placeholderNote": "Store photography • Siwar Butik Halmstad",
+      "items": {
+        "storefront": {
+          "title": "Store Façade & Welcoming Entrance",
+          "desc": "Our inviting retail location on Åttingsstigen 41 in Halmstad with convenient parking and accessibility."
+        },
+        "spices": {
+          "title": "Aromatic Spice Bazaar & Herbs",
+          "desc": "Abundant bins of freshly ground spices, sumac, za'atar, whole cardamom, and golden saffron."
+        },
+        "sweets": {
+          "title": "Crispy Baklava & Traditional Sweets",
+          "desc": "Daily baked pistachio baklava, artisanal halva, stuffed dates, and Mediterranean pastries."
+        },
+        "delicacies": {
+          "title": "Gourmet Pantry & Mediterranean Delicacies",
+          "desc": "Cold-pressed extra virgin olive oils, sesame tahini, pomegranate molasses, pulses, and premium basmati rice."
+        }
+      }
+    },
+    "visit": {
+      "badge": "Visit Us",
+      "title": "Experience the store in Halmstad",
+      "desc": "Find us at Åttingsstigen 41 in Halmstad. Stop by to smell the spices, get personal cooking recommendations, or collect your online orders with free Click & Collect.",
+      "viewAllHours": "View all opening hours & directions",
+      "findUs": "Get directions"
+    },
+    "social": {
+      "badge": "Join Our Community",
+      "title": "Follow Siwar on Social Media",
+      "desc": "Never miss new seasonal arrivals, weekly specials, recipe inspiration, or behind-the-scenes stories. Follow us today!"
+    }
+  },
+
+  "contactPage": {
+    "metaTitle": "Contact Us – Customer Service & Store",
+    "metaDesc": "Have questions about our products, hours, or orders? Contact Siwar Butik in Halmstad by phone, email, or our online form.",
+    "badge": "Customer Support & Store",
+    "title": "We are here to help you",
+    "subtitle": "Whether you are looking for a specialty item, need directions, or have an inquiry regarding your order, our team is always ready to assist.",
+    "cards": {
+      "phoneTitle": "Call the Store",
+      "phoneDesc": "Feel free to call us directly during normal store opening hours for quick support.",
+      "emailTitle": "Email & Customer Care",
+      "emailDesc": "We answer all customer emails as quickly as possible, normally within 24 hours.",
+      "addressTitle": "Physical Address",
+      "addressDesc": "Conveniently located in Halmstad with free customer parking and nearby bus stops.",
+      "hoursTitle": "Store Opening Hours",
+      "hoursDesc": "Our regular opening hours Monday through Sunday.",
+      "viewHours": "View Schedule",
+      "openInMaps": "Open in Google Maps"
+    },
+    "form": {
+      "badge": "Send a Message",
+      "title": "Get in touch directly",
+      "desc": "Fill out the contact form below and we will get back to your email address promptly.",
+      "nameLabel": "Your Full Name",
+      "namePlaceholder": "e.g. Fatima Svensson",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "your.email{'@'}example.com",
+      "phoneLabel": "Phone Number (optional)",
+      "phonePlaceholder": "+46 70 123 45 67",
+      "orderRefLabel": "Order Number (if regarding an order)",
+      "orderRefPlaceholder": "e.g. ORD-12345",
+      "categoryLabel": "Inquiry Subject",
+      "categories": {
+        "general": "General store inquiry",
+        "order": "Order status or delivery",
+        "product": "Product request or allergens",
+        "feedback": "Suggestions or feedback"
+      },
+      "messageLabel": "Your Message",
+      "messagePlaceholder": "Tell us how we can assist you in as much detail as possible...",
+      "submitButton": "Send Message",
+      "submitting": "Sending message...",
+      "successTitle": "Thank you for your message!",
+      "successDesc": "We have received your message and will reply to your email address within 24 hours.",
+      "sendAnother": "Send another message",
+      "validation": {
+        "nameRequired": "Please enter your name (at least 2 characters).",
+        "emailRequired": "Please enter a valid email address.",
+        "messageRequired": "Message must contain at least 10 characters."
+      }
+    },
+    "map": {
+      "badge": "Location",
+      "title": "Find our store in Halmstad",
+      "directions": "Get Directions",
+      "freeParking": "Free customer parking adjacent to the entrance",
+      "busNearby": "Near public transit stops and wheelchair accessible"
+    },
+    "social": {
+      "badge": "Social Channels",
+      "title": "Connect with us on Social Media",
+      "desc": "Have a quick question, recipe suggestion, or want to explore our latest arrivals? Reach out via our social channels anytime."
+    }
   }
 }

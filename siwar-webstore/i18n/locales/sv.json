@@ -10,7 +10,9 @@
       "store": "Butik",
       "preferences": "Inställningar",
       "favorites": "Favoriter",
-      "trackOrder": "Spåra order"
+      "trackOrder": "Spåra order",
+      "about": "Om oss",
+      "contact": "Kontakt"
     },
   "theme": {
     "dark": "Mörkt läge",
@@ -664,7 +666,8 @@
     "categories": {
       "heading": "Utforska våra kategorier",
       "subheading": "Hitta dina orientaliska favoriter bland våra noga utvalda råvaror och delikatesser",
-      "explore": "Utforska sortiment"
+      "explore": "Utforska sortiment",
+      "viewAll": "Se alla kategorier"
     },
     "deals": {
       "badge": "Specialerbjudande",
@@ -765,7 +768,7 @@
       "metaDesc": "Information om hur Siwar Butik AB hanterar personuppgifter i enlighet med GDPR.",
       "gdprBadge": "Dataskyddsförordningen (GDPR)",
       "sec1_title": "1. Personuppgiftsansvarig",
-      "sec1_p1": "Siwar Butik AB, Storgatan 12, 302 43 Halmstad, organisationsnummer 559123-4567, är personuppgiftsansvarig för behandlingen av dina personuppgifter.",
+      "sec1_p1": "Siwar Butik AB, Åttingsstigen 41, 302 54 Halmstad, organisationsnummer 559123-4567, är personuppgiftsansvarig för behandlingen av dina personuppgifter.",
       "sec1_p2": "Vi värnar om din personliga integritet och eftersträvar alltid en hög nivå av dataskydd i enlighet med EU:s dataskyddsförordning (GDPR).",
       "sec2_title": "2. Vilka personuppgifter vi samlar in",
       "sec2_p1": "Vi samlar in information som du lämnar till oss vid genomförande av köp eller kontakt med vår kundtjänst:",
@@ -967,5 +970,134 @@
     },
     "allRightsReserved": "Alla rättigheter förbehållna.",
     "complianceNotice": "Följer Bokföringslagen (1999:1078) och Prisinformationslagen."
+  },
+
+  "aboutPage": {
+    "metaTitle": "Om oss – Vår historia & arv",
+    "metaDesc": "Lär känna Siwar Butik i Halmstad. Upptäck vårt utbud av autentiska orientaliska råvaror, doftande kryddor, sötsaker och delikatesser.",
+    "badge": "Vår historia & arv",
+    "title": "Äkta smaker från Orienten mitt i Halmstad",
+    "subtitle": "Sedan starten har vår vision varit enkel: att erbjuda det bästa ur det orientaliska och medelhavsinspirerade köket med passion för tradition, hantverk och råvaror av högsta kvalitet.",
+    "story": {
+      "title": "En levande mötesplats för matglädje och gemenskap",
+      "p1": "Siwar Butik grundades med en passion för det rika kulturarv och de generösa smakerna som präglar Mellanöstern och Medelhavet. Hos oss hittar du allt från solmogna oliver, krispiga nötter och dagsfärsk baklava till noga utvalda kryddor, tahini och premium basmatiris direkt från betrodda producenter.",
+      "p2": "Vi tror att mat förenar människor och bygger broar mellan kulturer. Vårt engagerade butiksteam hjälper dig gärna att hitta rätt råvaror för traditionella familjerecept, oavsett om du lagar en mustig gryta med sumac och za'atar eller vill bjuda nära och kära på sött kardemummakaffe och dadlar."
+    },
+    "pillars": {
+      "p1": {
+        "title": "Handplockat & Autentiskt",
+        "desc": "Vi importerar noggrant utvalda delikatesser från traditionella producenter i Mellanöstern och Medelhavsområdet."
+      },
+      "p2": {
+        "title": "Färska Kryddor & Råvaror",
+        "desc": "Doftande kryddor, torkade örter, baljväxter och dagsfärska specialiteter för den genuina smakupplevelsen."
+      },
+      "p3": {
+        "title": "Varmt & Personligt Bemötande",
+        "desc": "Vi är stolta över att vara en lokal mötesplats i Halmstad där varje besökare möts med personlig service och kunskap."
+      }
+    },
+    "gallery": {
+      "badge": "Fysisk butiksmiljö",
+      "title": "Välkommen in till butiken i Halmstad",
+      "desc": "Upptäck vår välfyllda butikslokal, dofterna från kryddavdelningen och vårt breda sortiment av orientaliska delikatesser. Klicka på bilderna för att förstora.",
+      "clickToExpand": "Klicka för att förstora",
+      "close": "Stäng",
+      "placeholderNote": "Butiksfoto • Siwar Butik Halmstad",
+      "items": {
+        "storefront": {
+          "title": "Butiksfasad & Välkomnande Entré",
+          "desc": "Vår fysiska butikslokal på Åttingsstigen 41 i Halmstad med gott om parkeringsplatser och bekväm tillgänglighet."
+        },
+        "spices": {
+          "title": "Doftande Kryddbasar & Örter",
+          "desc": "Stora tråg med nymalda kryddor, sumac, za'atar, kardemumma och saffran för äkta orientalisk matlagning."
+        },
+        "sweets": {
+          "title": "Spröd Baklava & Traditionella Sötsaker",
+          "desc": "Dagsfärsk pistagebaklava, halvah, fyllda dadlar och söta delikatesser bakade enligt klassiska recept."
+        },
+        "delicacies": {
+          "title": "Gourmetskafferi & Medelhavsdelikatesser",
+          "desc": "Kallpressade olivoljor, sesamtahini, granatäppelsirap, premiumris, bönor och inlagda grönsaker."
+        }
+      }
+    },
+    "visit": {
+      "badge": "Välkommen in",
+      "title": "Upplev butiken på plats i Halmstad",
+      "desc": "Du hittar oss på Åttingsstigen 41 i Halmstad. Kom in och dofta på kryddorna, få personliga recepttips eller hämta dina onlinebeställningar kostnadsfritt.",
+      "viewAllHours": "Se alla öppettider & vägbeskrivning",
+      "findUs": "Hitta till oss"
+    },
+    "social": {
+      "badge": "Följ vår gemenskap",
+      "title": "Följ Siwar på sociala medier",
+      "desc": "Missa inga nya säsongsleveranser, helgerbjudanden eller goda recept. Följ oss och bli en del av Siwar-familjen!"
+    }
+  },
+
+  "contactPage": {
+    "metaTitle": "Kontakta oss – Kundservice & Butik",
+    "metaDesc": "Har du frågor om vårt sortiment, öppettider eller beställningar? Kontakta Siwar Butik i Halmstad via telefon, e-post eller vårt kontaktformulär.",
+    "badge": "Kundservice & Butik",
+    "title": "Vi finns här för att hjälpa dig",
+    "subtitle": "Oavsett om du har frågor om en specifik vara, vill veta mer om våra öppettider eller behöver hjälp med en beställning är du alltid varmt välkommen att höra av dig.",
+    "cards": {
+      "phoneTitle": "Telefon till butiken",
+      "phoneDesc": "Ring oss gärna direkt under butikens ordinarie öppettider för snabb hjälp.",
+      "emailTitle": "E-post & Kundsupport",
+      "emailDesc": "Vi besvarar e-postfrågor så snart vi kan, normalt inom 24 timmar.",
+      "addressTitle": "Besöksadress",
+      "addressDesc": "Centralt i Halmstad med goda parkeringsmöjligheter och bussförbindelser.",
+      "hoursTitle": "Butikens Öppettider",
+      "hoursDesc": "Våra ordinarie öppettider måndag till söndag.",
+      "viewHours": "Se alla tider",
+      "openInMaps": "Öppna i Google Maps"
+    },
+    "form": {
+      "badge": "Skicka meddelande",
+      "title": "Kontakta oss direkt via formuläret",
+      "desc": "Fyll i dina kontaktuppgifter och ditt meddelande nedan så återkommer vi till din angivna e-postadress så fort som möjligt.",
+      "nameLabel": "Ditt fullständiga namn",
+      "namePlaceholder": "t.ex. Fatima Svensson",
+      "emailLabel": "E-postadress",
+      "emailPlaceholder": "din.epost{'@'}example.com",
+      "phoneLabel": "Telefonnummer (valfritt)",
+      "phonePlaceholder": "070 123 45 67",
+      "orderRefLabel": "Ordernummer (om ärendet gäller en pågående order)",
+      "orderRefPlaceholder": "t.ex. ORD-12345",
+      "categoryLabel": "Vad gäller ditt ärende?",
+      "categories": {
+        "general": "Allmän fråga om butiken",
+        "order": "Fråga om beställning eller leverans",
+        "product": "Sortimentsfråga / allergener",
+        "feedback": "Förslag eller synpunkter"
+      },
+      "messageLabel": "Ditt meddelande",
+      "messagePlaceholder": "Beskriv ditt ärende så utförligt som möjligt så hjälper vi dig snabbare...",
+      "submitButton": "Skicka meddelande",
+      "submitting": "Skickar meddelande...",
+      "successTitle": "Tack för ditt meddelande!",
+      "successDesc": "Vi har tagit emot ditt ärende och återkopplar till din e-postadress så snart som möjligt.",
+      "sendAnother": "Skicka ytterligare ett meddelande",
+      "validation": {
+        "nameRequired": "Vänligen ange ditt namn (minst 2 tecken).",
+        "emailRequired": "Vänligen ange en giltig e-postadress.",
+        "messageRequired": "Meddelandet måste innehålla minst 10 tecken."
+      }
+    },
+    "map": {
+      "badge": "Hitta hit",
+      "title": "Hitta till vår fysiska butik i Halmstad",
+      "directions": "Få vägbeskrivning",
+      "freeParking": "Kostnadsfri kundparkering i anslutning till butiken",
+      "busNearby": "Nära busshållplats och smidig tillgänglighet"
+    },
+    "social": {
+      "badge": "Sociala medier",
+      "title": "Koppla upp med oss i sociala medier",
+      "desc": "Har du en snabb fråga, vill tipsa om en produkt eller följa våra senaste nyheter? Du når oss även via våra sociala kanaler."
+    }
   }
 }
