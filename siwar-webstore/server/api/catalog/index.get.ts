@@ -2,7 +2,7 @@
 import { type QueryFilter, Types } from 'mongoose'
 import { Product, type IProduct } from '~/server/models/Product'
 import { Category } from '~/server/models/Category'
-import '~/server/models/Allergens'
+import { Allergen } from '~/server/models/Allergens'
 import { calculateDiscountedPrice, isDiscountActive } from '~/server/services/pricing.service'
 
 /**
@@ -63,20 +63,63 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // 5. AC-2: Allergen Exclusion Filtering ($nin)
-  // Excludes any product whose allergens array contains ANY of the selected allergen IDs
+  // 5. AC-2 & AC-10: Allergen Exclusion Filtering ($nin)
+  // Excludes any product whose allergens array contains ANY of the selected allergen ObjectIds or codes
   if (query.excludeAllergens) {
-    const rawAllergens = Array.isArray(query.excludeAllergens)
-      ? query.excludeAllergens
-      : String(query.excludeAllergens).split(',')
+    const rawAllergens = (
+      Array.isArray(query.excludeAllergens)
+        ? query.excludeAllergens
+        : String(query.excludeAllergens).split(',')
+    )
+      .map((item) => String(item).trim())
+      .filter(Boolean)
 
-    const allergenObjectIds = rawAllergens
-      .map((id) => String(id).trim())
-      .filter((id) => Types.ObjectId.isValid(id))
-      .map((id) => new Types.ObjectId(id))
+    if (rawAllergens.length > 0) {
+      const resolvedObjectIds: Types.ObjectId[] = []
+      const codesOrTerms: string[] = []
 
-    if (allergenObjectIds.length > 0) {
-      filter.allergens = { $nin: allergenObjectIds }
+      for (const item of rawAllergens) {
+        if (Types.ObjectId.isValid(item) && item.length === 24) {
+          resolvedObjectIds.push(new Types.ObjectId(item))
+        } else {
+          codesOrTerms.push(item)
+        }
+      }
+
+      // If allergen codes or names (e.g. 'milk', 'gluten', 'mjölk') are provided, resolve their ObjectIds
+      if (codesOrTerms.length > 0) {
+        const lowerCodes = codesOrTerms.map((c) => c.toLowerCase())
+        const termRegexes = codesOrTerms.map((term) => {
+          const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          return new RegExp(`^${escaped}$`, 'i')
+        })
+
+        const matchedAllergens = await Allergen.find({
+          $or: [
+            { code: { $in: lowerCodes } },
+            { 'name.sv': { $in: termRegexes } },
+            { 'name.en': { $in: termRegexes } },
+            { 'name.ar': { $in: termRegexes } },
+          ],
+        })
+          .select('_id')
+          .lean()
+
+        for (const doc of matchedAllergens) {
+          if (doc._id) {
+            resolvedObjectIds.push(doc._id as Types.ObjectId)
+          }
+        }
+      }
+
+      // Deduplicate resolved ObjectIds
+      const uniqueObjectIds = Array.from(
+        new Set(resolvedObjectIds.map((id) => String(id)))
+      ).map((idStr) => new Types.ObjectId(idStr))
+
+      if (uniqueObjectIds.length > 0) {
+        filter.allergens = { $nin: uniqueObjectIds }
+      }
     }
   }
 

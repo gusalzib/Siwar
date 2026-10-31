@@ -41,6 +41,20 @@ watch(
   }
 )
 
+// Sync allergen exclusions if route query changes
+watch(
+  () => route.query.excludeAllergens,
+  (newVal) => {
+    if (!newVal) {
+      excludedAllergens.value = []
+    } else if (Array.isArray(newVal)) {
+      excludedAllergens.value = newVal as string[]
+    } else {
+      excludedAllergens.value = String(newVal).split(',').map((s) => s.trim()).filter(Boolean)
+    }
+  }
+)
+
 // Mobile filter drawer state
 const isMobileDrawerOpen = ref(false)
 
@@ -177,12 +191,17 @@ function isAllergenExcluded(allergen: { id: string; code?: string }): boolean {
   return excludedAllergens.value.includes(code) || excludedAllergens.value.includes(allergen.id)
 }
 
-function toggleAllergenExclusion(identifier: string) {
-  const idx = excludedAllergens.value.indexOf(identifier)
-  if (idx >= 0) {
-    excludedAllergens.value.splice(idx, 1)
+function toggleAllergenExclusion(allergen: { id: string; code?: string } | string) {
+  const code = typeof allergen === 'string' ? allergen : (allergen.code || allergen.id)
+  const id = typeof allergen === 'string' ? allergen : allergen.id
+
+  const isCurrentlyExcluded = excludedAllergens.value.includes(code) || excludedAllergens.value.includes(id)
+  if (isCurrentlyExcluded) {
+    excludedAllergens.value = excludedAllergens.value.filter(
+      (item) => item !== code && item !== id
+    )
   } else {
-    excludedAllergens.value.push(identifier)
+    excludedAllergens.value.push(code)
   }
   currentPage.value = 1
   applyFiltersToUrl({ page: undefined })
@@ -377,9 +396,9 @@ function getLocalized(obj?: Record<string, string>): string {
                 >
                   <input
                     type="checkbox"
-                    :checked="excludedAllergens.includes(allergen.code || allergen.id)"
+                    :checked="isAllergenExcluded(allergen)"
                     class="checkbox checkbox-error checkbox-sm border-2 border-base-300 dark:border-zinc-500 cursor-pointer"
-                    @change="toggleAllergenExclusion(allergen.code || allergen.id)"
+                    @change="toggleAllergenExclusion(allergen)"
                   />
                   <span>{{ getLocalized(allergen.name) }}</span>
                 </label>
