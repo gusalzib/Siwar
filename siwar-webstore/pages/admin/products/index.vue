@@ -1,6 +1,6 @@
 <!-- pages/admin/products/index.vue -->
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { toMajorUnits } from '~~/utils/currency'
 
 definePageMeta({
@@ -19,6 +19,10 @@ const onlyDiscounted = ref(false)
 const onlyMissingTranslations = ref(false)
 const isActionLoading = ref<string | null>(null)
 
+// Pagination states
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+
 // Delete modal state
 const deleteModalRef = ref<HTMLDialogElement | null>(null)
 const productToDelete = ref<any | null>(null)
@@ -29,13 +33,15 @@ const { data: categories } = await useFetch<Array<{ id: string; name: Record<str
   '/api/admin/categories'
 )
 
-// 2. Reactive query parameters for product fetching
+// 2. Reactive query parameters for product fetching (Server-side pagination & filtering)
 const queryParams = computed(() => {
-  const q: Record<string, string | undefined> = {
+  const q: Record<string, string | number | undefined> = {
     search: searchQuery.value.trim() || undefined,
     category: selectedCategory.value || undefined,
     stockStatus: selectedStockStatus.value !== 'all' ? selectedStockStatus.value : undefined,
     missingTranslations: onlyMissingTranslations.value ? 'true' : undefined,
+    page: currentPage.value,
+    limit: itemsPerPage.value,
   }
 
   if (selectedStatus.value === 'archived') {
@@ -53,11 +59,38 @@ const queryParams = computed(() => {
 
 // 3. Fetch products with reactive query parameters
 const {
-  data: products,
+  data: productsResponse,
   pending: isLoading,
   refresh: refreshProducts,
-} = await useFetch<any[]>('/api/admin/products', {
+} = await useFetch<any>('/api/admin/products', {
   query: queryParams,
+})
+
+// Safe computed getters for hybrid data
+const products = computed(() => {
+  if (Array.isArray(productsResponse.value)) return productsResponse.value
+  return productsResponse.value?.products || []
+})
+
+const pagination = computed(() => {
+  if (!productsResponse.value || Array.isArray(productsResponse.value)) {
+    return {
+      total: products.value?.length || 0,
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+      totalPages: Math.ceil((products.value?.length || 0) / itemsPerPage.value) || 1,
+    }
+  }
+  return productsResponse.value.pagination
+})
+
+const metrics = computed(() => {
+  return productsResponse.value?.metrics || {
+    totalCount: pagination.value.total,
+    totalActive: 0,
+    totalArchived: 0,
+    totalDiscounted: 0,
+  }
 })
 
 // Checks if any filter is actively applied
@@ -79,7 +112,37 @@ function resetFilters() {
   selectedStatus.value = 'all'
   onlyDiscounted.value = false
   onlyMissingTranslations.value = false
+  currentPage.value = 1
 }
+
+function changePage(newPage: number) {
+  if (newPage < 1 || newPage > pagination.value.totalPages) return
+  currentPage.value = newPage
+  if (import.meta.client) {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+function visiblePages(current: number, total: number): (number | string)[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1)
+  }
+  if (current <= 3) {
+    return [1, 2, 3, 4, '...', total]
+  }
+  if (current >= total - 2) {
+    return [1, '...', total - 3, total - 2, total - 1, total]
+  }
+  return [1, '...', current - 1, current, current + 1, '...', total]
+}
+
+// Reset page when filters change
+watch(
+  [searchQuery, selectedCategory, selectedStockStatus, selectedStatus, onlyDiscounted, onlyMissingTranslations, itemsPerPage],
+  () => {
+    currentPage.value = 1
+  }
+)
 
 // 4. Toggle product active / archived status
 async function toggleArchive(productId: string) {
@@ -283,8 +346,8 @@ function isDiscountActiveOrScheduled(product: any): boolean {
 
           <!-- Reset Filters & Product Count -->
           <div class="flex items-center gap-3">
-            <span v-if="products" class="text-xs font-semibold text-base-content/60">
-              {{ t('admin.products.cards.showingCount', { count: products.length }) }}
+            <span v-if="pagination.total > 0" class="text-xs font-semibold text-base-content/60">
+              {{ t('admin.products.cards.showingCount', { count: pagination.total }) }}
             </span>
             <button
               v-if="hasActiveFilters"
@@ -539,6 +602,75 @@ function isDiscountActiveOrScheduled(product: any): boolean {
             </div>
           </div>
         </article>
+      </div>
+
+      <!-- Pagination Controls Bar -->
+      <div
+        v-if="pagination.total > 0"
+        class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t-2 border-base-300 dark:border-zinc-800"
+      >
+        <!-- Range info & items per page -->
+        <div class="flex items-center gap-3 text-xs text-base-content/70">
+          <span>
+            {{ t('admin.pagination.showingRange', {
+              from: pagination.total > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0,
+              to: Math.min(pagination.page * pagination.limit, pagination.total),
+              total: pagination.total
+            }) }}
+          </span>
+          <span class="text-base-content/30">•</span>
+          <div class="flex items-center gap-1.5">
+            <span>{{ t('admin.pagination.perPage') }}:</span>
+            <select
+              v-model="itemsPerPage"
+              class="select select-bordered select-xs rounded-lg border-base-300 dark:border-zinc-700 bg-base-100 dark:bg-zinc-800 text-xs"
+            >
+              <option :value="10">10</option>
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Pagination Buttons -->
+        <div v-if="pagination.totalPages > 1" class="flex items-center gap-1.5">
+          <button
+            type="button"
+            :disabled="pagination.page <= 1"
+            @click="changePage(pagination.page - 1)"
+            class="btn btn-outline btn-sm rounded-xl font-bold border-2 border-base-300 dark:border-zinc-700 hover:border-brand-500 hover:bg-brand-500 hover:text-slate-950 disabled:opacity-40 transition"
+          >
+            <Icon name="lucide:chevron-left" class="size-4" />
+            <span class="hidden sm:inline">{{ t('admin.pagination.previous') }}</span>
+          </button>
+
+          <!-- Page Number Pills -->
+          <div class="flex items-center gap-1">
+            <button
+              v-for="p in visiblePages(pagination.page, pagination.totalPages)"
+              :key="p"
+              type="button"
+              :disabled="p === '...'"
+              @click="typeof p === 'number' && changePage(p)"
+              class="btn btn-sm rounded-xl font-bold min-w-9 h-9"
+              :class="p === pagination.page
+                ? 'bg-brand-600 text-white border-2 border-brand-600 shadow-xs'
+                : (p === '...' ? 'btn-ghost cursor-default' : 'btn-ghost border-2 border-transparent hover:border-base-300 dark:hover:border-zinc-700 text-base-content')"
+            >
+              {{ p }}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            :disabled="pagination.page >= pagination.totalPages"
+            @click="changePage(pagination.page + 1)"
+            class="btn btn-outline btn-sm rounded-xl font-bold border-2 border-base-300 dark:border-zinc-700 hover:border-brand-500 hover:bg-brand-500 hover:text-slate-950 disabled:opacity-40 transition"
+          >
+            <span class="hidden sm:inline">{{ t('admin.pagination.next') }}</span>
+            <Icon name="lucide:chevron-right" class="size-4" />
+          </button>
+        </div>
       </div>
     </div>
 

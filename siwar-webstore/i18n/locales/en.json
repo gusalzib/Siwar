@@ -95,6 +95,14 @@
       "submitting": "Logging in...",
       "invalidCredentials": "Invalid email or password. Please try again."
     },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "pageOf": "Page {page} of {totalPages}",
+      "showingRange": "Showing {from}–{to} of {total}",
+      "perPage": "Per page",
+      "itemsPerPage": "{count} / page"
+    },
     "products": {
       "title": "Product Management",
       "subtitle": "View, edit, and filter products, inventory buffers, and translations",

@@ -1,6 +1,6 @@
 <!-- pages/admin/orders/index.vue -->
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 definePageMeta({
   middleware: 'admin',
@@ -12,19 +12,40 @@ const localePath = useLocalePath()
 const searchQuery = ref('')
 const selectedFulfillmentStatus = ref('all')
 const selectedPaymentStatus = ref('all')
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
 
 const {
-  data: orders,
+  data: ordersResponse,
   pending: isLoading,
   refresh: refreshOrders,
-} = await useFetch<any[]>('/api/admin/orders', {
+} = await useFetch<any>('/api/admin/orders', {
   query: computed(() => ({
-    search: searchQuery.value || undefined,
+    search: searchQuery.value.trim() || undefined,
     fulfillmentStatus:
       selectedFulfillmentStatus.value !== 'all' ? selectedFulfillmentStatus.value : undefined,
     paymentStatus:
       selectedPaymentStatus.value !== 'all' ? selectedPaymentStatus.value : undefined,
+    page: currentPage.value,
+    limit: itemsPerPage.value,
   })),
+})
+
+const orders = computed(() => {
+  if (Array.isArray(ordersResponse.value)) return ordersResponse.value
+  return ordersResponse.value?.orders || []
+})
+
+const pagination = computed(() => {
+  if (!ordersResponse.value || Array.isArray(ordersResponse.value)) {
+    return {
+      total: orders.value?.length || 0,
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+      totalPages: Math.ceil((orders.value?.length || 0) / itemsPerPage.value) || 1,
+    }
+  }
+  return ordersResponse.value.pagination
 })
 
 function formatMoney(amountMinor?: number, currency = 'SEK') {
@@ -36,19 +57,52 @@ function resetFilters() {
   searchQuery.value = ''
   selectedFulfillmentStatus.value = 'all'
   selectedPaymentStatus.value = 'all'
+  currentPage.value = 1
 }
 
-// Quick counters for the header metrics
-const pendingPackingCount = computed(
-  () => orders.value?.filter((o) => o.fulfillmentStatus === 'PENDING_PACKING').length || 0
-)
-const dispatchedCount = computed(
-  () => orders.value?.filter((o) => o.fulfillmentStatus === 'DISPATCHED').length || 0
-)
+function changePage(newPage: number) {
+  if (newPage < 1 || newPage > pagination.value.totalPages) return
+  currentPage.value = newPage
+  if (import.meta.client) {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+function visiblePages(current: number, total: number): (number | string)[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1)
+  }
+  if (current <= 3) {
+    return [1, 2, 3, 4, '...', total]
+  }
+  if (current >= total - 2) {
+    return [1, '...', total - 3, total - 2, total - 1, total]
+  }
+  return [1, '...', current - 1, current, current + 1, '...', total]
+}
+
+// Reset page when filters change
+watch([searchQuery, selectedFulfillmentStatus, selectedPaymentStatus, itemsPerPage], () => {
+  currentPage.value = 1
+})
+
+// Quick counters for the header metrics (hybrid: server-side global counts, fallback to local)
+const pendingPackingCount = computed(() => {
+  if (ordersResponse.value?.metrics?.pendingPackingCount !== undefined) {
+    return ordersResponse.value.metrics.pendingPackingCount
+  }
+  return orders.value?.filter((o: any) => o.fulfillmentStatus === 'PENDING_PACKING').length || 0
+})
+const dispatchedCount = computed(() => {
+  if (ordersResponse.value?.metrics?.dispatchedCount !== undefined) {
+    return ordersResponse.value.metrics.dispatchedCount
+  }
+  return orders.value?.filter((o: any) => o.fulfillmentStatus === 'DISPATCHED').length || 0
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-100/90 dark:bg-zinc-950 p-4 sm:p-6 lg:p-8 text-base-content">
+  <div class="min-h-screen p-4 sm:p-6 lg:p-8 text-base-content">
     <div class="max-w-7xl mx-auto space-y-6">
       <!-- Header & Stats Summary -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -420,6 +474,75 @@ const dispatchedCount = computed(
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination Controls Bar -->
+        <div
+          v-if="pagination.total > 0"
+          class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t-2 border-slate-200 dark:border-zinc-700/80 bg-slate-50/50 dark:bg-zinc-900/50"
+        >
+          <!-- Range info & items per page -->
+          <div class="flex items-center gap-3 text-xs text-base-content/70">
+            <span>
+              {{ t('admin.pagination.showingRange', {
+                from: pagination.total > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0,
+                to: Math.min(pagination.page * pagination.limit, pagination.total),
+                total: pagination.total
+              }) }}
+            </span>
+            <span class="text-base-content/30">•</span>
+            <div class="flex items-center gap-1.5">
+              <span>{{ t('admin.pagination.perPage') }}:</span>
+              <select
+                v-model="itemsPerPage"
+                class="select select-bordered select-xs rounded-lg border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs"
+              >
+                <option :value="10">10</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Pagination Buttons -->
+          <div v-if="pagination.totalPages > 1" class="flex items-center gap-1.5">
+            <button
+              type="button"
+              :disabled="pagination.page <= 1"
+              @click="changePage(pagination.page - 1)"
+              class="btn btn-outline btn-sm rounded-xl font-bold border-2 border-slate-300 dark:border-zinc-700 hover:border-brand-500 hover:bg-brand-500 hover:text-slate-950 disabled:opacity-40 transition"
+            >
+              <Icon name="lucide:chevron-left" class="size-4" />
+              <span class="hidden sm:inline">{{ t('admin.pagination.previous') }}</span>
+            </button>
+
+            <!-- Page Number Pills -->
+            <div class="flex items-center gap-1">
+              <button
+                v-for="p in visiblePages(pagination.page, pagination.totalPages)"
+                :key="p"
+                type="button"
+                :disabled="p === '...'"
+                @click="typeof p === 'number' && changePage(p)"
+                class="btn btn-sm rounded-xl font-bold min-w-9 h-9"
+                :class="p === pagination.page
+                  ? 'bg-brand-600 text-white border-2 border-brand-600 shadow-xs'
+                  : (p === '...' ? 'btn-ghost cursor-default' : 'btn-ghost border-2 border-transparent hover:border-slate-300 dark:hover:border-zinc-700 text-base-content')"
+              >
+                {{ p }}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              :disabled="pagination.page >= pagination.totalPages"
+              @click="changePage(pagination.page + 1)"
+              class="btn btn-outline btn-sm rounded-xl font-bold border-2 border-slate-300 dark:border-zinc-700 hover:border-brand-500 hover:bg-brand-500 hover:text-slate-950 disabled:opacity-40 transition"
+            >
+              <span class="hidden sm:inline">{{ t('admin.pagination.next') }}</span>
+              <Icon name="lucide:chevron-right" class="size-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

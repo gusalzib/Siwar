@@ -95,6 +95,14 @@
       "submitting": "جارٍ تسجيل الدخول...",
       "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى."
     },
+    "pagination": {
+      "previous": "السابق",
+      "next": "التالي",
+      "pageOf": "صفحة {page} من {totalPages}",
+      "showingRange": "عرض {from}–{to} من {total}",
+      "perPage": "لكل صفحة",
+      "itemsPerPage": "{count} / صفحة"
+    },
     "products": {
       "title": "إدارة المنتجات",
       "subtitle": "عرض وتعديل وتصفية المنتجات ومستويات المخزون والترجمات",

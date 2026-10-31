@@ -112,7 +112,7 @@ describe('Section 6. Admin Products View Overhaul & Filters (pages/admin/product
     })
   })
 
-  describe('4. Backend API Support (server/api/admin/products/index.get.ts)', () => {
+  describe('4. Backend API Support & Hybrid Pagination (server/api/admin/products/index.get.ts)', () => {
     it('includes barcode in the transformed product response payload', () => {
       expect(adminProductsGetContent).toContain('barcode: p.barcode || null')
     })
@@ -128,9 +128,41 @@ describe('Section 6. Admin Products View Overhaul & Filters (pages/admin/product
       expect(adminProductsGetContent).toContain("hasDiscount === 'true'")
       expect(adminProductsGetContent).toContain('filter.discount = { $gt: 0 }')
     })
+
+    it('supports server-side pagination with hybrid metrics in products API', () => {
+      expect(adminProductsGetContent).toContain('pagination: {')
+      expect(adminProductsGetContent).toContain('metrics: {')
+      expect(adminProductsContent).toContain('itemsPerPage')
+      expect(adminProductsContent).toContain('changePage')
+    })
   })
 
-  describe('5. Multilingual Localization Integrity (sv, en, ar)', () => {
+  describe('5. Admin Orders Hybrid Server-Side Pagination (pages/admin/orders/index.vue)', () => {
+    const adminOrdersPath = path.resolve(__dirname, '../../pages/admin/orders/index.vue')
+    const adminOrdersGetPath = path.resolve(__dirname, '../../server/api/admin/orders/index.get.ts')
+    const adminOrdersContent = fs.readFileSync(adminOrdersPath, 'utf-8')
+    const adminOrdersGetContent = fs.readFileSync(adminOrdersGetPath, 'utf-8')
+
+    it('supports server-side pagination in orders API and returns hybrid global metrics', () => {
+      expect(adminOrdersGetContent).toContain('pagination: {')
+      expect(adminOrdersGetContent).toContain('metrics: {')
+      expect(adminOrdersGetContent).toContain('pendingPackingCount')
+      expect(adminOrdersGetContent).toContain('dispatchedCount')
+    })
+
+    it('preserves top summary counters accurately across all orders via hybrid metrics in UI', () => {
+      expect(adminOrdersContent).toContain('ordersResponse.value?.metrics?.pendingPackingCount')
+      expect(adminOrdersContent).toContain('ordersResponse.value?.metrics?.dispatchedCount')
+    })
+
+    it('renders pagination controls with items-per-page selector in orders UI', () => {
+      expect(adminOrdersContent).toContain('pagination.totalPages > 1')
+      expect(adminOrdersContent).toContain('itemsPerPage')
+      expect(adminOrdersContent).toContain('changePage')
+    })
+  })
+
+  describe('6. Multilingual Localization Integrity (sv, en, ar)', () => {
     it('defines status and deals filters in Swedish, English, and Arabic', () => {
       expect(svLocale.admin.products.filters.status.all).toBeTruthy()
       expect(svLocale.admin.products.filters.status.active).toBeTruthy()
@@ -163,6 +195,20 @@ describe('Section 6. Admin Products View Overhaul & Filters (pages/admin/product
       expect(arLocale.admin.products.cards.stockPhysical).toBeTruthy()
       expect(arLocale.admin.products.deleteModal.title).toBeTruthy()
       expect(arLocale.admin.products.deleteModal.confirm).toBeTruthy()
+    })
+
+    it('defines pagination strings in Swedish, English, and Arabic', () => {
+      expect(svLocale.admin.pagination.previous).toBeTruthy()
+      expect(svLocale.admin.pagination.next).toBeTruthy()
+      expect(svLocale.admin.pagination.showingRange).toBeTruthy()
+
+      expect(enLocale.admin.pagination.previous).toBeTruthy()
+      expect(enLocale.admin.pagination.next).toBeTruthy()
+      expect(enLocale.admin.pagination.showingRange).toBeTruthy()
+
+      expect(arLocale.admin.pagination.previous).toBeTruthy()
+      expect(arLocale.admin.pagination.next).toBeTruthy()
+      expect(arLocale.admin.pagination.showingRange).toBeTruthy()
     })
   })
 })

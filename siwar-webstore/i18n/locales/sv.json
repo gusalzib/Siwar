@@ -96,6 +96,14 @@
       "submitting": "Loggar in...",
       "invalidCredentials": "Ogiltig e-postadress eller lösenord. Försök igen."
     },
+    "pagination": {
+      "previous": "Föregående",
+      "next": "Nästa",
+      "pageOf": "Sida {page} av {totalPages}",
+      "showingRange": "Visar {from}–{to} av {total}",
+      "perPage": "Per sida",
+      "itemsPerPage": "{count} / sida"
+    },
     "products": {
       "title": "Produkthantering",
       "subtitle": "Visa, redigera och filtrera produkter, lagernivåer och översättningar",
