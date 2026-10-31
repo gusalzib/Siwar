@@ -40,6 +40,24 @@ function getMailFrom(): string {
   )
 }
 
+function getStoreEmail(): string {
+  const config = getRuntimeConfigSafe()
+  return (
+    (config?.storeEmail as string | undefined) ||
+    process.env.STORE_EMAIL ||
+    'info@siwar.se'
+  )
+}
+
+export interface IContactMessageParams {
+  fullName: string
+  email: string
+  phone?: string
+  orderReference?: string
+  category?: string
+  message: string
+}
+
 export const mailService = {
   /**
    * 1. Order Confirmation (Sent immediately upon payment authorization)
@@ -162,6 +180,48 @@ export const mailService = {
       from,
       to,
       subject: subjects[locale],
+      html,
+    })
+  },
+
+  /**
+   * 4. Customer Contact Inquiry (Sent to store email when customer submits contact form)
+   */
+  async sendContactMessage(params: IContactMessageParams) {
+    const { fullName, email, phone, orderReference, category = 'general', message } = params
+    const resend = getResendClient()
+    const from = getMailFrom()
+    const to = getStoreEmail()
+
+    const categoryNames: Record<string, string> = {
+      general: 'Allmän fråga',
+      order: 'Order & Leverans',
+      product: 'Produkter & Sortiment',
+      feedback: 'Feedback & Förslag',
+    }
+    const catLabel = categoryNames[category] || category
+
+    const subject = `[Kundkontakt - ${catLabel}] ${fullName}${orderReference ? ` (Order: #${orderReference})` : ''}`
+
+    const html = generateContactInquiryHtml({
+      fullName,
+      email,
+      phone,
+      orderReference,
+      categoryLabel: catLabel,
+      message,
+    })
+
+    if (!resend) {
+      console.log(`[MOCK EMAIL: CONTACT] To: ${to} | Reply-To: ${email} | Subject: ${subject}`)
+      return { id: 'mock-mail-id' }
+    }
+
+    return await resend.emails.send({
+      from,
+      to,
+      replyTo: email,
+      subject,
       html,
     })
   },
@@ -390,8 +450,8 @@ function generatePackedHtml(
   const customerName = order.customer?.fullName || ''
 
   const pickup = pickupSettings || DEFAULT_PICKUP_CONFIG
-  const street = pickup.address?.street || 'Storgatan 12'
-  const postalCode = pickup.address?.postalCode || '302 43'
+  const street = pickup.address?.street || 'Åttingsstigen 41'
+  const postalCode = pickup.address?.postalCode || '302 54'
   const city = pickup.address?.city || 'Halmstad'
   const fullAddress = `${street}, ${postalCode} ${city}`
 
@@ -602,6 +662,100 @@ function generateDispatchedReceiptHtml(
             ${copy.receiptBtn}
           </a>
         </div>
+      </div>
+    </div>
+  `
+}
+
+function generateContactInquiryHtml(params: {
+  fullName: string
+  email: string
+  phone?: string
+  orderReference?: string
+  categoryLabel: string
+  message: string
+}): string {
+  const { fullName, email, phone, orderReference, categoryLabel, message } = params
+  // Escape message for HTML safety
+  const safeMessage = message
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+    .replace(/\n/g, '<br>')
+
+  const safeName = fullName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeEmail = email.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safePhone = (phone || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeOrder = (orderReference || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+  return `
+    <div dir="ltr" style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; color: #1f2937;">
+      <div style="background-color: #15803d; color: #ffffff; padding: 20px 24px;">
+        <h1 style="margin: 0; font-size: 20px; font-weight: bold;">Nytt kundmeddelande</h1>
+        <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.9;">Mottaget via kontaktformuläret på siwar.se</p>
+      </div>
+
+      <div style="padding: 24px;">
+        <!-- Metadata Box -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; color: #6b7280; width: 140px; font-weight: 600;">Avsändare:</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; color: #111827; font-weight: bold;">${safeName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; color: #6b7280; font-weight: 600;">E-postadress:</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+              <a href="mailto:${safeEmail}" style="color: #15803d; text-decoration: underline; font-weight: 600;">${safeEmail}</a>
+            </td>
+          </tr>
+          ${
+            phone
+              ? `
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; color: #6b7280; font-weight: 600;">Telefon:</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+              <a href="tel:${safePhone}" style="color: #111827; text-decoration: none;">${safePhone}</a>
+            </td>
+          </tr>`
+              : ''
+          }
+          ${
+            orderReference
+              ? `
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; color: #6b7280; font-weight: 600;">Ordernummer:</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-family: monospace; font-weight: bold; color: #111827;">#${safeOrder}</td>
+          </tr>`
+              : ''
+          }
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; color: #6b7280; font-weight: 600;">Kategori:</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+              <span style="display: inline-block; background-color: #f3f4f6; color: #374151; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px;">
+                ${categoryLabel}
+              </span>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Message Box -->
+        <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 18px; margin-bottom: 24px;">
+          <h3 style="margin: 0 0 10px 0; font-size: 13px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em;">Meddelande:</h3>
+          <div style="font-size: 15px; line-height: 1.6; color: #1f2937; word-break: break-word;">
+            ${safeMessage}
+          </div>
+        </div>
+
+        <!-- Quick Reply Callout -->
+        <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; border-radius: 4px; padding: 12px 16px; font-size: 13px; color: #065f46; line-height: 1.5;">
+          💡 <strong>Tips:</strong> Du kan svara kunden direkt genom att trycka på <em>Svara</em> i ditt e-postprogram (Svarsadressen är förinställd till <strong>${safeEmail}</strong>).
+        </div>
+      </div>
+
+      <div style="background-color: #f9fafb; border-top: 1px solid #e5e7eb; padding: 14px 24px; text-align: center; font-size: 12px; color: #9ca3af;">
+        Siwar Webstore Kundkontakt &bull; Åttingsstigen 41, 302 54 Halmstad
       </div>
     </div>
   `
