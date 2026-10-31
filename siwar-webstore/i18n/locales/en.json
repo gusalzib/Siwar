@@ -330,10 +330,14 @@
       "searchPlaceholder": "Search..."
     },
     "banners": {
-      "title": "Promotional Banners",
-      "subtitle": "Manage homepage hero slideshow banners, graphics, and link destinations",
+      "title": "Campaign Banners",
+      "subtitle": "Manage homepage campaign banners, artwork, and destination links",
+      "add": "Add Banner",
       "searchPlaceholder": "Filter banners by title or link...",
-      "add": "Add New Banner",
+      "slideshowTimer": "Slideshow Timer:",
+      "timerTooltip": "Time in seconds before the next slide transitions (2–30 seconds)",
+      "saveTimer": "Save",
+      "timerSaved": "Slideshow timer saved!",
       "addTitle": "Create Promotional Banner",
       "editTitle": "Edit Promotional Banner",
       "edit": "Edit",

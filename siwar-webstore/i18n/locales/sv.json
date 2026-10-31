@@ -104,6 +104,7 @@
       "perPage": "Per sida",
       "itemsPerPage": "{count} / sida"
     },
+
     "products": {
       "title": "Produkthantering",
       "subtitle": "Visa, redigera och filtrera produkter, lagernivåer och översättningar",
@@ -340,6 +341,10 @@
       "add": "Lägg till banner",
       "addTitle": "Skapa kampanjbanner",
       "editTitle": "Redigera kampanjbanner",
+      "slideshowTimer": "Bildväxling:",
+      "timerTooltip": "Tid i sekunder innan nästa bild visas i bildspelet (2–30 sekunder)",
+      "saveTimer": "Spara",
+      "timerSaved": "Bildväxlingstid sparad!",
       "edit": "Redigera",
       "delete": "Ta bort",
       "empty": "Inga kampanjbanners konfigurerade ännu.",
