@@ -134,4 +134,48 @@ describe('Section 5. Storefront Visual Polish (Catalog & Product Cards)', () => 
       expect(layoutContent).toContain('<StoreFooter class="relative z-10" />')
     })
   })
+
+  describe('6. Configurable Hero Slideshow Timing (AC-8 & BannerManager.vue)', () => {
+    const bannerManagerPath = path.resolve(__dirname, '../../components/admin/settings/BannerManager.vue')
+    const bannerManagerContent = fs.readFileSync(bannerManagerPath, 'utf-8')
+
+    it('places the slideshow timer adjustment input right next to the search field in BannerManager', () => {
+      expect(bannerManagerContent).toContain('carousel-interval-input')
+      expect(bannerManagerContent).toContain('searchQuery')
+      expect(bannerManagerContent).toContain("t('admin.banners.slideshowTimer'")
+      expect(bannerManagerContent).toContain('carouselIntervalSeconds')
+      expect(bannerManagerContent).toContain('handleIntervalChange')
+    })
+
+    it('binds hero carousel timer on homepage (pages/index.vue) to dynamic StoreSettings.carouselIntervalMs', () => {
+      expect(homeContent).toContain('/api/settings')
+      expect(homeContent).toContain('storeSettings.value?.carouselIntervalMs')
+      expect(homeContent).toContain('intervalMs')
+    })
+
+    it('contains carouselIntervalMs schema field and returns it in GET /api/settings', async () => {
+      const settingsGetPath = path.resolve(__dirname, '../../server/api/settings.get.ts')
+      const settingsGetContent = fs.readFileSync(settingsGetPath, 'utf-8')
+      expect(settingsGetContent).toContain('carouselIntervalMs')
+    })
+
+    it('supports saving carouselIntervalMs via PUT /api/admin/settings/banners', async () => {
+      const bannersPutPath = path.resolve(__dirname, '../../server/api/admin/settings/banners.put.ts')
+      const bannersPutContent = fs.readFileSync(bannersPutPath, 'utf-8')
+      expect(bannersPutContent).toContain('carouselIntervalMs')
+    })
+
+    it('contains admin banner timer translations across sv.json, en.json, and ar.json', () => {
+      const sv = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../i18n/locales/sv.json'), 'utf-8'))
+      const en = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../i18n/locales/en.json'), 'utf-8'))
+      const ar = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../i18n/locales/ar.json'), 'utf-8'))
+
+      for (const loc of [sv, en, ar]) {
+        expect(loc.admin.banners.slideshowTimer).toBeDefined()
+        expect(loc.admin.banners.saveTimer).toBeDefined()
+        expect(loc.admin.banners.timerTooltip).toBeDefined()
+        expect(loc.admin.banners.timerSaved).toBeDefined()
+      }
+    })
+  })
 })
