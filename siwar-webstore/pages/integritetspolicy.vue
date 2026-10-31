@@ -1,11 +1,34 @@
 <!-- /pages/integritetspolicy.vue -->
 <script setup lang="ts">
-const { t } = useI18n()
+import { computed } from 'vue'
+
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 
+// Fetch dynamic StoreSettings for statutory legal identity
+const { data: settings } = await useAsyncData('store-settings', () => $fetch<any>('/api/settings'))
+
+const storeName = computed(() => {
+  const name = settings.value?.storeName
+  if (!name) return 'Siwar'
+  return typeof name === 'object' ? (name[locale.value] || name.sv || name.en || name.ar || 'Siwar') : name
+})
+
+const companyName = computed(() => settings.value?.company?.name || settings.value?.companyName || 'Siwar Butik AB')
+const orgNumber = computed(() => settings.value?.company?.orgNumber || settings.value?.orgNumber || '559123-4567')
+const momsNumber = computed(() => settings.value?.company?.vatNumber || settings.value?.momsNumber || 'SE559123456701')
+const contactEmail = computed(() => settings.value?.contact?.email || settings.value?.contactEmail || 'order@siwar.se')
+const contactPhone = computed(() => settings.value?.contact?.phone || settings.value?.contactPhone || '+46 35 123 456')
+
+const street = computed(() => settings.value?.address?.street || 'Storgatan 12')
+const postalCode = computed(() => settings.value?.address?.postalCode || '302 43')
+const city = computed(() => settings.value?.address?.city || 'Halmstad')
+const country = computed(() => settings.value?.address?.country || 'Sverige')
+const fullAddress = computed(() => `${street.value}, ${postalCode.value} ${city.value}, ${country.value}`)
+
 useSeoMeta({
-  title: () => `${t('legal.privacy.metaTitle', 'Integritetspolicy')} | Siwar`,
-  description: () => t('legal.privacy.metaDesc', 'Information om hur Siwar Butik AB hanterar personuppgifter i enlighet med GDPR.'),
+  title: () => `${t('legal.privacy.metaTitle', 'Integritetspolicy')} | ${storeName.value}`,
+  description: () => t('legal.privacy.metaDesc', { companyName: companyName.value }),
 })
 </script>
 
@@ -47,12 +70,46 @@ useSeoMeta({
         </p>
       </div>
 
+      <!-- Statutory Entity Summary Card -->
+      <div class="card bg-slate-50 dark:bg-zinc-800/60 border-2 border-slate-200 dark:border-zinc-700/80 rounded-2xl p-4 sm:p-5 not-prose shadow-xs">
+        <div class="flex items-center gap-2 mb-3 text-brand-600 dark:text-brand-400 font-bold text-sm">
+          <Icon name="lucide:building-2" class="size-4" />
+          <span>{{ t('legal.entityCard.title', 'Företagsinformation & Juridisk person') }}</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+          <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-700">
+            <span class="text-base-content/60 font-semibold block">{{ t('legal.entityCard.company', 'Juridiskt namn') }}</span>
+            <span class="font-bold text-base-content text-sm">{{ companyName }}</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-700">
+            <span class="text-base-content/60 font-semibold block">{{ t('legal.entityCard.orgNumber', 'Organisationsnummer') }}</span>
+            <span class="font-bold font-mono text-base-content text-sm">{{ orgNumber }}</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-700">
+            <span class="text-base-content/60 font-semibold block">{{ t('legal.entityCard.momsNumber', 'Momsregistreringsnummer') }}</span>
+            <span class="font-bold font-mono text-base-content text-sm">{{ momsNumber }}</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-700">
+            <span class="text-base-content/60 font-semibold block">{{ t('legal.entityCard.address', 'Sätes- & butiksadress') }}</span>
+            <span class="font-medium text-base-content">{{ fullAddress }}</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-700">
+            <span class="text-base-content/60 font-semibold block">{{ t('legal.entityCard.email', 'Officiell e-post') }}</span>
+            <a :href="`mailto:${contactEmail}`" class="font-medium text-brand-600 dark:text-brand-400 hover:underline">{{ contactEmail }}</a>
+          </div>
+          <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-700">
+            <span class="text-base-content/60 font-semibold block">{{ t('legal.entityCard.phone', 'Telefon') }}</span>
+            <a :href="`tel:${contactPhone}`" class="font-medium text-brand-600 dark:text-brand-400 hover:underline font-mono">{{ contactPhone }}</a>
+          </div>
+        </div>
+      </div>
+
       <!-- Main Legal Content -->
       <div class="prose max-w-none text-base-content/80 text-sm leading-relaxed space-y-6">
         <!-- 1. Data Controller -->
         <section class="space-y-2">
           <h2 class="text-lg font-bold text-base-content">{{ t('legal.privacy.sec1_title', '1. Personuppgiftsansvarig') }}</h2>
-          <p>{{ t('legal.privacy.sec1_p1', 'Siwar Butik AB, Storgatan 12, 302 43 Halmstad, organisationsnummer 559123-4567, är personuppgiftsansvarig för behandlingen av dina personuppgifter.') }}</p>
+          <p>{{ t('legal.privacy.sec1_p1', { companyName, address: fullAddress, orgNumber }) }}</p>
           <p>{{ t('legal.privacy.sec1_p2', 'Vi värnar om din personliga integritet och eftersträvar alltid en hög nivå av dataskydd i enlighet med EU:s dataskyddsförordning (GDPR).') }}</p>
         </section>
 
@@ -88,7 +145,7 @@ useSeoMeta({
         <section class="space-y-2">
           <h2 class="text-lg font-bold text-base-content">{{ t('legal.privacy.sec5_title', '5. Dina rättigheter') }}</h2>
           <p>{{ t('legal.privacy.sec5_p1', 'Enligt GDPR har du rätt att kostnadsfritt begära ett registerutdrag över vilka uppgifter vi har lagrade om dig, begära rättelse av felaktiga uppgifter samt under vissa förutsättningar begära radering eller begränsning av behandlingen.') }}</p>
-          <p>{{ t('legal.privacy.sec5_p2', 'För att utöva dina rättigheter, kontakta oss via order@siwar.se. Du har även rätt att inge klagomål till Integritetsskyddsmyndigheten (IMY).') }}</p>
+          <p>{{ t('legal.privacy.sec5_p2', { email: contactEmail }) }}</p>
         </section>
       </div>
 

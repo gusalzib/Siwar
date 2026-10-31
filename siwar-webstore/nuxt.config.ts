@@ -23,6 +23,7 @@ export default defineNuxtConfig({
     // Email Service (Resend)
     resendApiKey: process.env.RESEND_API_KEY || process.env.MAIL_API_KEY || '',
     mailFrom: process.env.MAIL_FROM || process.env.MAIL_FROM_ADDRESS || 'Siwar Webstore <order@siwar.se>',
+    storeEmail: process.env.STORE_EMAIL || '',
 
     // Private keys accessible strictly on the server side
     r2AccountId: process.env.R2_ACCOUNT_ID || '',

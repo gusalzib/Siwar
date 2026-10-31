@@ -31,7 +31,32 @@ export default defineEventHandler(async (event) => {
     en: body.openingHours?.en || formatWeeklySchedule(schedule, 'en'),
   }
 
-  // 3. Assemble general settings
+  // 3. Process social media links if provided
+  const validPlatforms = ['instagram', 'facebook', 'tiktok', 'whatsapp', 'youtube', 'x']
+  let socialLinks = settings.general?.socialLinks || settings.socialLinks || []
+  if (body.socialLinks !== undefined) {
+    socialLinks = Array.isArray(body.socialLinks)
+      ? body.socialLinks
+          .filter((item: any) => item && validPlatforms.includes(item.platform) && typeof item.url === 'string')
+          .map((item: any, idx: number) => ({
+            platform: item.platform,
+            url: item.url.trim(),
+            isActive: typeof item.isActive === 'boolean' ? item.isActive : true,
+            sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : idx,
+          }))
+      : []
+  }
+
+  // 3.5 Process carouselIntervalMs if provided
+  let carouselIntervalMs = settings.carouselIntervalMs || settings.general?.carouselIntervalMs || 5000
+  if (body.carouselIntervalMs !== undefined) {
+    let ms = Number(body.carouselIntervalMs)
+    if (ms >= 2 && ms <= 30) ms = ms * 1000
+    carouselIntervalMs = Math.max(2000, Math.min(30000, ms || 5000))
+    settings.carouselIntervalMs = carouselIntervalMs
+  }
+
+  // 4. Assemble general settings
   settings.general = {
     storeName: {
       ar: body.storeName?.ar?.trim() || settings.general?.storeName?.ar || DEFAULT_GENERAL_CONFIG.storeName.ar,
@@ -60,7 +85,11 @@ export default defineEventHandler(async (event) => {
     },
     schedule,
     openingHours,
+    socialLinks,
+    carouselIntervalMs,
   }
+
+  settings.socialLinks = socialLinks
 
   // 4. Keep pickup address & schedule aligned with physical store location if sync requested or default
   if (body.syncPickup !== false && settings.pickup) {

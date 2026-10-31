@@ -1,10 +1,25 @@
 <!-- /pages/angerratt.vue -->
 <script setup lang="ts">
-const { t } = useI18n()
+import { computed } from 'vue'
+
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 
+// Fetch dynamic StoreSettings for statutory legal identity
+const { data: settings } = await useAsyncData('store-settings', () => $fetch<any>('/api/settings'))
+
+const storeName = computed(() => {
+  const name = settings.value?.storeName
+  if (!name) return 'Siwar'
+  return typeof name === 'object' ? (name[locale.value] || name.sv || name.en || name.ar || 'Siwar') : name
+})
+
+const companyName = computed(() => settings.value?.company?.name || settings.value?.companyName || 'Siwar Butik AB')
+const contactEmail = computed(() => settings.value?.contact?.email || settings.value?.contactEmail || 'order@siwar.se')
+const contactPhone = computed(() => settings.value?.contact?.phone || settings.value?.contactPhone || '+46 35 123 456')
+
 useSeoMeta({
-  title: () => `${t('legal.withdrawal.metaTitle')} | Siwar`,
+  title: () => `${t('legal.withdrawal.metaTitle')} | ${storeName.value}`,
   description: () => t('legal.withdrawal.metaDesc'),
 })
 </script>
@@ -48,6 +63,21 @@ useSeoMeta({
         <p class="text-sm text-base-content/70 mt-2">
           {{ t('legal.withdrawal.subtitle') }}
         </p>
+
+        <!-- Customer Service Contact Bar -->
+        <div class="mt-4 inline-flex flex-wrap items-center gap-4 text-xs font-medium text-base-content/80 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2">
+          <span class="font-bold text-base-content">{{ companyName }} ({{ storeName }})</span>
+          <span class="hidden sm:inline text-base-content/30">•</span>
+          <span class="flex items-center gap-1.5">
+            <Icon name="lucide:mail" class="size-3.5 text-brand-600 dark:text-brand-400" />
+            <a :href="`mailto:${contactEmail}`" class="hover:underline font-semibold">{{ contactEmail }}</a>
+          </span>
+          <span class="hidden sm:inline text-base-content/30">•</span>
+          <span class="flex items-center gap-1.5">
+            <Icon name="lucide:phone" class="size-3.5 text-brand-600 dark:text-brand-400" />
+            <a :href="`tel:${contactPhone}`" class="hover:underline font-mono">{{ contactPhone }}</a>
+          </span>
+        </div>
       </div>
 
       <div class="prose max-w-none text-base-content/80 text-sm leading-relaxed space-y-6">
@@ -99,7 +129,7 @@ useSeoMeta({
         <section class="space-y-3">
           <h2 class="text-lg font-bold text-base-content">{{ t('legal.withdrawal.sec3_title') }}</h2>
           <ol class="list-decimal pl-5 rtl:pr-5 rtl:pl-0 space-y-1">
-            <li>{{ t('legal.withdrawal.sec3_step1') }}</li>
+            <li>{{ t('legal.withdrawal.sec3_step1', { email: contactEmail }) }}</li>
             <li>{{ t('legal.withdrawal.sec3_step2') }}</li>
             <li>{{ t('legal.withdrawal.sec3_step3') }}</li>
           </ol>

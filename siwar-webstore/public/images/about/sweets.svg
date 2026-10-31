@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="sweetGlow" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#451a03"/>
+      <stop offset="100%" stop-color="#1c0a00"/>
+    </radialGradient>
+    <linearGradient id="brassTray" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="50%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="pastryGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fed7aa"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <radialGradient id="pistachioGreen" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#a3e635"/>
+      <stop offset="100%" stop-color="#65a30d"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Dark Luxurious Background -->
+  <rect width="800" height="600" fill="url(#sweetGlow)"/>
+
+  <!-- Ornate Brass Tray (Ottoman Style) -->
+  <ellipse cx="400" cy="350" rx="330" ry="170" fill="url(#brassTray)" stroke="#fef08a" stroke-width="4"/>
+  <ellipse cx="400" cy="350" rx="310" ry="155" fill="#78350f" stroke="#ca8a04" stroke-width="2"/>
+
+  <!-- Tray Engravings Pattern -->
+  <ellipse cx="400" cy="350" rx="270" ry="130" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+  <!-- Diamond-Cut Baklava Pieces (Center-Left) -->
+  <g transform="translate(180, 260)">
+    <!-- Diamond 1 -->
+    <polygon points="60,0 120,30 60,60 0,30" fill="url(#pastryGold)" stroke="#d97706" stroke-width="1.5"/>
+    <ellipse cx="60" cy="30" rx="15" ry="8" fill="url(#pistachioGreen)"/>
+    
+    <!-- Diamond 2 -->
+    <polygon points="120,30 180,60 120,90 60,60" fill="url(#pastryGold)" stroke="#d97706" stroke-width="1.5"/>
+    <ellipse cx="120" cy="60" rx="15" ry="8" fill="url(#pistachioGreen)"/>
+
+    <!-- Diamond 3 -->
+    <polygon points="180,60 240,90 180,120 120,90" fill="url(#pastryGold)" stroke="#d97706" stroke-width="1.5"/>
+    <ellipse cx="180" cy="90" rx="15" ry="8" fill="url(#pistachioGreen)"/>
+
+    <!-- Diamond 4 (Front Row) -->
+    <polygon points="60,60 120,90 60,120 0,90" fill="url(#pastryGold)" stroke="#d97706" stroke-width="1.5"/>
+    <ellipse cx="60" cy="90" rx="15" ry="8" fill="url(#pistachioGreen)"/>
+
+    <!-- Diamond 5 -->
+    <polygon points="120,90 180,120 120,150 60,120" fill="url(#pastryGold)" stroke="#d97706" stroke-width="1.5"/>
+    <ellipse cx="120" cy="120" rx="15" ry="8" fill="url(#pistachioGreen)"/>
+  </g>
+
+  <!-- Medjool Dates Pyramid (Right Side of Tray) -->
+  <g transform="translate(480, 280)">
+    <ellipse cx="40" cy="60" rx="28" ry="18" fill="#451a03" stroke="#291002" stroke-width="2" transform="rotate(-15 40 60)"/>
+    <ellipse cx="90" cy="65" rx="29" ry="19" fill="#361402" stroke="#291002" stroke-width="2" transform="rotate(10 90 65)"/>
+    <ellipse cx="140" cy="60" rx="28" ry="18" fill="#451a03" stroke="#291002" stroke-width="2" transform="rotate(25 140 60)"/>
+    <ellipse cx="65" cy="35" rx="27" ry="17" fill="#542203" stroke="#291002" stroke-width="2" transform="rotate(-5 65 35)"/>
+    <ellipse cx="115" cy="35" rx="27" ry="17" fill="#451a03" stroke="#291002" stroke-width="2" transform="rotate(15 115 35)"/>
+    <ellipse cx="90" cy="10" rx="26" ry="16" fill="#5e2604" stroke="#291002" stroke-width="2"/>
+    <!-- Date gloss highlight -->
+    <ellipse cx="92" cy="7" rx="12" ry="4" fill="#fed7aa" opacity="0.3"/>
+  </g>
+
+  <!-- Honey / Syrup Dripper & Silver Tea Glass -->
+  <g transform="translate(400, 140)">
+    <!-- Ornate Turkish/Arabic Tea Glass -->
+    <path d="M -25,20 C -20,60 -10,70 -18,120 L 18,120 C 10,70 20,60 25,20 Z" fill="#b45309" stroke="#fef08a" stroke-width="2" opacity="0.9"/>
+    <!-- Saucer -->
+    <ellipse cx="0" cy="125" rx="40" ry="10" fill="url(#brassTray)"/>
+    <!-- Tea level -->
+    <ellipse cx="0" cy="50" rx="16" ry="5" fill="#78350f"/>
+    <!-- Steam -->
+    <path d="M -5,10 Q -10,-10 0,-25 Q 10,-40 0,-50" fill="none" stroke="#fed7aa" opacity="0.4" stroke-width="2"/>
+    <path d="M 5,10 Q 15,-10 5,-25 Q -5,-40 5,-50" fill="none" stroke="#fed7aa" opacity="0.4" stroke-width="2"/>
+  </g>
+
+  <!-- Crushed Pistachio Garnish Dusting -->
+  <circle cx="270" cy="420" r="2" fill="#84cc16"/>
+  <circle cx="285" cy="415" r="3" fill="#65a30d"/>
+  <circle cx="310" cy="425" r="2.5" fill="#84cc16"/>
+  <circle cx="340" cy="418" r="3" fill="#65a30d"/>
+  <circle cx="370" cy="430" r="2" fill="#84cc16"/>
+
+  <!-- Caption Banner -->
+  <rect x="210" y="520" width="380" height="32" rx="16" fill="#0f172a" opacity="0.85"/>
+  <text x="400" y="541" fill="#fef08a" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">Sötsaker &amp; Baklava • Dagsfärska Medelhavsdelikatesser</text>
+</svg>

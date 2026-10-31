@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="wallGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="canopyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background / Sky -->
+  <rect width="800" height="600" fill="url(#skyGrad)"/>
+
+  <!-- Stars / Ambient Night Sky -->
+  <circle cx="120" cy="80" r="1.5" fill="#f8fafc" opacity="0.6"/>
+  <circle cx="280" cy="50" r="2" fill="#f8fafc" opacity="0.7"/>
+  <circle cx="650" cy="90" r="1.5" fill="#f8fafc" opacity="0.5"/>
+  <circle cx="720" cy="40" r="2" fill="#f8fafc" opacity="0.8"/>
+
+  <!-- Building Façade -->
+  <rect x="80" y="140" width="640" height="420" rx="16" fill="url(#wallGrad)"/>
+
+  <!-- Upper Cornice & Decorative Arch -->
+  <path d="M 80 160 Q 400 90 720 160 L 720 180 L 80 180 Z" fill="#cbd5e1"/>
+  <path d="M 280 140 Q 400 110 520 140 Z" fill="url(#goldGrad)"/>
+
+  <!-- Main Store Sign -->
+  <rect x="220" y="195" width="360" height="65" rx="12" fill="#0f172a" stroke="#d97706" stroke-width="2"/>
+  <text x="400" y="235" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="900" text-anchor="middle" letter-spacing="3">SIWAR BUTIK</text>
+  <text x="400" y="252" fill="#f59e0b" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" text-anchor="middle" letter-spacing="2">ORIENTALISK LIVSMEDEL • HALMSTAD</text>
+
+  <!-- Green Striped Canopy -->
+  <polygon points="120,270 680,270 700,320 100,320" fill="url(#canopyGrad)"/>
+  <path d="M 100,320 Q 130,335 160,320 Q 190,335 220,320 Q 250,335 280,320 Q 310,335 340,320 Q 370,335 400,320 Q 430,335 460,320 Q 490,335 520,320 Q 550,335 580,320 Q 610,335 640,320 Q 670,335 700,320" fill="#047857"/>
+
+  <!-- Large Left Display Window -->
+  <rect x="130" y="340" width="220" height="190" rx="8" fill="#1e293b" stroke="#94a3b8" stroke-width="3"/>
+  <rect x="145" y="355" width="190" height="160" fill="#0f172a" opacity="0.85"/>
+  <!-- Display Window Shelves & Goodies -->
+  <line x1="145" y1="420" x2="335" y2="420" stroke="#f59e0b" stroke-width="3"/>
+  <line x1="145" y1="475" x2="335" y2="475" stroke="#f59e0b" stroke-width="3"/>
+  <!-- Jars & items in window -->
+  <rect x="160" y="380" width="22" height="38" rx="4" fill="#10b981"/>
+  <rect x="195" y="375" width="26" height="43" rx="4" fill="#f59e0b"/>
+  <rect x="235" y="385" width="20" height="33" rx="3" fill="#ef4444"/>
+  <rect x="270" y="378" width="24" height="40" rx="4" fill="#8b5cf6"/>
+  <rect x="165" y="440" width="30" height="33" rx="4" fill="#f97316"/>
+  <rect x="210" y="435" width="28" height="38" rx="4" fill="#06b6d4"/>
+  <rect x="255" y="442" width="25" height="31" rx="3" fill="#eab308"/>
+
+  <!-- Glass Entrance Doors (Center-Right) -->
+  <rect x="390" y="340" width="140" height="210" rx="6" fill="#334155" stroke="#94a3b8" stroke-width="3"/>
+  <!-- Double Door Divide -->
+  <line x1="460" y1="340" x2="460" y2="550" stroke="#94a3b8" stroke-width="2"/>
+  <!-- Door Windows -->
+  <rect x="402" y="355" width="48" height="140" rx="4" fill="#0f172a" opacity="0.9"/>
+  <rect x="470" y="355" width="48" height="140" rx="4" fill="#0f172a" opacity="0.9"/>
+  <!-- Handles -->
+  <rect x="448" y="430" width="4" height="35" rx="2" fill="#f59e0b"/>
+  <rect x="468" y="430" width="4" height="35" rx="2" fill="#f59e0b"/>
+
+  <!-- Right Display Window -->
+  <rect x="560" y="340" width="120" height="190" rx="8" fill="#1e293b" stroke="#94a3b8" stroke-width="3"/>
+  <rect x="572" y="355" width="96" height="160" fill="#0f172a" opacity="0.85"/>
+  <line x1="572" y1="435" x2="668" y2="435" stroke="#f59e0b" stroke-width="3"/>
+  <circle cx="600" cy="405" r="16" fill="#ec4899"/>
+  <circle cx="640" cy="405" r="14" fill="#10b981"/>
+
+  <!-- Pavement / Sidewalk -->
+  <rect x="0" y="550" width="800" height="50" fill="#334155"/>
+  <line x1="0" y1="550" x2="800" y2="550" stroke="#64748b" stroke-width="3"/>
+
+  <!-- Welcoming Lanterns on Exterior Walls -->
+  <g transform="translate(100, 280)">
+    <rect x="-6" y="0" width="12" height="26" rx="3" fill="#f59e0b"/>
+    <circle cx="0" cy="13" r="18" fill="#fbbf24" opacity="0.25"/>
+  </g>
+  <g transform="translate(700, 280)">
+    <rect x="-6" y="0" width="12" height="26" rx="3" fill="#f59e0b"/>
+    <circle cx="0" cy="13" r="18" fill="#fbbf24" opacity="0.25"/>
+  </g>
+
+  <!-- Watermark / Caption Overlay -->
+  <rect x="250" y="505" width="300" height="30" rx="15" fill="#0f172a" opacity="0.85"/>
+  <text x="400" y="525" fill="#e2e8f0" font-family="system-ui, sans-serif" font-size="12" font-weight="600" text-anchor="middle">Butiksfasad • Åttingsstigen 41, Halmstad</text>
+</svg>

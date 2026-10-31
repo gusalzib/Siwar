@@ -1,4 +1,5 @@
 // utils/schedule.ts
+import type { ISocialLink } from './social'
 
 export type DayOfWeek =
   | 'monday'
@@ -291,6 +292,7 @@ export interface IGeneralSettings {
     sv?: string
     en?: string
   }
+  socialLinks?: ISocialLink[]
 }
 
 export const DEFAULT_GENERAL_CONFIG: IGeneralSettings = {
@@ -325,4 +327,5 @@ export const DEFAULT_GENERAL_CONFIG: IGeneralSettings = {
     sv: formatWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE, 'sv'),
     en: formatWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE, 'en'),
   },
+  socialLinks: [],
 }

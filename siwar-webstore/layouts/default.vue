@@ -58,14 +58,29 @@ const logout = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-base-200 text-base-content transition-all duration-150 overflow-x-clip">
+  <div class="min-h-screen flex flex-col bg-base-200 text-base-content transition-all duration-150 overflow-x-clip relative">
+    <!-- Ambient Woven Texture Watermark (Option 4: Masked so it fades before touching content) -->
+    <div
+      class="fixed inset-0 pointer-events-none z-0 bg-repeat opacity-[0.3] dark:opacity-[0.14] transition-opacity duration-300"
+      style="
+        background-image: url('/images/patterns/islamic-khatam8-tile (9).svg');
+        background-size: 230px 230px;
+        mask-image: radial-gradient(ellipse 90% 75% at 50% 25%, black 35%, transparent 95%);
+        -webkit-mask-image: radial-gradient(ellipse 90% 75% at 50% 25%, black 35%, transparent 95%);
+      "
+      aria-hidden="true"
+    />
+
     <!-- DaisyUI Navbar -->
     <header class="navbar bg-base-100 shadow-sm sticky top-0 z-50 px-1.5 sm:px-4 gap-1 sm:gap-2">
 
       <!-- Left: Brand Logo & Mobile Navigation Trigger -->
       <div class="flex items-center gap-0.5 sm:gap-1 shrink-0">
-        <!-- Mobile Hamburger Menu (Only visible on screens < 1024px) -->
-        <div class="dropdown lg:hidden">
+        <!-- Mobile Hamburger Menu (Only visible on screens < 1280px for customers, or < 1600px when admin view is active) -->
+        <div
+          class="dropdown"
+          :class="isAdmin ? 'min-[1600px]:hidden' : 'xl:hidden'"
+        >
           <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm">
             <Icon name="lucide:menu" class="h-5 w-5" />
           </div>
@@ -95,6 +110,26 @@ const logout = async () => {
               >
                 <Icon name="lucide:clock" class="h-4 w-4" />
                 {{ t('nav.oppettider', 'Öppettider') }}
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink
+                :to="localePath('/about')"
+                class="font-medium text-base-content"
+                active-class="!bg-brand-600 !text-white font-bold shadow-xs"
+              >
+                <Icon name="lucide:info" class="h-4 w-4" />
+                {{ t('nav.about', 'Om oss') }}
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink
+                :to="localePath('/contact')"
+                class="font-medium text-base-content"
+                active-class="!bg-brand-600 !text-white font-bold shadow-xs"
+              >
+                <Icon name="lucide:mail" class="h-4 w-4" />
+                {{ t('nav.contact', 'Kontakt') }}
               </NuxtLink>
             </li>
             <li>
@@ -192,8 +227,11 @@ const logout = async () => {
         </NuxtLink>
       </div>
 
-      <!-- Center: Desktop Navigation Links (Visible on screens >= 1024px) -->
-      <nav class="hidden lg:flex items-center justify-center gap-1 xl:gap-2 flex-1 min-w-0 px-2">
+      <!-- Center: Desktop Navigation Links (Visible on screens >= 1280px for customers, or >= 1600px when admin view is active) -->
+      <nav
+        class="items-center justify-center gap-1 xl:gap-2 flex-1 min-w-0 px-2 flex-nowrap"
+        :class="isAdmin ? 'hidden min-[1600px]:flex' : 'hidden xl:flex'"
+      >
         <NuxtLink
           :to="localePath('/catalog')"
           class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
@@ -209,6 +247,22 @@ const logout = async () => {
         >
           <Icon name="lucide:clock" class="h-4 w-4" />
           {{ t('nav.oppettider', 'Öppettider') }}
+        </NuxtLink>
+        <NuxtLink
+          :to="localePath('/about')"
+          class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
+          active-class="!bg-brand-600 !text-white font-bold shadow-xs"
+        >
+          <Icon name="lucide:info" class="h-4 w-4" />
+          {{ t('nav.about', 'Om oss') }}
+        </NuxtLink>
+        <NuxtLink
+          :to="localePath('/contact')"
+          class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
+          active-class="!bg-brand-600 !text-white font-bold shadow-xs"
+        >
+          <Icon name="lucide:mail" class="h-4 w-4" />
+          {{ t('nav.contact', 'Kontakt') }}
         </NuxtLink>
         <NuxtLink
           :to="localePath('/order/lookup')"
@@ -390,12 +444,12 @@ const logout = async () => {
     </header>
 
     <!-- Main View Slot -->
-    <main class="container mx-auto p-4 sm:p-6 lg:p-8 flex-1">
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8 flex-1 relative z-10">
       <slot />
     </main>
 
     <!-- Global Multi-Column Storefront Footer -->
-    <StoreFooter />
+    <StoreFooter class="relative z-10" />
 
     <CartDrawer />
   </div>

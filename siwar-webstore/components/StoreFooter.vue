@@ -68,10 +68,16 @@ const company = computed(() => {
     vatNumber: storeInfo.value?.company?.vatNumber || DEFAULT_GENERAL_CONFIG.company.vatNumber,
   }
 })
+
+// Active social media links check
+const hasActiveSocial = computed(() => {
+  return Array.isArray(storeInfo.value?.socialLinks) &&
+    storeInfo.value.socialLinks.some((l: any) => l && l.isActive !== false && typeof l.url === 'string' && l.url.trim().length > 0)
+})
 </script>
 
 <template>
-  <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 mt-16 pt-12 pb-8 transition-colors duration-200">
+  <footer class="relative z-10 bg-slate-900 text-slate-300 border-t-2 border-slate-800 mt-16 pt-12 pb-8 transition-colors duration-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
       
       <!-- 4-Column Responsive Grid -->
@@ -89,6 +95,14 @@ const company = computed(() => {
           <p class="text-xs text-slate-400 leading-relaxed font-medium">
             {{ storeTagline }}
           </p>
+
+          <!-- Social Media Links Elements -->
+          <div v-if="hasActiveSocial" class="pt-1">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+              {{ t('footer.social.title', 'Följ oss') }}
+            </span>
+            <SocialMediaShelf :links="storeInfo?.socialLinks || []" size="sm" />
+          </div>
 
           <div class="space-y-2.5 pt-2 border-t border-slate-800/80 text-xs">
             <!-- Physical Address -->
@@ -154,10 +168,18 @@ const company = computed(() => {
               </a>
             </li>
 
-            <li class="pt-2">
+            <li class="pt-2 flex flex-wrap gap-2">
+              <NuxtLink
+                :to="localePath('/contact')"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 transition-all hover:border-primary/50 shadow-xs"
+              >
+                <Icon name="lucide:mail" class="size-3.5 text-blue-400" />
+                <span>{{ t('nav.contact', 'Kontakta oss') }}</span>
+              </NuxtLink>
+
               <NuxtLink
                 :to="localePath('/order/lookup')"
-                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 transition-all hover:border-primary/50 shadow-xs"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 transition-all hover:border-primary/50 shadow-xs"
               >
                 <Icon name="lucide:package-search" class="size-3.5 text-primary" />
                 <span>{{ t('footer.customerService.orderLookup', 'Spåra beställning') }}</span>
@@ -187,6 +209,16 @@ const company = computed(() => {
 
           <!-- Working Policy Links -->
           <ul class="space-y-2 text-xs">
+            <li>
+              <NuxtLink
+                :to="localePath('/about')"
+                class="flex items-center gap-2 text-slate-300 hover:text-primary transition-colors font-medium"
+              >
+                <Icon name="lucide:sparkles" class="size-3.5 text-amber-400 shrink-0" />
+                <span>{{ t('nav.about', 'Om Siwar (Vår historia)') }}</span>
+              </NuxtLink>
+            </li>
+
             <li>
               <NuxtLink
                 :to="localePath('/villkor')"
@@ -238,9 +270,9 @@ const company = computed(() => {
               class="h-9 px-3 rounded-lg bg-white text-slate-900 flex items-center gap-1.5 shadow-xs font-bold text-xs"
               :title="t('footer.payment.swish', 'Swish Handel')"
             >
-              <div class="size-4.5 rounded-full bg-emerald-600 flex items-center justify-center text-white text-[10px] font-black">
-                S
-              </div>
+              
+              <img src="/public/images/patterns/Swish Logo Primary Dark-BG SVG.svg" alt="Swish" class="h-5 w-auto object-contain" />
+
               <span class="tracking-tight text-slate-900 font-extrabold">swish</span>
             </div>
 

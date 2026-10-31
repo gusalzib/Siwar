@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#3b1d11"/>
+      <stop offset="100%" stop-color="#180b06"/>
+    </radialGradient>
+    <radialGradient id="turmeric" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </radialGradient>
+    <radialGradient id="sumac" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#be123c"/>
+      <stop offset="100%" stop-color="#881337"/>
+    </radialGradient>
+    <radialGradient id="zaatar" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#65a30d"/>
+      <stop offset="100%" stop-color="#3f6212"/>
+    </radialGradient>
+    <radialGradient id="saffron" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#c2410c"/>
+    </radialGradient>
+    <radialGradient id="cardamom" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#84cc16"/>
+      <stop offset="100%" stop-color="#4d7c0f"/>
+    </radialGradient>
+    <linearGradient id="woodBoard" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#78350f"/>
+      <stop offset="100%" stop-color="#451a03"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rustic Ambient Background -->
+  <rect width="800" height="600" fill="url(#bgGlow)"/>
+
+  <!-- Rustic Wooden Table Base -->
+  <rect x="40" y="360" width="720" height="200" rx="16" fill="url(#woodBoard)" stroke="#92400e" stroke-width="2"/>
+  <line x1="40" y1="420" x2="760" y2="420" stroke="#92400e" opacity="0.4" stroke-width="2"/>
+  <line x1="40" y1="480" x2="760" y2="480" stroke="#92400e" opacity="0.4" stroke-width="2"/>
+
+  <!-- Center Big Brass Spice Bowl (Turmeric / Kurkuma) -->
+  <ellipse cx="400" cy="380" rx="140" ry="60" fill="#78350f"/>
+  <ellipse cx="400" cy="370" rx="136" ry="55" fill="#ca8a04"/>
+  <path d="M 270 370 Q 400 320 530 370 Q 400 420 270 370 Z" fill="url(#turmeric)"/>
+  <!-- Spice Texture Particles -->
+  <circle cx="380" cy="360" r="3" fill="#fde68a" opacity="0.8"/>
+  <circle cx="420" cy="375" r="4" fill="#f59e0b" opacity="0.8"/>
+  <circle cx="350" cy="380" r="2.5" fill="#fde68a" opacity="0.7"/>
+  <circle cx="450" cy="365" r="3.5" fill="#d97706" opacity="0.8"/>
+
+  <!-- Left Bowl: Sumac (Deep Ruby Crimson) -->
+  <ellipse cx="190" cy="340" rx="100" ry="45" fill="#4c0519"/>
+  <ellipse cx="190" cy="332" rx="96" ry="40" fill="#9f1239"/>
+  <path d="M 100 332 Q 190 290 280 332 Q 190 370 100 332 Z" fill="url(#sumac)"/>
+  <circle cx="170" cy="330" r="3" fill="#fda4af" opacity="0.6"/>
+  <circle cx="210" cy="340" r="2.5" fill="#f43f5e" opacity="0.7"/>
+
+  <!-- Right Bowl: Za'atar & Thyme (Wild Herbs & Sesame) -->
+  <ellipse cx="610" cy="340" rx="100" ry="45" fill="#14532d"/>
+  <ellipse cx="610" cy="332" rx="96" ry="40" fill="#15803d"/>
+  <path d="M 520 332 Q 610 290 700 332 Q 610 370 520 332 Z" fill="url(#zaatar)"/>
+  <!-- Sesame seeds in Zaatar -->
+  <ellipse cx="590" cy="325" rx="3" ry="1.5" fill="#fef08a" transform="rotate(25 590 325)"/>
+  <ellipse cx="630" cy="335" rx="3" ry="1.5" fill="#fef08a" transform="rotate(-30 630 335)"/>
+  <ellipse cx="570" cy="340" rx="3.5" ry="1.5" fill="#fef08a" transform="rotate(15 570 340)"/>
+  <ellipse cx="650" cy="328" rx="3" ry="1.5" fill="#fef08a" transform="rotate(-40 650 328)"/>
+
+  <!-- Top Center Hanging Jute Burlap Sacks of Cardamom & Saffron -->
+  <rect x="220" y="80" width="140" height="150" rx="10" fill="#a16207" stroke="#713f12" stroke-width="2"/>
+  <text x="290" y="160" fill="#fef08a" font-family="system-ui, sans-serif" font-size="14" font-weight="800" text-anchor="middle">KARDEMUMMA</text>
+  <rect x="440" y="80" width="140" height="150" rx="10" fill="#b45309" stroke="#78350f" stroke-width="2"/>
+  <text x="510" y="160" fill="#fef08a" font-family="system-ui, sans-serif" font-size="14" font-weight="800" text-anchor="middle">SAFFRAN &amp; CHILI</text>
+
+  <!-- Cinnamon Sticks & Star Anise scattered on foreground -->
+  <rect x="300" y="470" width="100" height="14" rx="4" fill="#78350f" transform="rotate(-15 300 470)"/>
+  <rect x="315" y="485" width="95" height="13" rx="4" fill="#92400e" transform="rotate(-10 315 485)"/>
+  <circle cx="480" cy="465" r="12" fill="#451a03"/>
+  <circle cx="510" cy="475" r="10" fill="#451a03"/>
+
+  <!-- Headline Overlay -->
+  <rect x="200" y="515" width="400" height="32" rx="16" fill="#0f172a" opacity="0.85"/>
+  <text x="400" y="536" fill="#fef08a" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">Autentiska Kryddor &amp; Örter • Importerade från Orienten</text>
+</svg>

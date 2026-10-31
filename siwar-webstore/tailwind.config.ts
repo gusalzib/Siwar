@@ -13,6 +13,9 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        '3xl': '1600px',
+      },
       colors: {
         brand: {
           50: '#F5F9EC',

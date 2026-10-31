@@ -186,7 +186,7 @@ const localePath = useLocalePath()
 </script>
 
 <template>
-  <div v-if="product" class="container mx-auto px-4 py-8">
+  <div v-if="product" class="min-h-screen container mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16">
     <!-- Breadcrumb Navigation -->
     <nav class="text-sm breadcrumbs mb-8 mt-2 overflow-visible">
       <ul class="!flex flex-col sm:!flex-row flex-wrap gap-2 w-full">
@@ -217,11 +217,11 @@ const localePath = useLocalePath()
       </ul>
     </nav>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-      <!-- Left: Responsive Image Gallery -->
-      <section class="flex flex-col gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start">
+      <!-- Left: Responsive Image Gallery Card -->
+      <section class="card bg-base-100 dark:bg-zinc-900/60 border-2 border-base-300 dark:border-zinc-700 shadow-md p-4 sm:p-6 rounded-3xl flex flex-col gap-4">
         <!-- Main Image Stage -->
-        <div class="relative aspect-square w-full rounded-2xl bg-base-200 overflow-hidden border border-base-300 shadow-inner flex items-center justify-center">
+        <div class="relative aspect-square w-full rounded-2xl bg-neutral-50 dark:bg-zinc-900/60 overflow-hidden border border-base-200 dark:border-zinc-800 shadow-inner flex items-center justify-center">
           <img
             v-if="selectedImage"
             :src="selectedImage.url"
@@ -309,8 +309,8 @@ const localePath = useLocalePath()
         </div>
       </section>
 
-      <!-- Right: Product Information & Purchase Actions -->
-      <section class="flex flex-col justify-between">
+      <!-- Right: Product Information & Purchase Actions Card -->
+      <section class="card bg-base-100 dark:bg-zinc-900/60 border-2 border-base-300 dark:border-zinc-700 shadow-md p-6 sm:p-8 rounded-3xl flex flex-col justify-between">
         <div class="space-y-4">
           <!-- Brand & Origin -->
           <div class="flex items-center gap-2 text-xs uppercase tracking-wider font-semibold text-base-content/60">
@@ -325,10 +325,10 @@ const localePath = useLocalePath()
           </h1>
 
           <!-- Price & Jämförpris Section (AC-1) -->
-          <div class="p-4 rounded-xl bg-base-200/60 border border-base-200 flex items-baseline justify-between">
+          <div class="p-5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border-2 border-emerald-500/40 dark:border-emerald-600/50 border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs flex items-baseline justify-between">
             <div>
               <div v-if="hasDiscount" class="flex items-baseline gap-2.5 flex-wrap">
-                <span class="text-3xl font-black text-error">
+                <span class="text-3xl font-black text-rose-600 dark:text-rose-400">
                   {{ displayPrice }} {{ activeCurrency }}
                 </span>
                 <span class="text-lg font-semibold text-base-content/50 line-through">
@@ -346,7 +346,7 @@ const localePath = useLocalePath()
                   {{ t('deals.endsSoon', 'Slutar snart') }}
                 </span>
               </div>
-              <div v-else class="text-3xl font-black text-base-content">
+              <div v-else class="text-3xl font-black text-base-content dark:text-emerald-300">
                 {{ displayPrice }} {{ activeCurrency }}
               </div>
               <div v-if="comparisonPrice" class="text-xs text-base-content/70 mt-1">
@@ -372,25 +372,25 @@ const localePath = useLocalePath()
           </div>
 
           <!-- Separated Ingredients (EU 1169/2011 & FR-1) -->
-          <div v-if="getLocalized(product.ingredients)" class="pt-4 border-t border-base-200">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-base-content/70 mb-1">
+          <div v-if="getLocalized(product.ingredients)" class="pt-4 border-t-2 border-base-300 dark:border-zinc-700">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-base-content/80 mb-2">
               {{ t(  'admin.products.ingredientsTitle') }}
             </h2>
-            <p class="text-sm text-base-content/80 leading-relaxed bg-base-100 p-3 rounded-lg border border-base-200">
+            <p class="text-sm text-base-content/90 leading-relaxed bg-base-200/60 dark:bg-zinc-800/60 p-4 rounded-xl border-2 border-base-300 dark:border-zinc-700">
               {{ getLocalized(product.ingredients) }}
             </p>
           </div>
 
           <!-- Allergen Declarations -->
           <div v-if="product.allergens && product.allergens.length" class="pt-2">
-            <span class="text-xs font-bold text-error/90 uppercase tracking-wider">
+            <span class="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
               {{ t(  'admin.products.allergensTitle') }}:
             </span>
-            <div class="flex flex-wrap gap-1.5 mt-1">
+            <div class="flex flex-wrap gap-1.5 mt-1.5">
               <span
                 v-for="allergen in product.allergens"
                 :key="allergen._id"
-                class="badge badge-error badge-outline badge-sm font-semibold"
+                class="badge badge-error border-2 border-rose-500/40 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 badge-sm font-bold py-2.5 px-3"
               >
                 {{ getLocalized(allergen.name) }}
               </span>
@@ -398,19 +398,19 @@ const localePath = useLocalePath()
           </div>
 
           <!-- AC-2: Nutrition Facts Table (Structured + Package Image Reference) -->
-          <div class="pt-4 border-t border-base-200">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-base-content/70 mb-2">
+          <div class="pt-4 border-t-2 border-base-300 dark:border-zinc-700">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-base-content/80 mb-2">
               {{ t(  'admin.products.nutritionTitle') }}
             </h2>
 
             <!-- Render structured table if values are defined -->
             <div
               v-if="product.nutritionTable && Object.keys(product.nutritionTable).length"
-              class="overflow-x-auto rounded-lg border border-base-200"
+              class="overflow-x-auto rounded-xl border-2 border-base-300 dark:border-zinc-700 shadow-2xs"
             >
               <table class="table table-xs w-full">
                 <thead>
-                  <tr class="bg-base-200/50">
+                  <tr class="bg-base-200/60 dark:bg-zinc-800">
                     <th class="font-bold">{{ t(  'admin.products.nutritionPer100') }}</th>
                     <th class="text-end font-bold">{{ t(  'admin.products.nutritionAmount') }}</th>
                   </tr>
@@ -451,7 +451,7 @@ const localePath = useLocalePath()
             </div>
 
             <!-- Fallback notification directing user to packaging gallery -->
-            <div v-else class="text-xs text-base-content/60 bg-base-200/40 p-3 rounded-lg flex items-center gap-2">
+            <div v-else class="text-xs text-base-content/70 bg-base-200/60 dark:bg-zinc-800/60 p-3 rounded-xl border-2 border-base-300 dark:border-zinc-700 flex items-center gap-2">
               <Icon name="lucide:info" class="size-4 shrink-0" />
               <span>{{ t(  'admin.products.nutritionOnPackageNotice') }}</span>
             </div>
@@ -459,10 +459,10 @@ const localePath = useLocalePath()
         </div>
 
         <!-- Add to Cart & Availability Boundary -->
-        <div class="pt-6 border-t border-base-200 mt-6 space-y-3">
+        <div class="pt-6 border-t-2 border-base-300 dark:border-zinc-700 mt-6 space-y-3">
           <div class="flex items-center gap-3">
             <!-- Quantity Selector -->
-            <div class="join border border-base-300 rounded-lg">
+            <div class="join border-2 border-base-300 dark:border-zinc-700 rounded-xl bg-base-100 dark:bg-zinc-800 shadow-2xs">
               <button
                 type="button"
                 class="join-item btn btn-sm btn-ghost px-3"
@@ -489,7 +489,7 @@ const localePath = useLocalePath()
               type="button"
               :disabled="!product.availability.canAddToCart"
               @click="addToCart"
-              class="btn btn-md flex-1 !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none font-bold gap-2 shadow transition-all disabled:opacity-50"
+              class="btn btn-md flex-1 !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none font-bold gap-2 shadow-sm rounded-xl transition-all disabled:opacity-50"
             >
               <Icon name="lucide:shopping-cart" class="size-5" />
               <span>{{ product.availability.canAddToCart ? t('cart.add') : t('inventory.' + product.availability.statusCode) }}</span>
@@ -500,7 +500,7 @@ const localePath = useLocalePath()
               type="button"
               :aria-label="favoritesStore.isFavorite(effectiveProductId) ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
               :title="favoritesStore.isFavorite(effectiveProductId) ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
-              class="btn btn-md btn-outline border-base-300 hover:border-rose-500 text-base-content hover:text-rose-500 transition-all gap-2"
+              class="btn btn-md btn-outline border-base-300 dark:border-zinc-700 hover:border-rose-500 text-base-content hover:text-rose-500 rounded-xl transition-all gap-2"
               @click="favoritesStore.toggleFavorite(effectiveProductId)"
             >
               <Icon

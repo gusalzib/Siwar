@@ -10,7 +10,9 @@
       "store": "Butik",
       "preferences": "Inställningar",
       "favorites": "Favoriter",
-      "trackOrder": "Spåra order"
+      "trackOrder": "Spåra order",
+      "about": "Om oss",
+      "contact": "Kontakt"
     },
   "theme": {
     "dark": "Mörkt läge",
@@ -94,6 +96,15 @@
       "submitting": "Loggar in...",
       "invalidCredentials": "Ogiltig e-postadress eller lösenord. Försök igen."
     },
+    "pagination": {
+      "previous": "Föregående",
+      "next": "Nästa",
+      "pageOf": "Sida {page} av {totalPages}",
+      "showingRange": "Visar {from}–{to} av {total}",
+      "perPage": "Per sida",
+      "itemsPerPage": "{count} / sida"
+    },
+
     "products": {
       "title": "Produkthantering",
       "subtitle": "Visa, redigera och filtrera produkter, lagernivåer och översättningar",
@@ -134,7 +145,39 @@
           "all": "Alla produkter",
           "missing": "Endast saknade översättningar"
         },
+        "status": {
+          "label": "Status",
+          "all": "Alla produkter",
+          "active": "Endast aktiva",
+          "archived": "Endast arkiverade"
+        },
+        "deals": {
+          "label": "Kampanjer & Rabatter",
+          "discounted": "Endast rabatterade / Rea"
+        },
         "reset": "Återställ filter"
+      },
+      "cards": {
+        "barcode": "Streckkod",
+        "noBarcode": "Saknar streckkod",
+        "stockPhysical": "Fysiskt lager",
+        "stockBuffer": "Buffert",
+        "stockOnline": "Tillgängligt online",
+        "primaryImage": "Huvudbild",
+        "noImages": "Ingen bild",
+        "prices": "Priser",
+        "inventory": "Lageröversikt",
+        "languages": "Språkversioner",
+        "brand": "Varumärke",
+        "category": "Kategori",
+        "showingCount": "Visar {count} produkter"
+      },
+      "deleteModal": {
+        "title": "Radera produkt permanent",
+        "message": "Är du säker på att du vill radera \"{name}\"? Denna åtgärd tar bort produkten och alla dess bildreferenser permanent från butiken och kan inte ångras.",
+        "cancel": "Avbryt",
+        "confirm": "Ja, radera produkt",
+        "deleting": "Raderar..."
       },
       "table": {
         "image": "Bild",
@@ -298,6 +341,10 @@
       "add": "Lägg till banner",
       "addTitle": "Skapa kampanjbanner",
       "editTitle": "Redigera kampanjbanner",
+      "slideshowTimer": "Bildväxling:",
+      "timerTooltip": "Tid i sekunder innan nästa bild visas i bildspelet (2–30 sekunder)",
+      "saveTimer": "Spara",
+      "timerSaved": "Bildväxlingstid sparad!",
       "edit": "Redigera",
       "delete": "Ta bort",
       "empty": "Inga kampanjbanners konfigurerade ännu.",
@@ -569,7 +616,7 @@
       "saveError": "Ett fel uppstod vid sparande.",
       "collapseAll": "Fäll ihop alla",
       "expandAll": "Fäll ut alla",
-      "sectionsCount": "5 sektioner",
+      "sectionsCount": "6 sektioner",
       "company": {
         "sectionTitle": "Företagsinformation & Bokföringslagen",
         "badge": "Org.nr & Moms",
@@ -607,6 +654,24 @@
         "description": "Butikens namn och slogan som presenteras för kunder i sidfot och rubriker.",
         "storeName": "Butiksnamn",
         "tagline": "Slogan / Butiksbeskrivning"
+      },
+      "social": {
+        "sectionTitle": "Sociala medier & Kanaler",
+        "badge": "Länkar & Ikoner",
+        "description": "Hantera butikens officiella länkar till sociala medier som visas i sidfoten och på kontaktsidan.",
+        "addLink": "Lägg till social kanal",
+        "noLinks": "Inga sociala medier tillagda än. Klicka ovan för att lägga till din första länk.",
+        "platformLabel": "Plattform",
+        "urlLabel": "Webbadress (URL)",
+        "urlPlaceholder": "Ange giltig webbadress...",
+        "invalidUrl": "Ange en giltig URL (måste börja med https:// eller http://)",
+        "activeLabel": "Aktiv",
+        "inactiveLabel": "Inaktiv",
+        "remove": "Ta bort",
+        "moveUp": "Flytta upp",
+        "moveDown": "Flytta ner",
+        "selectPlatform": "Välj plattform...",
+        "invalidUrlError": "Vänligen korrigera ogiltiga webbadresser för sociala medier innan du sparar."
       }
     }
   },
@@ -646,7 +711,8 @@
     "categories": {
       "heading": "Utforska våra kategorier",
       "subheading": "Hitta dina orientaliska favoriter bland våra noga utvalda råvaror och delikatesser",
-      "explore": "Utforska sortiment"
+      "explore": "Utforska sortiment",
+      "viewAll": "Se alla kategorier"
     },
     "deals": {
       "badge": "Specialerbjudande",
@@ -691,30 +757,39 @@
     "backToCheckout": "Tillbaka till kassan",
     "readTerms": "Läs Köpvillkor",
     "readWithdrawal": "Läs om Ångerrätt",
+    "entityCard": {
+      "title": "Företagsinformation & Juridisk person",
+      "company": "Juridiskt namn",
+      "orgNumber": "Organisationsnummer",
+      "momsNumber": "Momsregistreringsnummer",
+      "address": "Sätes- & butiksadress",
+      "email": "Officiell e-post",
+      "phone": "Telefon"
+    },
     "terms": {
       "title": "Köpvillkor",
       "metaTitle": "Köpvillkor",
-      "metaDesc": "Allmänna köpvillkor och leveransregler för köp i Siwars webbutik.",
+      "metaDesc": "Allmänna köpvillkor och leveransregler för köp i {storeName}s webbutik.",
       "sec1_title": "1. Allmänt och Företagsinformation",
-      "sec1_p1": "Dessa köpvillkor gäller för alla beställningar som görs via webbutiken Siwar. Avtal ingås mellan dig som konsument och Siwar Butik AB, Halmstad, Sverige.",
+      "sec1_p1": "Dessa köpvillkor gäller för alla beställningar som görs via webbutiken {storeName}. Avtal ingås mellan dig som konsument och {companyName}, organisationsnummer {orgNumber}, {address}.",
       "sec1_p2": "För att handla hos oss måste du vara minst 18 år eller ha målsmans godkännande.",
       "sec2_title": "2. Priser, Valutor och Moms",
-      "sec2_p1": "Samtliga konsumentpriser i butiken anges inklusive svensk mervärdesskatt (moms) i enlighet med prisinformationslagen. Momsen specificeras uppdelad i 12% moms för livsmedel samt 25% moms för övriga artiklar och fraktavgifter.",
+      "sec2_p1": "Samtliga konsumentpriser i butiken anges inklusive svensk mervärdesskatt (moms) i enlighet med prisinformationslagen. Momsregistreringsnummer: {momsNumber}. Momsen specificeras uppdelad i 12% moms för livsmedel samt 25% moms för övriga artiklar och fraktavgifter.",
       "sec2_p2": "Siwar erbjuder fasta katalogpriser i SEK, EUR och USD oberoende av varandra utan dynamiska valutapåslag i kassan. Beställningen debiteras i den valuta du valt.",
       "sec3_title": "3. Beställning och Lagerreservation",
       "sec3_p1": "Efter lagd beställning skickas en automatisk orderbekräftelse till din e-post. Eftersom butiken har fysisk butiksförsäljning tillämpas automatiska säkerhetsbuffertar. Om en vara mot förmodan saknas vid packning i butik kontaktas du omgående för ersättningsvara eller direkt kreditering.",
       "sec4_title": "4. Leveranssätt och Frakt",
       "sec4_pickup_title": "Hämta i butik (In-Store Pickup)",
-      "sec4_pickup_desc": "Kostnadsfritt. Beställningen packas och finns normalt redo för avhämtning i vår butik i Halmstad inom 2 timmar under ordinarie öppettider.",
+      "sec4_pickup_desc": "Kostnadsfritt. Beställningen packas och finns normalt redo för avhämtning i vår butik på {street}, {city} inom 2 timmar under ordinarie öppettider.",
       "sec4_delivery_title": "Paketleverans / Postombud",
-      "sec4_delivery_desc": "Leverans sker med PostNord (normalt 1–3 helgfria vardagar). Fraktkostnaden baseras på försändelsens sammanlagda bruttovikt och inkluderar 25% moms.",
+      "sec4_delivery_desc": "Leverans sker med DHL (normalt 1–5 helgfria vardagar). Fraktkostnaden baseras på försändelsens sammanlagda bruttovikt och inkluderar 25% moms.",
       "sec5_title": "5. Ångerrätt och Undantag för Livsmedel",
       "sec5_p1": "Enligt lagen (2005:59) om distansavtal har konsumenter som huvudregel 14 dagars ångerrätt.",
       "sec5_highlight": "Vänligen observera att livsmedel och färskvaror är lagstadgat undantagna från ångerrätten.",
       "sec5_link_prefix": "För fullständiga villkor, läs vår särskilda sida för",
       "sec5_link_text": "Ångerrätt och Livsmedelsundantag",
       "sec6_title": "6. Reklamation och Skadat Gods",
-      "sec6_p1": "Om en vara är defekt, saknas eller har skadats under transport ber vi dig kontakta vår kundtjänst inom skälig tid med fotodokumentation och ordernummer för ersättning eller kreditering."
+      "sec6_p1": "Om en vara är defekt, saknas eller har skadats under transport ber vi dig kontakta vår kundtjänst ({email}) inom skälig tid med fotodokumentation och ordernummer för ersättning eller kreditering."
     },
     "withdrawal": {
       "title": "Ångerrätt och Livsmedelsundantag",
@@ -735,7 +810,7 @@
       "sec2_exemption2_desc": "Detta omfattar öppnade kryddburkar, oljeflaskor, konserver, tahini och torrvaror med bruten försegling.",
       "sec2_conclusion": "Genom att slutföra din beställning i kassan godkänner du att dessa livsmedelsartiklar är undantagna från ångerrätten.",
       "sec3_title": "3. Hur du utövar din ångerrätt (icke-livsmedel)",
-      "sec3_step1": "Meddela kundtjänst skriftligen inom 14 dagar från mottagandet via e-post till order{'@'}siwar.se med ditt ordernummer.",
+      "sec3_step1": "Meddela kundtjänst skriftligen inom 14 dagar från mottagandet via e-post till {email} med ditt ordernummer.",
       "sec3_step2": "Du kan även använda Konsumentverkets standardformulär för ångerrätt.",
       "sec3_step3": "Skicka tillbaka varan inom 14 dagar från meddelandet. Returfrakten bekostas av konsumenten.",
       "sec4_title": "4. Återbetalning",
@@ -744,10 +819,10 @@
     "privacy": {
       "title": "Integritetspolicy & Dataskydd",
       "metaTitle": "Integritetspolicy",
-      "metaDesc": "Information om hur Siwar Butik AB hanterar personuppgifter i enlighet med GDPR.",
+      "metaDesc": "Information om hur {companyName} hanterar personuppgifter i enlighet med GDPR.",
       "gdprBadge": "Dataskyddsförordningen (GDPR)",
       "sec1_title": "1. Personuppgiftsansvarig",
-      "sec1_p1": "Siwar Butik AB, Storgatan 12, 302 43 Halmstad, organisationsnummer 559123-4567, är personuppgiftsansvarig för behandlingen av dina personuppgifter.",
+      "sec1_p1": "{companyName}, {address}, organisationsnummer {orgNumber}, är personuppgiftsansvarig för behandlingen av dina personuppgifter.",
       "sec1_p2": "Vi värnar om din personliga integritet och eftersträvar alltid en hög nivå av dataskydd i enlighet med EU:s dataskyddsförordning (GDPR).",
       "sec2_title": "2. Vilka personuppgifter vi samlar in",
       "sec2_p1": "Vi samlar in information som du lämnar till oss vid genomförande av köp eller kontakt med vår kundtjänst:",
@@ -763,7 +838,7 @@
       "sec4_item2": "Betaltjänstleverantörer (t.ex. Swish och kortinlösare) för säker betalningshantering.",
       "sec5_title": "5. Dina rättigheter",
       "sec5_p1": "Enligt GDPR har du rätt att kostnadsfritt begära ett registerutdrag över vilka uppgifter vi har lagrade om dig, begära rättelse av felaktiga uppgifter samt under vissa förutsättningar begära radering eller begränsning av behandlingen.",
-      "sec5_p2": "För att utöva dina rättigheter, kontakta oss via order{'@'}siwar.se. Du har även rätt att inge klagomål till Integritetsskyddsmyndigheten (IMY)."
+      "sec5_p2": "För att utöva dina rättigheter, kontakta oss via {email}. Du har även rätt att inge klagomål till Integritetsskyddsmyndigheten (IMY)."
     }
   },
   "checkout": {
@@ -772,7 +847,7 @@
     "fulfillmentMethod": "Leveranssätt",
     "parcelDelivery": "Postombud / Paket",
     "delivery": "Postombud / Paket",
-    "parcelDeliveryDesc": "1–3 vardagar via PostNord",
+    "parcelDeliveryDesc": "1–5 vardagar via DHL",
     "inStorePickup": "Hämta i butik",
     "pickup": "Hämta i butik",
     "inStorePickupDesc": "Klar inom 2 timmar (0 kr)",
@@ -806,6 +881,10 @@
     },
     "continueShopping": "Fortsätt handla",
     "confirmCancel": "Är du säker på att du vill avbryta köpet?",
+    "cancelModalTitle": "Avbryta beställning?",
+    "cancelModalWarning": "Är du säker på att du vill avbryta din betalningssession?",
+    "keepShopping": "Fortsätt handla",
+    "confirmCancelOrder": "Avbryt beställning",
     "cancelOrder": "Avbryt beställning",
     "authorizePayment": "Godkänn betalning",
     "changeMethod": "Ändra leveranssätt",
@@ -828,10 +907,10 @@
       "pendingPacking": "Mottagen",
       "pendingPackingDesc": "Vi har tagit emot din order och förbereder packning.",
       "packed": "Färdigpackad",
-      "packedDescDelivery": "Ditt paket är färdigpackat och inväntar upphämtning av PostNord.",
+      "packedDescDelivery": "Ditt paket är färdigpackat och inväntar upphämtning av DHL.",
       "packedDescPickup": "Ditt paket är färdigpackat och redo att hämtas i vår butik!",
       "dispatched": "Skickad / Hämtad",
-      "dispatchedDescDelivery": "Paketet har lämnats över till PostNord och är på väg till dig.",
+      "dispatchedDescDelivery": "Paketet har lämnats över till DHL och är på väg till dig.",
       "dispatchedDescPickup": "Ordern har hämtats i butik.",
       "cancelled": "Avbruten",
       "cancelledDesc": "Denna order har avbrutits."
@@ -840,8 +919,8 @@
       "title": "Försändelseinformation",
       "carrier": "Transportör",
       "kolliId": "Kolli-ID / Försändelse-ID",
-      "trackButton": "Spåra försändelse hos PostNord",
-      "waitingNotice": "Spårningslänk blir aktiv så snart paketet har skannats av PostNord."
+      "trackButton": "Spåra försändelse hos DHL",
+      "waitingNotice": "Spårningslänk blir aktiv så snart paketet har skannats av DHL."
     },
     "pickup": {
       "title": "Instruktioner för upphämtning i butik",
@@ -939,7 +1018,148 @@
       "mastercard": "Mastercard",
       "sslGuarantee": "256-bit SSL-krypterad anslutning"
     },
+    "social": {
+      "title": "Följ oss",
+      "subtitle": "Håll dig uppdaterad om nya varor och erbjudanden"
+    },
     "allRightsReserved": "Alla rättigheter förbehållna.",
     "complianceNotice": "Följer Bokföringslagen (1999:1078) och Prisinformationslagen."
+  },
+
+  "aboutPage": {
+    "metaTitle": "Om oss – Vår historia & arv",
+    "metaDesc": "Lär känna Siwar Butik i Halmstad. Upptäck vårt utbud av autentiska orientaliska råvaror, doftande kryddor, sötsaker och delikatesser.",
+    "badge": "Vår historia & arv",
+    "title": "Äkta smaker från Orienten mitt i Halmstad",
+    "subtitle": "Sedan starten har vår vision varit enkel: att erbjuda det bästa ur det orientaliska och medelhavsinspirerade köket med passion för tradition, hantverk och råvaror av högsta kvalitet.",
+    "story": {
+      "title": "En levande mötesplats för matglädje och gemenskap",
+      "p1": "Siwar Butik grundades med en passion för det rika kulturarv och de generösa smakerna som präglar Mellanöstern och Medelhavet. Hos oss hittar du allt från solmogna oliver, krispiga nötter och dagsfärsk baklava till noga utvalda kryddor, tahini och premium basmatiris direkt från betrodda producenter.",
+      "p2": "Vi tror att mat förenar människor och bygger broar mellan kulturer. Vårt engagerade butiksteam hjälper dig gärna att hitta rätt råvaror för traditionella familjerecept, oavsett om du lagar en mustig gryta med sumac och za'atar eller vill bjuda nära och kära på sött kardemummakaffe och dadlar."
+    },
+    "pillars": {
+      "p1": {
+        "title": "Handplockat & Autentiskt",
+        "desc": "Vi importerar noggrant utvalda delikatesser från traditionella producenter i Mellanöstern och Medelhavsområdet."
+      },
+      "p2": {
+        "title": "Färska Kryddor & Råvaror",
+        "desc": "Doftande kryddor, torkade örter, baljväxter och dagsfärska specialiteter för den genuina smakupplevelsen."
+      },
+      "p3": {
+        "title": "Varmt & Personligt Bemötande",
+        "desc": "Vi är stolta över att vara en lokal mötesplats i Halmstad där varje besökare möts med personlig service och kunskap."
+      }
+    },
+    "gallery": {
+      "badge": "Fysisk butiksmiljö",
+      "title": "Välkommen in till butiken i Halmstad",
+      "desc": "Upptäck vår välfyllda butikslokal, dofterna från kryddavdelningen och vårt breda sortiment av orientaliska delikatesser. Klicka på bilderna för att förstora.",
+      "clickToExpand": "Klicka för att förstora",
+      "close": "Stäng",
+      "placeholderNote": "Butiksfoto • Siwar Butik Halmstad",
+      "items": {
+        "storefront": {
+          "title": "Butiksfasad & Välkomnande Entré",
+          "desc": "Vår fysiska butikslokal på Åttingsstigen 41 i Halmstad med gott om parkeringsplatser och bekväm tillgänglighet."
+        },
+        "spices": {
+          "title": "Doftande Kryddbasar & Örter",
+          "desc": "Stora tråg med nymalda kryddor, sumac, za'atar, kardemumma och saffran för äkta orientalisk matlagning."
+        },
+        "sweets": {
+          "title": "Spröd Baklava & Traditionella Sötsaker",
+          "desc": "Dagsfärsk pistagebaklava, halvah, fyllda dadlar och söta delikatesser bakade enligt klassiska recept."
+        },
+        "delicacies": {
+          "title": "Gourmetskafferi & Medelhavsdelikatesser",
+          "desc": "Kallpressade olivoljor, sesamtahini, granatäppelsirap, premiumris, bönor och inlagda grönsaker."
+        }
+      }
+    },
+    "visit": {
+      "badge": "Välkommen in",
+      "title": "Upplev butiken på plats i Halmstad",
+      "desc": "Du hittar oss på Åttingsstigen 41 i Halmstad. Kom in och dofta på kryddorna, få personliga recepttips eller hämta dina onlinebeställningar kostnadsfritt.",
+      "viewAllHours": "Se alla öppettider & vägbeskrivning",
+      "findUs": "Hitta till oss"
+    },
+    "social": {
+      "badge": "Följ vår gemenskap",
+      "title": "Följ Siwar på sociala medier",
+      "desc": "Missa inga nya säsongsleveranser, helgerbjudanden eller goda recept. Följ oss och bli en del av Siwar-familjen!"
+    }
+  },
+
+  "contactPage": {
+    "metaTitle": "Kontakta oss – Kundservice & Butik",
+    "metaDesc": "Har du frågor om vårt sortiment, öppettider eller beställningar? Kontakta Siwar Butik i Halmstad via telefon, e-post eller vårt kontaktformulär.",
+    "badge": "Kundservice & Butik",
+    "title": "Vi finns här för att hjälpa dig",
+    "subtitle": "Oavsett om du har frågor om en specifik vara, vill veta mer om våra öppettider eller behöver hjälp med en beställning är du alltid varmt välkommen att höra av dig.",
+    "cards": {
+      "phoneTitle": "Telefon till butiken",
+      "phoneDesc": "Ring oss gärna direkt under butikens ordinarie öppettider för snabb hjälp.",
+      "emailTitle": "E-post & Kundsupport",
+      "emailDesc": "Vi besvarar e-postfrågor så snart vi kan, normalt inom 24 timmar.",
+      "addressTitle": "Besöksadress",
+      "addressDesc": "Centralt i Halmstad med goda parkeringsmöjligheter och bussförbindelser.",
+      "hoursTitle": "Butikens Öppettider",
+      "hoursDesc": "Våra ordinarie öppettider måndag till söndag.",
+      "viewHours": "Se alla tider",
+      "openInMaps": "Öppna i Google Maps",
+      "whatsappTitle": "WhatsApp Kundsupport",
+      "whatsappDesc": "Snabbchatt direkt med oss för frågor om sortiment eller lagda ordrar.",
+      "whatsappOpenApp": "Öppna WhatsApp-appen",
+      "whatsappOpenWeb": "Öppna WhatsApp Web",
+      "whatsappFallbackNotice": "Klicka för att chatta i webbläsaren",
+      "whatsappFallbackBannerTitle": "Starta WhatsApp Web",
+      "whatsappFallbackBannerDesc": "Öppnades inte WhatsApp Web automatiskt i en ny flik? Klicka på knappen för att fortsätta chatten.",
+      "whatsappFallbackBannerAction": "Öppna WhatsApp Web"
+    },
+    "form": {
+      "badge": "Skicka meddelande",
+      "title": "Kontakta oss direkt via formuläret",
+      "desc": "Fyll i dina kontaktuppgifter och ditt meddelande nedan så återkommer vi till din angivna e-postadress så fort som möjligt.",
+      "nameLabel": "Ditt fullständiga namn",
+      "namePlaceholder": "t.ex. Fatima Svensson",
+      "emailLabel": "E-postadress",
+      "emailPlaceholder": "din.epost{'@'}example.com",
+      "phoneLabel": "Telefonnummer (valfritt)",
+      "phonePlaceholder": "070 123 45 67",
+      "orderRefLabel": "Ordernummer (om ärendet gäller en pågående order)",
+      "orderRefPlaceholder": "t.ex. ORD-12345",
+      "categoryLabel": "Vad gäller ditt ärende?",
+      "categories": {
+        "general": "Allmän fråga om butiken",
+        "order": "Fråga om beställning eller leverans",
+        "product": "Sortimentsfråga / allergener",
+        "feedback": "Förslag eller synpunkter"
+      },
+      "messageLabel": "Ditt meddelande",
+      "messagePlaceholder": "Beskriv ditt ärende så utförligt som möjligt så hjälper vi dig snabbare...",
+      "submitButton": "Skicka meddelande",
+      "submitting": "Skickar meddelande...",
+      "successTitle": "Tack för ditt meddelande!",
+      "successDesc": "Vi har tagit emot ditt ärende och återkopplar till din e-postadress så snart som möjligt.",
+      "sendAnother": "Skicka ytterligare ett meddelande",
+      "validation": {
+        "nameRequired": "Vänligen ange ditt namn (minst 2 tecken).",
+        "emailRequired": "Vänligen ange en giltig e-postadress.",
+        "messageRequired": "Meddelandet måste innehålla minst 10 tecken."
+      }
+    },
+    "map": {
+      "badge": "Hitta hit",
+      "title": "Hitta till vår fysiska butik i Halmstad",
+      "directions": "Få vägbeskrivning",
+      "freeParking": "Kostnadsfri kundparkering i anslutning till butiken",
+      "busNearby": "Nära busshållplats och smidig tillgänglighet"
+    },
+    "social": {
+      "badge": "Sociala medier",
+      "title": "Koppla upp med oss i sociala medier",
+      "desc": "Har du en snabb fråga, vill tipsa om en produkt eller följa våra senaste nyheter? Du når oss även via våra sociala kanaler."
+    }
   }
 }

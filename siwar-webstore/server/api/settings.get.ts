@@ -14,10 +14,17 @@ export default defineEventHandler(async () => {
     storeName: general.storeName,
     tagline: general.tagline,
     company: general.company,
+    companyName: general.company?.name || 'Siwar Butik AB',
+    orgNumber: general.company?.orgNumber || '559123-4567',
+    momsNumber: general.company?.vatNumber || 'SE559123456701',
+    vatNumber: general.company?.vatNumber || 'SE559123456701',
     contact: general.contact,
+    contactEmail: general.contact?.email || 'order@siwar.se',
+    contactPhone: general.contact?.phone || '+46 35 123 456',
     address: general.address,
     schedule: general.schedule,
     openingHours: general.openingHours,
+    carouselIntervalMs: general.carouselIntervalMs ?? 5000,
     pickup: {
       enabled: pickup.enabled,
       address: pickup.address,
@@ -25,6 +32,7 @@ export default defineEventHandler(async () => {
       pickupHours: pickup.pickupHours,
       instructions: pickup.instructions,
     },
+    socialLinks: (general.socialLinks || []).slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
     paymentMethods: ['swish', 'visa', 'mastercard'],
   }
 })

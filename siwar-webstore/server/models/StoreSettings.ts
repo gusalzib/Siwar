@@ -1,6 +1,61 @@
 // server/models/StoreSettings.ts
 import mongoose, { Schema, model, type Document, type Types } from 'mongoose'
 
+export type SocialPlatform = 'instagram' | 'facebook' | 'tiktok' | 'whatsapp' | 'youtube' | 'x'
+
+export interface ISocialLink {
+  platform: SocialPlatform
+  url: string
+  isActive: boolean
+  sortOrder: number
+}
+
+export interface ISocialPlatformOption {
+  platform: SocialPlatform
+  label: string
+  icon: string
+  placeholder: string
+}
+
+export const SOCIAL_PLATFORM_OPTIONS: readonly ISocialPlatformOption[] = [
+  {
+    platform: 'instagram',
+    label: 'Instagram',
+    icon: 'skill-icons:instagram',
+    placeholder: 'https://instagram.com/siwar.butik',
+  },
+  {
+    platform: 'facebook',
+    label: 'Facebook',
+    icon: 'logos:facebook',
+    placeholder: 'https://facebook.com/siwar.butik',
+  },
+  {
+    platform: 'tiktok',
+    label: 'TikTok',
+    icon: 'logos:tiktok-icon',
+    placeholder: 'https://tiktok.com/@siwar.butik',
+  },
+  {
+    platform: 'whatsapp',
+    label: 'WhatsApp',
+    icon: 'logos:whatsapp-icon',
+    placeholder: 'https://wa.me/4635123456',
+  },
+  {
+    platform: 'youtube',
+    label: 'YouTube',
+    icon: 'logos:youtube-icon',
+    placeholder: 'https://youtube.com/@siwar.butik',
+  },
+  {
+    platform: 'x',
+    label: 'X (Twitter)',
+    icon: 'simple-icons:x',
+    placeholder: 'https://x.com/siwar_butik',
+  },
+] as const
+
 export interface IBanner {
   _id?: Types.ObjectId
   id?: string
@@ -92,6 +147,8 @@ export interface IGeneralSettings {
     sv?: string
     en?: string
   }
+  socialLinks?: ISocialLink[]
+  carouselIntervalMs?: number
 }
 
 export interface IStoreSettings {
@@ -109,6 +166,8 @@ export interface IStoreSettings {
   general: IGeneralSettings
   pickup: IPickupSettings
   banners: IBanner[]
+  socialLinks?: ISocialLink[]
+  carouselIntervalMs?: number
   updatedAt: Date
 }
 
@@ -275,6 +334,8 @@ export const DEFAULT_GENERAL_CONFIG: IGeneralSettings = {
     sv: formatWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE, 'sv'),
     en: formatWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE, 'en'),
   },
+  socialLinks: [],
+  carouselIntervalMs: 5000,
 }
 
 export const DEFAULT_PICKUP_CONFIG: IPickupSettings = {
@@ -297,6 +358,20 @@ export const DEFAULT_PICKUP_CONFIG: IPickupSettings = {
     en: 'Please present your order reference number and a valid ID at the store counter upon collection.',
   },
 }
+
+export const SocialLinkSchema = new Schema<ISocialLink>(
+  {
+    platform: {
+      type: String,
+      enum: ['instagram', 'facebook', 'tiktok', 'whatsapp', 'youtube', 'x'],
+      required: true,
+    },
+    url: { type: String, required: true, trim: true },
+    isActive: { type: Boolean, default: true },
+    sortOrder: { type: Number, default: 0 },
+  },
+  { _id: false }
+)
 
 const ShippingTierSchema = new Schema<IShippingTier>(
   {
@@ -355,6 +430,16 @@ const GeneralSettingsSchema = new Schema<IGeneralSettings>(
       ar: { type: String },
       sv: { type: String },
       en: { type: String },
+    },
+    socialLinks: {
+      type: [SocialLinkSchema],
+      default: [],
+    },
+    carouselIntervalMs: {
+      type: Number,
+      default: 5000,
+      min: 2000,
+      max: 30000,
     },
   },
   { _id: false }
@@ -456,6 +541,16 @@ const StoreSettingsSchema = new Schema<IStoreSettings>(
       type: [BannerSchema],
       default: [],
     },
+    socialLinks: {
+      type: [SocialLinkSchema],
+      default: [],
+    },
+    carouselIntervalMs: {
+      type: Number,
+      default: 5000,
+      min: 2000,
+      max: 30000,
+    },
   },
   { timestamps: true }
 )
@@ -473,11 +568,20 @@ export async function getStoreGeneralSettings(): Promise<IGeneralSettings> {
   }
 
   try {
-    const settings = await StoreSettings.findOne().select('general').lean()
+    const settings = await StoreSettings.findOne().select('general socialLinks carouselIntervalMs').lean()
     if (!settings || !settings.general) {
       cachedGeneral = { ...DEFAULT_GENERAL_CONFIG }
     } else {
       const schedule = normalizeSchedule(settings.general.schedule)
+      const rawSocial = settings.general.socialLinks || (settings as any).socialLinks || []
+      const socialLinks: ISocialLink[] = Array.isArray(rawSocial)
+        ? rawSocial.map((item: any, idx: number) => ({
+            platform: item.platform,
+            url: item.url || '',
+            isActive: typeof item.isActive === 'boolean' ? item.isActive : true,
+            sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : idx,
+          }))
+        : []
       cachedGeneral = {
         storeName: {
           ar: settings.general.storeName?.ar || DEFAULT_GENERAL_CONFIG.storeName.ar,
@@ -510,6 +614,8 @@ export async function getStoreGeneralSettings(): Promise<IGeneralSettings> {
           sv: settings.general.openingHours?.sv || formatWeeklySchedule(schedule, 'sv'),
           en: settings.general.openingHours?.en || formatWeeklySchedule(schedule, 'en'),
         },
+        socialLinks,
+        carouselIntervalMs: (settings as any)?.carouselIntervalMs ?? settings?.general?.carouselIntervalMs ?? 5000,
       }
     }
   } catch (err) {
