@@ -628,23 +628,15 @@ async function handleProceedToPayment() {
                     </div>
                   </div>
                 </div>
-                <div class="flex items-center gap-1.5 font-black text-sm tracking-tight text-[#EC663C]">
-                  <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"
-                      fill="#EC663C"
-                      fill-opacity="0.1"
-                    />
-                    <path
-                      d="M7.5 13.5C7.5 11.57 9.07 10 11 10H16.5M16.5 10.5C16.5 12.43 14.93 14 13 14H7.5"
-                      stroke="#EC663C"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                  <span class="text-xs uppercase font-extrabold text-base-content/80">Swish</span>
-              </div>
+                <div
+                  class="h-9 px-3 rounded-lg bg-white text-slate-900 flex items-center gap-1.5 shadow-xs font-bold text-xs"
+                  :title="t('footer.payment.swish', 'Swish Handel')"
+                >
+                  
+                  <img src="/public/images/patterns/Swish Logo Primary Dark-BG SVG.svg" alt="Swish" class="h-5 w-auto object-contain" />
+
+                  <span class="tracking-tight text-slate-900 font-extrabold">swish</span>
+                </div>
               </label>
             </div>
           </div>

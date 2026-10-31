@@ -270,9 +270,9 @@ const hasActiveSocial = computed(() => {
               class="h-9 px-3 rounded-lg bg-white text-slate-900 flex items-center gap-1.5 shadow-xs font-bold text-xs"
               :title="t('footer.payment.swish', 'Swish Handel')"
             >
-              <div class="size-4.5 rounded-full bg-emerald-600 flex items-center justify-center text-white text-[10px] font-black">
-                S
-              </div>
+              
+              <img src="/public/images/patterns/Swish Logo Primary Dark-BG SVG.svg" alt="Swish" class="h-5 w-auto object-contain" />
+
               <span class="tracking-tight text-slate-900 font-extrabold">swish</span>
             </div>
 

@@ -342,9 +342,9 @@ function toggleQuickAllergen(allergenCodeOrId: string) {
             <!-- Submit Button (High-contrast dark text on light theme, never invisible white) -->
             <button
               type="submit"
-              class="btn btn-primary text-slate-950 dark:text-slate-950 font-black gap-2 px-7 h-12 rounded-xl shadow-sm hover:brightness-105 cursor-pointer transition-all text-sm"
+              class="btn btn-primary border-2 !border-brand-700 dark:!border-brand-200 !bg-brand-500 hover:!bg-brand-400 text-slate-950 font-black gap-2 px-7 h-12 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 cursor-pointer transition-all duration-200 text-sm group"
             >
-              <Icon name="lucide:arrow-right" class="size-4.5 rtl:rotate-180 text-slate-950 stroke-[2.5]" />
+              <Icon name="lucide:arrow-right" class="size-4.5 rtl:rotate-180 stroke-[2.5] text-slate-950 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform duration-200" />
               <span>{{ t('home.search.submit') }}</span>
             </button>
           </form>
