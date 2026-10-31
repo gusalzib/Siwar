@@ -1,8 +1,9 @@
 <!-- pages/contact.vue - Kontakta oss / Contact Us / اتصل بنا -->
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import SocialMediaShelf from '~/components/SocialMediaShelf.vue'
 import { DEFAULT_GENERAL_CONFIG, formatWeeklySchedule } from '~/utils/schedule'
+import { sanitizeWhatsAppNumber, getWhatsAppUrl } from '~/utils/social'
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
@@ -30,6 +31,67 @@ const storeContact = computed(() => {
     email: storeInfo.value?.contact?.email || DEFAULT_GENERAL_CONFIG.contact.email,
   }
 })
+
+// ---------------------------------------------------------------------------
+// WhatsApp Integration (Dynamic from StoreSettings + Device Awareness)
+// ---------------------------------------------------------------------------
+const isMobileDevice = ref(false)
+const desktopWhatsAppPrompt = ref(false)
+
+// Active WhatsApp link from storeSettings.socialLinks if available
+const whatsAppSocialLink = computed(() => {
+  return storeInfo.value?.socialLinks?.find(
+    (l: any) => l.platform === 'whatsapp' && (l.isActive ?? true)
+  )
+})
+
+// Raw phone number: prefer WhatsApp specific link from socialLinks if set, otherwise fallback to store contact phone
+const rawWhatsAppPhone = computed(() => {
+  const customUrl = whatsAppSocialLink.value?.url?.trim()
+  if (customUrl) {
+    return customUrl
+  }
+  return storeContact.value?.phone || DEFAULT_GENERAL_CONFIG.contact.phone
+})
+
+// Sanitized numeric-only phone number with international country code
+const sanitizedWhatsAppPhone = computed(() => {
+  return sanitizeWhatsAppNumber(rawWhatsAppPhone.value)
+})
+
+// Human-friendly display string
+const whatsAppPhoneDisplay = computed(() => {
+  const raw = rawWhatsAppPhone.value
+  if (raw.startsWith('http://') || raw.startsWith('https://')) {
+    return '+' + sanitizedWhatsAppPhone.value
+  }
+  return raw
+})
+
+// Platform-aware URL: native deep link on mobile, WhatsApp Web on desktop
+const whatsappUrl = computed(() => {
+  return getWhatsAppUrl(sanitizedWhatsAppPhone.value, isMobileDevice.value)
+})
+
+function checkMobileDevice() {
+  if (typeof navigator !== 'undefined') {
+    isMobileDevice.value = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '')
+  }
+}
+
+onMounted(() => {
+  checkMobileDevice()
+})
+
+function handleWhatsAppClick(event?: MouseEvent) {
+  if (isMobileDevice.value) {
+    if (typeof window !== 'undefined') {
+      window.location.href = `whatsapp://send?phone=${sanitizedWhatsAppPhone.value}`
+    }
+  } else {
+    desktopWhatsAppPrompt.value = true
+  }
+}
 
 // Formatted opening hours for active locale
 const formattedHours = computed(() => {
@@ -166,13 +228,13 @@ useSeoMeta({
       </p>
     </header>
 
-    <!-- 2. Interactive Contact Cards (Phone, Email, Address, Hours) -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    <!-- 2. Interactive Contact Cards (Phone, WhatsApp, Email, Address, Hours) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
       
       <!-- Phone Card -->
       <a
         :href="`tel:${storeContact.phone.replace(/\\s+/g, '')}`"
-        class="card bg-base-100 dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-xs hover:shadow-lg hover:border-brand-500/60 transition-all duration-200 group"
+        class="card bg-base-100 dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-xs hover:shadow-lg hover:border-brand-500/60 transition-all duration-200 group flex flex-col justify-between"
       >
         <div class="space-y-3">
           <div class="size-11 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
@@ -192,10 +254,46 @@ useSeoMeta({
         </div>
       </a>
 
+      <!-- WhatsApp Card -->
+      <a
+        :href="whatsappUrl"
+        :target="isMobileDevice ? undefined : '_blank'"
+        rel="noopener noreferrer"
+        class="card bg-base-100 dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-xs hover:shadow-lg hover:border-emerald-500/60 transition-all duration-200 group flex flex-col justify-between"
+        @click="handleWhatsAppClick"
+      >
+        <div class="space-y-3">
+          <div class="size-11 rounded-2xl bg-[#25D366]/10 text-[#25D366] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <Icon name="logos:whatsapp-icon" class="size-5" />
+          </div>
+          <div>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+              {{ t('contactPage.cards.whatsappTitle', 'WhatsApp Kundsupport') }}
+            </span>
+            <span class="text-base sm:text-lg font-black text-base-content font-mono block mt-0.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+              {{ whatsAppPhoneDisplay }}
+            </span>
+          </div>
+          <p class="text-xs text-base-content/65 leading-relaxed">
+            {{ t('contactPage.cards.whatsappDesc', 'Snabbchatt direkt med oss för frågor om sortiment eller lagda ordrar.') }}
+          </p>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 dark:border-zinc-800/80 mt-3 space-y-1">
+          <div class="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+            <span>{{ isMobileDevice ? t('contactPage.cards.whatsappOpenApp', 'Öppna WhatsApp-appen') : t('contactPage.cards.whatsappOpenWeb', 'Öppna WhatsApp Web') }}</span>
+            <Icon :name="isMobileDevice ? 'lucide:arrow-right' : 'lucide:external-link'" class="size-3 rtl:rotate-180" />
+          </div>
+          <div v-if="!isMobileDevice" class="text-[11px] text-base-content/50">
+            {{ t('contactPage.cards.whatsappFallbackNotice', 'Klicka för att chatta i webbläsaren') }} ↗
+          </div>
+        </div>
+      </a>
+
       <!-- Email Card -->
       <a
         :href="`mailto:${storeContact.email}`"
-        class="card bg-base-100 dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-xs hover:shadow-lg hover:border-brand-500/60 transition-all duration-200 group"
+        class="card bg-base-100 dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-xs hover:shadow-lg hover:border-brand-500/60 transition-all duration-200 group flex flex-col justify-between"
       >
         <div class="space-y-3">
           <div class="size-11 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
@@ -220,7 +318,7 @@ useSeoMeta({
         :href="mapsUrl"
         target="_blank"
         rel="noopener noreferrer"
-        class="card bg-base-100 dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-xs hover:shadow-lg hover:border-brand-500/60 transition-all duration-200 group"
+        class="card bg-base-100 dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-xs hover:shadow-lg hover:border-brand-500/60 transition-all duration-200 group flex flex-col justify-between"
       >
         <div class="space-y-3">
           <div class="size-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
@@ -243,7 +341,7 @@ useSeoMeta({
       <!-- Opening Hours Card -->
       <NuxtLink
         :to="localePath('/oppettider')"
-        class="card bg-base-100 dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-xs hover:shadow-lg hover:border-brand-500/60 transition-all duration-200 group"
+        class="card bg-base-100 dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-xs hover:shadow-lg hover:border-brand-500/60 transition-all duration-200 group flex flex-col justify-between"
       >
         <div class="space-y-3">
           <div class="size-11 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
@@ -265,6 +363,45 @@ useSeoMeta({
       </NuxtLink>
 
     </section>
+
+    <!-- Desktop WhatsApp Fallback Banner / CTA -->
+    <div
+      v-if="desktopWhatsAppPrompt"
+      class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200"
+    >
+      <div class="flex items-center gap-3">
+        <div class="size-9 rounded-xl bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+          <Icon name="logos:whatsapp-icon" class="size-5" />
+        </div>
+        <div>
+          <h4 class="font-bold text-sm text-emerald-900 dark:text-emerald-200">
+            {{ t('contactPage.cards.whatsappFallbackBannerTitle', 'Starta WhatsApp Web') }}
+          </h4>
+          <p class="text-xs text-emerald-800/80 dark:text-emerald-300/80">
+            {{ t('contactPage.cards.whatsappFallbackBannerDesc', 'Öppnades inte WhatsApp Web automatiskt i en ny flik? Klicka på knappen för att fortsätta chatten.') }}
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <a
+          :href="`https://web.whatsapp.com/send?phone=${sanitizedWhatsAppPhone}`"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-sm bg-emerald-600 hover:bg-emerald-700 !text-white font-bold border-none rounded-xl gap-1.5 shadow-xs"
+        >
+          <span>{{ t('contactPage.cards.whatsappFallbackBannerAction', 'Öppna WhatsApp Web') }}</span>
+          <Icon name="lucide:external-link" class="size-3.5" />
+        </a>
+        <button
+          type="button"
+          class="btn btn-sm btn-ghost btn-circle text-slate-500 hover:text-slate-800 dark:hover:text-white"
+          :aria-label="t('common.close', 'Stäng')"
+          @click="desktopWhatsAppPrompt = false"
+        >
+          <Icon name="lucide:x" class="size-4" />
+        </button>
+      </div>
+    </div>
 
     <!-- 3. Two-Column Layout: Form (Left) & Map / Social (Right) -->
     <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

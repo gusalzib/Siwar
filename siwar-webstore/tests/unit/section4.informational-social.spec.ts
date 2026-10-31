@@ -71,6 +71,50 @@ describe('Section 4. Informational Content Pages & Social Shelf', () => {
       expect(contactContent).toContain('<iframe')
       expect(contactContent).toContain('mapsEmbedUrl')
     })
+
+    it('contains a dedicated WhatsApp contact card with dynamic store settings integration', () => {
+      expect(contactContent).toContain("t('contactPage.cards.whatsappTitle'")
+      expect(contactContent).toContain('whatsappUrl')
+      expect(contactContent).toContain('logos:whatsapp-icon')
+      expect(contactContent).toContain('whatsAppPhoneDisplay')
+      expect(contactContent).toContain('desktopWhatsAppPrompt')
+      expect(contactContent).toContain("t('contactPage.cards.whatsappFallbackBannerTitle'")
+    })
+
+    it('sanitizes phone numbers and generates platform-aware WhatsApp links', async () => {
+      const { sanitizeWhatsAppNumber, getWhatsAppUrl } = await import('../../utils/social')
+      
+      // Sanitizing tests
+      expect(sanitizeWhatsAppNumber('+46 35 123 456')).toBe('4635123456')
+      expect(sanitizeWhatsAppNumber('070 123 45 67')).toBe('46701234567')
+      expect(sanitizeWhatsAppNumber('https://wa.me/46701234567')).toBe('46701234567')
+      expect(sanitizeWhatsAppNumber('https://web.whatsapp.com/send?phone=46701234567')).toBe('46701234567')
+      
+      // Mobile platform-aware URL: native deep link
+      const mobileUrl = getWhatsAppUrl('+46 35 123 456', true)
+      expect(mobileUrl).toBe('whatsapp://send?phone=4635123456')
+      
+      // Desktop platform-aware URL: WhatsApp Web
+      const desktopUrl = getWhatsAppUrl('+46 35 123 456', false)
+      expect(desktopUrl).toBe('https://web.whatsapp.com/send?phone=4635123456')
+    })
+
+    it('contains complete WhatsApp localization in sv.json, en.json, and ar.json', () => {
+      const sv = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../i18n/locales/sv.json'), 'utf-8'))
+      const en = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../i18n/locales/en.json'), 'utf-8'))
+      const ar = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../i18n/locales/ar.json'), 'utf-8'))
+
+      for (const loc of [sv, en, ar]) {
+        expect(loc.contactPage.cards.whatsappTitle).toBeDefined()
+        expect(loc.contactPage.cards.whatsappDesc).toBeDefined()
+        expect(loc.contactPage.cards.whatsappOpenApp).toBeDefined()
+        expect(loc.contactPage.cards.whatsappOpenWeb).toBeDefined()
+        expect(loc.contactPage.cards.whatsappFallbackNotice).toBeDefined()
+        expect(loc.contactPage.cards.whatsappFallbackBannerTitle).toBeDefined()
+        expect(loc.contactPage.cards.whatsappFallbackBannerDesc).toBeDefined()
+        expect(loc.contactPage.cards.whatsappFallbackBannerAction).toBeDefined()
+      }
+    })
   })
 
   describe('3. Contact Form Submission API (server/api/contact.post.ts)', () => {

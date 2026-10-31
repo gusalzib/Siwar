@@ -768,7 +768,7 @@
       "sec4_pickup_title": "Hämta i butik (In-Store Pickup)",
       "sec4_pickup_desc": "Kostnadsfritt. Beställningen packas och finns normalt redo för avhämtning i vår butik i Halmstad inom 2 timmar under ordinarie öppettider.",
       "sec4_delivery_title": "Paketleverans / Postombud",
-      "sec4_delivery_desc": "Leverans sker med PostNord (normalt 1–3 helgfria vardagar). Fraktkostnaden baseras på försändelsens sammanlagda bruttovikt och inkluderar 25% moms.",
+      "sec4_delivery_desc": "Leverans sker med DHL (normalt 1–5 helgfria vardagar). Fraktkostnaden baseras på försändelsens sammanlagda bruttovikt och inkluderar 25% moms.",
       "sec5_title": "5. Ångerrätt och Undantag för Livsmedel",
       "sec5_p1": "Enligt lagen (2005:59) om distansavtal har konsumenter som huvudregel 14 dagars ångerrätt.",
       "sec5_highlight": "Vänligen observera att livsmedel och färskvaror är lagstadgat undantagna från ångerrätten.",
@@ -833,7 +833,7 @@
     "fulfillmentMethod": "Leveranssätt",
     "parcelDelivery": "Postombud / Paket",
     "delivery": "Postombud / Paket",
-    "parcelDeliveryDesc": "1–3 vardagar via PostNord",
+    "parcelDeliveryDesc": "1–5 vardagar via DHL",
     "inStorePickup": "Hämta i butik",
     "pickup": "Hämta i butik",
     "inStorePickupDesc": "Klar inom 2 timmar (0 kr)",
@@ -893,10 +893,10 @@
       "pendingPacking": "Mottagen",
       "pendingPackingDesc": "Vi har tagit emot din order och förbereder packning.",
       "packed": "Färdigpackad",
-      "packedDescDelivery": "Ditt paket är färdigpackat och inväntar upphämtning av PostNord.",
+      "packedDescDelivery": "Ditt paket är färdigpackat och inväntar upphämtning av DHL.",
       "packedDescPickup": "Ditt paket är färdigpackat och redo att hämtas i vår butik!",
       "dispatched": "Skickad / Hämtad",
-      "dispatchedDescDelivery": "Paketet har lämnats över till PostNord och är på väg till dig.",
+      "dispatchedDescDelivery": "Paketet har lämnats över till DHL och är på väg till dig.",
       "dispatchedDescPickup": "Ordern har hämtats i butik.",
       "cancelled": "Avbruten",
       "cancelledDesc": "Denna order har avbrutits."
@@ -905,8 +905,8 @@
       "title": "Försändelseinformation",
       "carrier": "Transportör",
       "kolliId": "Kolli-ID / Försändelse-ID",
-      "trackButton": "Spåra försändelse hos PostNord",
-      "waitingNotice": "Spårningslänk blir aktiv så snart paketet har skannats av PostNord."
+      "trackButton": "Spåra försändelse hos DHL",
+      "waitingNotice": "Spårningslänk blir aktiv så snart paketet har skannats av DHL."
     },
     "pickup": {
       "title": "Instruktioner för upphämtning i butik",
@@ -1093,7 +1093,15 @@
       "hoursTitle": "Butikens Öppettider",
       "hoursDesc": "Våra ordinarie öppettider måndag till söndag.",
       "viewHours": "Se alla tider",
-      "openInMaps": "Öppna i Google Maps"
+      "openInMaps": "Öppna i Google Maps",
+      "whatsappTitle": "WhatsApp Kundsupport",
+      "whatsappDesc": "Snabbchatt direkt med oss för frågor om sortiment eller lagda ordrar.",
+      "whatsappOpenApp": "Öppna WhatsApp-appen",
+      "whatsappOpenWeb": "Öppna WhatsApp Web",
+      "whatsappFallbackNotice": "Klicka för att chatta i webbläsaren",
+      "whatsappFallbackBannerTitle": "Starta WhatsApp Web",
+      "whatsappFallbackBannerDesc": "Öppnades inte WhatsApp Web automatiskt i en ny flik? Klicka på knappen för att fortsätta chatten.",
+      "whatsappFallbackBannerAction": "Öppna WhatsApp Web"
     },
     "form": {
       "badge": "Skicka meddelande",

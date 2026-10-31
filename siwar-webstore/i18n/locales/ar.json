@@ -766,7 +766,7 @@
       "sec4_pickup_title": "الاستلام من المتجر (Hämta i butik)",
       "sec4_pickup_desc": "مجاناً وبدون أي رسوم. يتم تجهيز الطلب ليكون جاهزاً للاستلام في متجرنا بمدينة هالمستاد خلال ساعتي عمل.",
       "sec4_delivery_title": "توصيل الطرود",
-      "sec4_delivery_desc": "يتم الشحن عبر PostNord (خلال 1–3 أيام عمل عادة). تُحسب رسوم الشحن وفقاً للوزن الإجمالي للطرد وتشمل 25% ضريبة.",
+      "sec4_delivery_desc": "يتم الشحن عبر DHL (خلال 1–5 أيام عمل عادة). تُحسب رسوم الشحن وفقاً للوزن الإجمالي للطرد وتشمل 25% ضريبة.",
       "sec5_title": "5. حق العدول عن الشراء واستثناء الأغذية",
       "sec5_p1": "بموجب قانون العقود عن بُعد السويدي (2005:59)، يحق للمستهلك عموماً العدول عن الشراء خلال 14 يوماً.",
       "sec5_highlight": "يرجى ملاحظة أن الأغذية والمواد التموينية الطازجة مستثناة قانوناً من حق العدول عن الشراء.",
@@ -831,7 +831,7 @@
     "fulfillmentMethod": "طريقة الاستلام",
     "parcelDelivery": "توصيل طرود",
     "delivery": "توصيل طرود",
-    "parcelDeliveryDesc": "خلال 1–3 أيام عمل عبر PostNord",
+    "parcelDeliveryDesc": "خلال 1–5 أيام عمل عبر DHL",
     "inStorePickup": "استلام من المتجر",
     "pickup": "استلام من المتجر",
     "inStorePickupDesc": "جاهز خلال ساعتين (مجاناً)",
@@ -891,10 +891,10 @@
       "pendingPacking": "تم الاستلام",
       "pendingPackingDesc": "استلمنا طلبك وجارٍ تحضيره للتجهيز والتغليف.",
       "packed": "تم التغليف",
-      "packedDescDelivery": "تم تغليف طردك وهو بانتظار استلام مندوب شركة النقل (PostNord).",
+      "packedDescDelivery": "تم تغليف طردك وهو بانتظار استلام مندوب شركة النقل (DHL).",
       "packedDescPickup": "طلبك جاهز تماماً للاستلام الآن من متجرنا!",
       "dispatched": "تم الشحن / الاستلام",
-      "dispatchedDescDelivery": "تم تسليم الشحنة لشركة النقل (PostNord) وهي في طريقها إليك.",
+      "dispatchedDescDelivery": "تم تسليم الشحنة لشركة النقل (DHL) وهي في طريقها إليك.",
       "dispatchedDescPickup": "تم استلام الطلب من المتجر بنجاح.",
       "cancelled": "ملغي",
       "cancelledDesc": "تم إلغاء هذا الطلب."
@@ -903,8 +903,8 @@
       "title": "معلومات الشحنة والتتبع",
       "carrier": "شركة الشحن",
       "kolliId": "رقم التتبع (Kolli-ID)",
-      "trackButton": "تتبع الشحنة عبر PostNord",
-      "waitingNotice": "سيتم تفعيل رابط التتبع فور مسح الشحنة لدى PostNord."
+      "trackButton": "تتبع الشحنة عبر DHL",
+      "waitingNotice": "سيتم تفعيل رابط التتبع فور مسح الشحنة لدى DHL."
     },
     "pickup": {
       "title": "تعليمات الاستلام من المتجر",
@@ -1091,7 +1091,15 @@
       "hoursTitle": "أوقات عمل المتجر",
       "hoursDesc": "أوقات عملنا المعتادة من الإثنين إلى الأحد.",
       "viewHours": "عرض الجدول",
-      "openInMaps": "فتح في خرائط Google"
+      "openInMaps": "فتح في خرائط Google",
+      "whatsappTitle": "دعم واتساب",
+      "whatsappDesc": "دردشة سريعة ومباشرة معنا للاستفسار عن المنتجات أو الطلبات.",
+      "whatsappOpenApp": "فتح تطبيق واتساب",
+      "whatsappOpenWeb": "فتح واتساب ويب",
+      "whatsappFallbackNotice": "انقر للمحادثة عبر المتصفح",
+      "whatsappFallbackBannerTitle": "بدء محادثة واتساب ويب",
+      "whatsappFallbackBannerDesc": "إذا لم يفتح واتساب ويب تلقائياً في تبويب جديد، يرجى النقر على الزر للمتابعة.",
+      "whatsappFallbackBannerAction": "فتح واتساب ويب"
     },
     "form": {
       "badge": "أرسل رسالة",

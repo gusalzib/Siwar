@@ -99,3 +99,35 @@ export function isValidSocialUrl(url: string): boolean {
     return false
   }
 }
+
+/**
+ * Sanitizes a phone number or WhatsApp URL to international E.164 digits without leading '+' or special characters.
+ * - Strips wa.me/ or send?phone= prefixes
+ * - Removes non-digit characters
+ * - Converts Swedish domestic 07... / 035... to 467... / 4635...
+ */
+export function sanitizeWhatsAppNumber(rawPhone: string): string {
+  if (!rawPhone || typeof rawPhone !== 'string') return ''
+  let cleaned = rawPhone.trim()
+  cleaned = cleaned.replace(/^https?:\/\/[^/]*\/(send\?phone=)?/i, '')
+  cleaned = cleaned.replace(/^wa\.me\//i, '')
+  let digits = cleaned.replace(/\D/g, '')
+  if (digits.startsWith('0') && digits.length >= 9) {
+    digits = '46' + digits.slice(1)
+  }
+  return digits
+}
+
+/**
+ * Builds platform-aware WhatsApp URL.
+ * - Mobile: triggers native deep link (whatsapp://send?phone=...)
+ * - Desktop: opens WhatsApp Web (https://web.whatsapp.com/send?phone=...)
+ */
+export function getWhatsAppUrl(phone: string, isMobile: boolean): string {
+  const sanitized = sanitizeWhatsAppNumber(phone)
+  if (!sanitized) return ''
+  if (isMobile) {
+    return `whatsapp://send?phone=${sanitized}`
+  }
+  return `https://web.whatsapp.com/send?phone=${sanitized}`
+}
