@@ -31,6 +31,11 @@ export default defineEventHandler(async (event) => {
   const search = query.search ? String(query.search).trim() : ''
   const isArchived = query.isArchived !== undefined ? String(query.isArchived).toLowerCase() : 'all'
   const hasDiscount = query.hasDiscount ? String(query.hasDiscount).toLowerCase() : ''
+  const page = Math.max(1, Number(query.page) || 1)
+  const limitParam = query.limit !== undefined ? Number(query.limit) : 10
+  const isAll = query.limit === 'all' || limitParam <= 0
+  const limit = isAll ? 0 : Math.min(100, Math.max(1, limitParam || 10))
+  const skip = isAll ? 0 : (page - 1) * limit
 
   // 2. Initialize a dynamic MongoDB filter object.
   // FilterQuery<IProduct> tells TypeScript that every key added to this object
@@ -99,18 +104,44 @@ export default defineEventHandler(async (event) => {
     filter.discount = { $gt: 0 }
   }
 
-  // 3. Execute MongoDB Query
-  // - .find(filter): matches all products meeting our filter criteria
-  // - .populate('category', 'name'): replaces the category ObjectId with the actual Category document (name only)
-  // - .sort({ createdAt: -1 }): orders newest items first
-  // - .lean(): returns plain lightweight JavaScript objects instead of heavy Mongoose documents
-  const products = await Product.find(filter)
+  // 3. Count documents for pagination & hybrid metrics
+  let totalCount = 0
+  let totalActive = 0
+  let totalArchived = 0
+  let totalDiscounted = 0
+
+  if (typeof (Product as any).countDocuments === 'function') {
+    try {
+      totalCount = await Product.countDocuments(filter)
+      totalActive = await Product.countDocuments({ isActive: true })
+      totalArchived = await Product.countDocuments({ isActive: false })
+      totalDiscounted = await Product.countDocuments({ discount: { $gt: 0 } })
+    } catch {
+      // Mock / fallback
+    }
+  }
+
+  // 4. Execute MongoDB Query with skip/limit
+  let queryBuilder: any = Product.find(filter)
     .populate('category', 'name')
     .sort({ createdAt: -1 })
-    .lean()
 
-  // 4. Transform and enrich each product for the frontend data table
-  return products.map((p) => {
+  if (!isAll && limit > 0) {
+    if (typeof queryBuilder.skip === 'function') {
+      queryBuilder = queryBuilder.skip(skip)
+    }
+    if (typeof queryBuilder.limit === 'function') {
+      queryBuilder = queryBuilder.limit(limit)
+    }
+  }
+
+  const rawProducts = await queryBuilder.lean()
+  if (totalCount === 0 && rawProducts) {
+    totalCount = rawProducts.length
+  }
+
+  // 5. Transform and enrich each product for the frontend data cards
+  const products = (rawProducts || []).map((p: any) => {
     // This callback runs once for EACH individual product 'p' in the array
     // Check if any language fields are missing or whitespace-only
     const hasMissingTranslations =
@@ -176,4 +207,23 @@ export default defineEventHandler(async (event) => {
       hasMissingTranslations,
     }
   })
+
+  const effectiveLimit = limit > 0 ? limit : (totalCount || 1)
+  const totalPages = Math.ceil(totalCount / effectiveLimit) || 1
+
+  return {
+    products,
+    pagination: {
+      total: totalCount,
+      page,
+      limit: effectiveLimit,
+      totalPages,
+    },
+    metrics: {
+      totalCount,
+      totalActive,
+      totalArchived,
+      totalDiscounted,
+    },
+  }
 })
