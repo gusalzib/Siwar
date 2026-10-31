@@ -8,16 +8,16 @@ describe('Section 3. Navigation & Payment Refinements', () => {
     const layoutPath = path.resolve(__dirname, '../../layouts/default.vue')
     const layoutContent = fs.readFileSync(layoutPath, 'utf-8')
 
-    it('has mobile hamburger menu visible up to xl breakpoint (xl:hidden)', () => {
-      // The hamburger dropdown container must use xl:hidden instead of lg:hidden
-      expect(layoutContent).toContain('class="dropdown xl:hidden"')
+    it('dynamically controls hamburger menu threshold (xl:hidden for shoppers, min-[1600px]:hidden for admin view)', () => {
+      // The hamburger dropdown container uses xl:hidden for standard storefront and 1600px for admin view
+      expect(layoutContent).toContain(":class=\"isAdmin ? 'min-[1600px]:hidden' : 'xl:hidden'\"")
       expect(layoutContent).not.toContain('class="dropdown lg:hidden"')
     })
 
-    it('keeps desktop navigation links hidden until xl breakpoint (hidden xl:flex)', () => {
-      // The center desktop navigation bar must be hidden until xl (>= 1280px)
-      expect(layoutContent).toContain('class="hidden xl:flex items-center justify-center')
-      expect(layoutContent).not.toContain('class="hidden lg:flex items-center justify-center')
+    it('dynamically controls desktop navigation links visibility (hidden xl:flex for shoppers, hidden min-[1600px]:flex for admin view)', () => {
+      // The center desktop navigation bar is hidden until xl (>= 1280px) for shoppers and >= 1600px for admin view
+      expect(layoutContent).toContain(":class=\"isAdmin ? 'hidden min-[1600px]:flex' : 'hidden xl:flex'\"")
+      expect(layoutContent).not.toContain('class="hidden lg:flex')
     })
   })
 
