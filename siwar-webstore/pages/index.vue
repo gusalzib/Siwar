@@ -315,36 +315,36 @@ function toggleQuickAllergen(allergenCodeOrId: string) {
 
     <!-- 2. Search & Filter Bar (Seamless Transition Trigger) -->
     <section class="max-w-4xl mx-auto px-4">
-      <div class="card bg-base-100 shadow-md border border-base-200">
+      <div class="card bg-base-100 dark:bg-zinc-900 shadow-md border-2 border-base-300 dark:border-zinc-700 rounded-2xl">
         <div class="card-body p-4 sm:p-6 space-y-4">
-          <form @submit.prevent="submitSearch" class="flex flex-col sm:flex-row gap-2">
+          <form @submit.prevent="submitSearch" class="flex flex-col sm:flex-row gap-3">
             <!-- Search Input with DaisyUI Join -->
-            <div class="join flex-1 w-full">
-              <span class="join-item btn btn-ghost no-animation bg-base-200 border border-base-300">
-                <Icon name="lucide:search" class="size-5 text-base-content/60" />
+            <div class="join flex-1 w-full shadow-2xs">
+              <span class="join-item btn btn-sm h-12 no-animation !bg-emerald-600 !border-emerald-600 hover:!bg-emerald-700 dark:text-white text-black px-3.5">
+                <Icon name="lucide:search" class="size-5" />
               </span>
               <input
                 v-model="searchInput"
                 type="search"
                 :placeholder="t('home.search.placeholder')"
                 :aria-label="t('home.search.label')"
-                class="input input-bordered join-item w-full focus:outline-none"
+                class="input input-bordered border-2 border-base-300 dark:border-zinc-700 focus:border-emerald-500 join-item w-full h-12 focus:outline-none bg-base-100 dark:bg-zinc-800 text-base-content text-sm font-medium"
               />
             </div>
 
-            <!-- Submit Button -->
+            <!-- Submit Button (High-contrast dark text on light theme, never invisible white) -->
             <button
               type="submit"
-              class="btn btn-primary text-white font-bold gap-2 px-6"
+              class="btn btn-primary text-slate-950 dark:text-slate-950 font-black gap-2 px-7 h-12 rounded-xl shadow-sm hover:brightness-105 cursor-pointer transition-all text-sm"
             >
-              <Icon name="lucide:arrow-right" class="size-4 rtl:rotate-180" />
+              <Icon name="lucide:arrow-right" class="size-4.5 rtl:rotate-180 text-slate-950 stroke-[2.5]" />
               <span>{{ t('home.search.submit') }}</span>
             </button>
           </form>
 
-          <!-- Quick Allergen Exclusion Pills -->
+          <!-- Quick Allergen Exclusion Pills (High-contrast active state, never invisible white text on light mode) -->
           <div v-if="facetData?.allergens?.length" class="flex flex-wrap items-center gap-2 pt-2 text-xs">
-            <span class="text-base-content/70 font-semibold flex items-center gap-1">
+            <span class="text-base-content/70 font-semibold flex items-center gap-1.5 select-none">
               <Icon name="lucide:shield-alert" class="size-4 text-warning" />
               {{ t('home.search.quickAllergenPrefix') }}
             </span>
@@ -353,16 +353,21 @@ function toggleQuickAllergen(allergenCodeOrId: string) {
               :key="allergen.id"
               type="button"
               :class="[
-                'badge badge-lg transition cursor-pointer gap-1 font-medium',
+                'px-3 py-1.5 rounded-xl font-bold text-xs transition-all duration-200 cursor-pointer select-none inline-flex items-center gap-1.5 border-2 shadow-2xs',
                 selectedAllergens.includes(allergen.code || allergen.id)
-                  ? 'badge-error text-white'
-                  : 'badge-outline hover:badge-error'
+                  ? 'bg-rose-100 border-rose-500 text-rose-900 dark:bg-rose-950/80 dark:border-rose-500 dark:text-rose-200 font-bold'
+                  : 'bg-base-200/60 dark:bg-zinc-800/60 border-base-300 dark:border-zinc-700 text-base-content hover:border-rose-400 dark:hover:border-rose-500 hover:text-rose-700 dark:hover:text-rose-300'
               ]"
               @click="toggleQuickAllergen(allergen.code || allergen.id)"
             >
               <Icon
                 :name="selectedAllergens.includes(allergen.code || allergen.id) ? 'lucide:check' : 'lucide:plus'"
-                class="size-3"
+                :class="[
+                  'size-3.5',
+                  selectedAllergens.includes(allergen.code || allergen.id)
+                    ? 'text-rose-900 dark:text-rose-200 stroke-[2.5]'
+                    : 'text-base-content/60'
+                ]"
               />
               <span>{{ getLocalized(allergen.name) }}</span>
             </button>
@@ -376,13 +381,28 @@ function toggleQuickAllergen(allergenCodeOrId: string) {
 
     <!-- 4. Category Cards Showcase Grid -->
     <section class="max-w-7xl mx-auto px-4 space-y-6">
-      <div class="text-center sm:text-start">
-        <h2 class="text-2xl sm:text-3xl font-black text-base-content tracking-tight">
-          {{ t('home.categories.heading', 'Utforska våra kategorier') }}
-        </h2>
-        <p class="text-xs sm:text-sm text-base-content/60 mt-1">
-          {{ t('home.categories.subheading', 'Hitta dina orientaliska favoriter bland våra noga utvalda råvaror och delikatesser') }}
-        </p>
+      <!-- Category Section Header Card with Solid Background, Rounded Corners & Clear Borders -->
+      <div class="card bg-base-100 dark:bg-zinc-900 border-2 border-base-300 dark:border-zinc-700 shadow-md rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50 text-xs font-black uppercase tracking-wider mb-2">
+            <Icon name="lucide:layout-grid" class="size-4 text-emerald-600 dark:text-emerald-400" />
+            <span>{{ t('nav.catalog', 'Sortiment') }}</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-black text-base-content tracking-tight">
+            {{ t('home.categories.heading', 'Utforska våra kategorier') }}
+          </h2>
+          <p class="text-xs sm:text-sm text-base-content/70 font-medium mt-1">
+            {{ t('home.categories.subheading', 'Hitta dina orientaliska favoriter bland våra noga utvalda råvaror och delikatesser') }}
+          </p>
+        </div>
+
+        <NuxtLink
+          :to="localePath('/catalog')"
+          class="btn btn-sm border-2 border-base-300 dark:border-zinc-700 text-base-content hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-300 rounded-xl gap-1.5 font-bold text-xs sm:text-sm transition-all shadow-xs self-start sm:self-auto cursor-pointer"
+        >
+          <span>{{ t('home.categories.viewAll', 'Se alla kategorier') }}</span>
+          <Icon name="lucide:arrow-right" class="size-4 rtl:rotate-180" />
+        </NuxtLink>
       </div>
 
       <!-- Category Grid (Responsive Dynamic Product Photography) -->
@@ -391,7 +411,7 @@ function toggleQuickAllergen(allergenCodeOrId: string) {
           v-for="cat in facetData?.categories"
           :key="cat.id"
           :to="localePath({ path: '/catalog', query: { category: cat.slug?.[locale] || cat.id } })"
-          class="card bg-base-100 border border-base-200/90 hover:border-primary/50 shadow-xs hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 rounded-2xl overflow-hidden group flex flex-col justify-between"
+          class="card bg-base-100 border-2 border-base-300 dark:border-zinc-700 hover:border-emerald-500/70 shadow-xs hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 rounded-2xl overflow-hidden group flex flex-col justify-between"
         >
           <!-- Category Image Stage -->
           <div class="relative aspect-square w-full bg-base-200/40 p-4 sm:p-5 flex items-center justify-center overflow-hidden border-b border-base-200/60">

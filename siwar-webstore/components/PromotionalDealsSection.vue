@@ -100,41 +100,41 @@ function handleAddToCart(product: any) {
 <template>
   <!-- AC-3: Gracefully collapse with v-if if no discounted products exist -->
   <section v-if="deals && deals.length > 0" class="max-w-7xl mx-auto px-4 space-y-6">
-    <!-- Section Header -->
-    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-base-200 pb-4">
+    <!-- Section Header Card with Solid Background, Rounded Corners & Clear Borders -->
+    <div class="card bg-base-100 dark:bg-zinc-900 border-2 border-base-300 dark:border-zinc-700 shadow-md rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-error/10 text-error text-xs font-black uppercase tracking-wider mb-2">
-          <Icon name="lucide:flame" class="size-4 animate-pulse" />
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 text-xs font-black uppercase tracking-wider mb-2">
+          <Icon name="lucide:flame" class="size-4 text-rose-600 dark:text-rose-400 animate-pulse" />
           <span>{{ t('home.deals.badge', 'Specialerbjudande') }}</span>
         </div>
         <h2 class="text-2xl sm:text-3xl font-black text-base-content tracking-tight">
           {{ t('home.deals.heading', 'Aktuella Kampanjer & Erbjudanden') }}
         </h2>
-        <p class="text-xs sm:text-sm text-base-content/60 mt-1">
+        <p class="text-xs sm:text-sm text-base-content/70 font-medium mt-1">
           {{ t('home.deals.subheading', 'Upptäck fantastiska prissänkningar på utvalda orientaliska delikatesser.') }}
         </p>
       </div>
 
       <div class="flex items-center gap-3 self-start sm:self-auto shrink-0 flex-wrap">
         <!-- Pagination Controls in Header (if totalPages > 1) -->
-        <div v-if="totalPages > 1" class="flex items-center gap-1.5 bg-base-200/80 p-1 rounded-xl border border-base-300/60 shadow-2xs">
+        <div v-if="totalPages > 1" class="flex items-center gap-1.5 bg-base-200 dark:bg-zinc-800 p-1 rounded-xl border-2 border-base-300 dark:border-zinc-700 shadow-2xs">
           <button
             type="button"
             :disabled="currentPage <= 1"
             :aria-label="t('catalog.prev', 'Föregående')"
-            class="btn btn-ghost btn-xs btn-square rounded-lg disabled:opacity-30 hover:bg-base-100"
+            class="btn btn-ghost btn-xs btn-square rounded-lg disabled:opacity-30 hover:bg-base-100 dark:hover:bg-zinc-700 cursor-pointer"
             @click="prevPage"
           >
             <Icon name="lucide:chevron-left" class="size-4 rtl:rotate-180" />
           </button>
-          <span class="text-xs font-bold px-2 text-base-content/80 select-none">
+          <span class="text-xs font-bold px-2 text-base-content select-none">
             {{ currentPage }} / {{ totalPages }}
           </span>
           <button
             type="button"
             :disabled="currentPage >= totalPages"
             :aria-label="t('catalog.next', 'Nästa')"
-            class="btn btn-ghost btn-xs btn-square rounded-lg disabled:opacity-30 hover:bg-base-100"
+            class="btn btn-ghost btn-xs btn-square rounded-lg disabled:opacity-30 hover:bg-base-100 dark:hover:bg-zinc-700 cursor-pointer"
             @click="nextPage"
           >
             <Icon name="lucide:chevron-right" class="size-4 rtl:rotate-180" />
@@ -144,7 +144,7 @@ function handleAddToCart(product: any) {
         <!-- View All Deals Button with discount>0 query filter -->
         <NuxtLink
           :to="localePath({ path: '/catalog', query: { hasDiscount: 'true' } })"
-          class="btn btn-sm btn-outline border-error/40 text-error hover:bg-error hover:text-white hover:border-error rounded-xl gap-1.5 font-bold text-xs sm:text-sm transition-all shadow-xs"
+          class="btn btn-sm border-2 border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white rounded-xl gap-1.5 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
         >
           <span>{{ t('home.deals.viewAll', 'Se alla erbjudanden') }}</span>
           <Icon name="lucide:arrow-right" class="size-4 rtl:rotate-180" />
@@ -157,7 +157,7 @@ function handleAddToCart(product: any) {
       <article
         v-for="product in paginatedDeals"
         :key="product.id"
-        class="card bg-base-100 border border-base-200 hover:border-error/40 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden group rounded-2xl min-w-0"
+        class="card bg-base-100 border-2 border-base-300 dark:border-zinc-700 hover:border-emerald-600/70 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden group rounded-2xl min-w-0"
       >
         <!-- Thumbnail Image & Badges -->
         <figure class="relative h-48 w-full bg-base-200 overflow-hidden">
