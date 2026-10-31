@@ -9,7 +9,7 @@ import {
 // ---------------------------------------------------------------------------
 // 1. Hoisted Nitro & H3 Globals + Mocks
 // ---------------------------------------------------------------------------
-const { mockState, mockProductModel, mockStoreSettingsModel } = vi.hoisted(() => {
+const { mockState, mockProductModel, mockStoreSettingsModel, mockAllergenModel, mockCategoryModel } = vi.hoisted(() => {
   const mockState = {
     body: {} as any,
     query: {} as Record<string, any>,
@@ -25,11 +25,17 @@ const { mockState, mockProductModel, mockStoreSettingsModel } = vi.hoisted(() =>
 
   // Mock Product Model
   const mockProductModel: any = {
+    countDocuments: vi.fn(async (filter: any) => {
+      mockState.capturedFilter = filter
+      return 1
+    }),
     find: vi.fn((filter: any) => {
       mockState.capturedFilter = filter
       return {
         populate: vi.fn().mockReturnThis(),
         sort: vi.fn().mockReturnThis(),
+        skip: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
         lean: vi.fn().mockResolvedValue([
           {
             _id: '65fa2c9e83b1d2001e4a9f10',
@@ -37,6 +43,7 @@ const { mockState, mockProductModel, mockStoreSettingsModel } = vi.hoisted(() =>
             description: { ar: 'وصف', sv: 'Beskrivning', en: 'Description' },
             brand: 'Ahmad Tea',
             category: { _id: 'cat1', name: { ar: 'شاي', sv: 'Te', en: 'Tea' } },
+            allergens: [],
             price: { SEK: 4900, EUR: 450, USD: 500 },
             discount: 10,
             stockQuantity: 20,
@@ -46,6 +53,31 @@ const { mockState, mockProductModel, mockStoreSettingsModel } = vi.hoisted(() =>
         ]),
       }
     }),
+  }
+
+  // Mock Allergen Model
+  const mockAllergenModel: any = {
+    find: vi.fn((query: any) => ({
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockImplementation(async () => {
+        const milkId = '65fa2c9e83b1d2001e4a9f20'
+        const glutenId = '65fa2c9e83b1d2001e4a9f21'
+        const results: any[] = []
+        const orConditions = query?.$or || []
+        const codeIn = orConditions.find((c: any) => c.code)?.code?.$in || []
+        if (codeIn.includes('milk')) results.push({ _id: milkId, code: 'milk' })
+        if (codeIn.includes('gluten')) results.push({ _id: glutenId, code: 'gluten' })
+        return results
+      }),
+    })),
+  }
+
+  // Mock Category Model
+  const mockCategoryModel: any = {
+    findOne: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue({ _id: '65fa2c9e83b1d2001e4a9f30' }),
+    })),
   }
 
   // Mock StoreSettings Model constructor & findOne
@@ -64,11 +96,19 @@ const { mockState, mockProductModel, mockStoreSettingsModel } = vi.hoisted(() =>
 
   mockStoreSettingsModel.findOne = vi.fn(async () => createSettingsInstance())
 
-  return { mockState, mockProductModel, mockStoreSettingsModel }
+  return { mockState, mockProductModel, mockStoreSettingsModel, mockAllergenModel, mockCategoryModel }
 })
 
 vi.mock('~/server/models/Product', () => ({
   Product: mockProductModel,
+}))
+
+vi.mock('~/server/models/Allergens', () => ({
+  Allergen: mockAllergenModel,
+}))
+
+vi.mock('~/server/models/Category', () => ({
+  Category: mockCategoryModel,
 }))
 
 vi.mock('~/server/models/StoreSettings', async (importOriginal) => {
@@ -86,6 +126,7 @@ vi.mock('~/server/models/StoreSettings', async (importOriginal) => {
 // Import route handlers
 import getSettingsHandler from '~/server/api/settings.get'
 import getAdminProductsHandler from '~/server/api/admin/products/index.get'
+import getCatalogHandler from '~/server/api/catalog/index.get'
 import putAdminGeneralSettingsHandler from '~/server/api/admin/settings/general.put'
 import putAdminSettingsHandler from '~/server/api/admin/settings/index.put'
 
@@ -221,6 +262,54 @@ describe('Section 1. Backend & Configuration', () => {
       await getAdminProductsHandler(dummyEvent)
       expect(mockState.capturedFilter.isActive).toBe(true)
       expect(mockState.capturedFilter.discount).toEqual({ $gt: 0 })
+    })
+  })
+
+  describe('5. Catalog Allergen Exclusion Filtering (GET /api/catalog - AC-10)', () => {
+    it('resolves semantic allergen code (e.g. milk) and excludes matching products via $nin', async () => {
+      mockState.query = { excludeAllergens: 'milk' }
+      await getCatalogHandler(dummyEvent)
+      expect(mockState.capturedFilter.allergens).toBeDefined()
+      expect(mockState.capturedFilter.allergens.$nin).toBeDefined()
+      const excludedStrs = mockState.capturedFilter.allergens.$nin.map(String)
+      expect(excludedStrs).toContain('65fa2c9e83b1d2001e4a9f20')
+    })
+
+    it('resolves comma-separated allergen codes (e.g. milk,gluten) into multiple ObjectIds in $nin', async () => {
+      mockState.query = { excludeAllergens: 'milk,gluten' }
+      await getCatalogHandler(dummyEvent)
+      expect(mockState.capturedFilter.allergens).toBeDefined()
+      expect(mockState.capturedFilter.allergens.$nin).toBeDefined()
+      const excludedStrs = mockState.capturedFilter.allergens.$nin.map(String)
+      expect(excludedStrs).toContain('65fa2c9e83b1d2001e4a9f20')
+      expect(excludedStrs).toContain('65fa2c9e83b1d2001e4a9f21')
+    })
+
+    it('supports array query parameter (e.g. ?excludeAllergens=milk&excludeAllergens=gluten)', async () => {
+      mockState.query = { excludeAllergens: ['milk', 'gluten'] }
+      await getCatalogHandler(dummyEvent)
+      const excludedStrs = mockState.capturedFilter.allergens.$nin.map(String)
+      expect(excludedStrs).toContain('65fa2c9e83b1d2001e4a9f20')
+      expect(excludedStrs).toContain('65fa2c9e83b1d2001e4a9f21')
+    })
+
+    it('passes direct 24-character ObjectIds directly to $nin without error', async () => {
+      const customId = '65fa2c9e83b1d2001e4a9f99'
+      mockState.query = { excludeAllergens: customId }
+      await getCatalogHandler(dummyEvent)
+      expect(mockState.capturedFilter.allergens).toBeDefined()
+      const excludedStrs = mockState.capturedFilter.allergens.$nin.map(String)
+      expect(excludedStrs).toContain(customId)
+    })
+
+    it('does not apply allergens filter when excludeAllergens is omitted or empty', async () => {
+      mockState.query = {}
+      await getCatalogHandler(dummyEvent)
+      expect(mockState.capturedFilter.allergens).toBeUndefined()
+
+      mockState.query = { excludeAllergens: '' }
+      await getCatalogHandler(dummyEvent)
+      expect(mockState.capturedFilter.allergens).toBeUndefined()
     })
   })
 })
