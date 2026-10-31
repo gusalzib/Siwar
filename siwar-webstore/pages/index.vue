@@ -57,6 +57,12 @@ const { data: banners } = await useAsyncData<StorefrontBanner[]>(
   () => $fetch<StorefrontBanner[]>('/api/banners' as string)
 )
 
+// 3.5 Fetch store settings for configurable hero carousel interval
+const { data: storeSettings } = await useAsyncData<any>(
+  'store-settings',
+  () => $fetch<any>('/api/settings' as string)
+)
+
 // 4. Hero Carousel state & auto-play logic
 const currentSlide = ref(0)
 let autoplayTimer: ReturnType<typeof setInterval> | null = null
@@ -64,10 +70,11 @@ let autoplayTimer: ReturnType<typeof setInterval> | null = null
 function startAutoplay() {
   if (autoplayTimer) clearInterval(autoplayTimer)
   if (!banners.value || banners.value.length <= 1) return
+  const intervalMs = storeSettings.value?.carouselIntervalMs || 5000
   autoplayTimer = setInterval(() => {
     if (!banners.value || banners.value.length <= 1) return
     currentSlide.value = (currentSlide.value + 1) % banners.value.length
-  }, 5000)
+  }, intervalMs)
 }
 
 function pauseAutoplay() {
