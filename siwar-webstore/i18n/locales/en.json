@@ -134,7 +134,39 @@
           "all": "All Products",
           "missing": "Missing Translations Only"
         },
+        "status": {
+          "label": "Status",
+          "all": "All Products",
+          "active": "Active Only",
+          "archived": "Archived Only"
+        },
+        "deals": {
+          "label": "Promotions & Deals",
+          "discounted": "Discounted / On Sale Only"
+        },
         "reset": "Reset Filters"
+      },
+      "cards": {
+        "barcode": "Barcode",
+        "noBarcode": "No barcode",
+        "stockPhysical": "Physical stock",
+        "stockBuffer": "Buffer",
+        "stockOnline": "Online available",
+        "primaryImage": "Primary image",
+        "noImages": "No image",
+        "prices": "Prices",
+        "inventory": "Inventory summary",
+        "languages": "Languages",
+        "brand": "Brand",
+        "category": "Category",
+        "showingCount": "Showing {count} products"
+      },
+      "deleteModal": {
+        "title": "Delete Product Permanently",
+        "message": "Are you sure you want to permanently delete \"{name}\"? This action removes the product and all image references from the store and cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Yes, Delete Product",
+        "deleting": "Deleting..."
       },
       "table": {
         "image": "Image",

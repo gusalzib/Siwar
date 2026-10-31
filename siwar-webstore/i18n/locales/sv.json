@@ -136,7 +136,39 @@
           "all": "Alla produkter",
           "missing": "Endast saknade översättningar"
         },
+        "status": {
+          "label": "Status",
+          "all": "Alla produkter",
+          "active": "Endast aktiva",
+          "archived": "Endast arkiverade"
+        },
+        "deals": {
+          "label": "Kampanjer & Rabatter",
+          "discounted": "Endast rabatterade / Rea"
+        },
         "reset": "Återställ filter"
+      },
+      "cards": {
+        "barcode": "Streckkod",
+        "noBarcode": "Saknar streckkod",
+        "stockPhysical": "Fysiskt lager",
+        "stockBuffer": "Buffert",
+        "stockOnline": "Tillgängligt online",
+        "primaryImage": "Huvudbild",
+        "noImages": "Ingen bild",
+        "prices": "Priser",
+        "inventory": "Lageröversikt",
+        "languages": "Språkversioner",
+        "brand": "Varumärke",
+        "category": "Kategori",
+        "showingCount": "Visar {count} produkter"
+      },
+      "deleteModal": {
+        "title": "Radera produkt permanent",
+        "message": "Är du säker på att du vill radera \"{name}\"? Denna åtgärd tar bort produkten och alla dess bildreferenser permanent från butiken och kan inte ångras.",
+        "cancel": "Avbryt",
+        "confirm": "Ja, radera produkt",
+        "deleting": "Raderar..."
       },
       "table": {
         "image": "Bild",

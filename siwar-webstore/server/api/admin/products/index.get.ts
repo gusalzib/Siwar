@@ -171,6 +171,7 @@ export default defineEventHandler(async (event) => {
       stockQuantity: p.stockQuantity,
       safetyBuffer: p.safetyBuffer,
       availableStock,
+      barcode: p.barcode || null,
       isActive: p.isActive,
       hasMissingTranslations,
     }
