@@ -52,7 +52,7 @@ useSeoMeta({
         <!-- 1. Data Controller -->
         <section class="space-y-2">
           <h2 class="text-lg font-bold text-base-content">{{ t('legal.privacy.sec1_title', '1. Personuppgiftsansvarig') }}</h2>
-          <p>{{ t('legal.privacy.sec1_p1', 'Siwar Butik AB, Storgatan 12, 302 43 Halmstad, organisationsnummer 559123-4567, är personuppgiftsansvarig för behandlingen av dina personuppgifter.') }}</p>
+          <p>{{ t('legal.privacy.sec1_p1', 'Siwar Butik AB, Åttingsstigen 41, 302 54 Halmstad, organisationsnummer 559123-4567, är personuppgiftsansvarig för behandlingen av dina personuppgifter.') }}</p>
           <p>{{ t('legal.privacy.sec1_p2', 'Vi värnar om din personliga integritet och eftersträvar alltid en hög nivå av dataskydd i enlighet med EU:s dataskyddsförordning (GDPR).') }}</p>
         </section>
 
