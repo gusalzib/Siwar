@@ -161,4 +161,62 @@ describe('Section 4. Informational Content Pages & Social Shelf', () => {
       expect(footerContent).toContain("localePath('/contact')")
     })
   })
+
+  describe('5. Dynamic Statutory Entity Data in Legal Policies (AC-9)', () => {
+    const privacyContent = fs.readFileSync(path.resolve(__dirname, '../../pages/integritetspolicy.vue'), 'utf-8')
+    const termsContent = fs.readFileSync(path.resolve(__dirname, '../../pages/villkor.vue'), 'utf-8')
+    const withdrawalContent = fs.readFileSync(path.resolve(__dirname, '../../pages/angerratt.vue'), 'utf-8')
+    const settingsGetContent = fs.readFileSync(path.resolve(__dirname, '../../server/api/settings.get.ts'), 'utf-8')
+
+    it('ensures GET /api/settings exposes statutory attributes (companyName, orgNumber, momsNumber, contactEmail, contactPhone)', () => {
+      expect(settingsGetContent).toContain('companyName')
+      expect(settingsGetContent).toContain('orgNumber')
+      expect(settingsGetContent).toContain('momsNumber')
+      expect(settingsGetContent).toContain('contactEmail')
+      expect(settingsGetContent).toContain('contactPhone')
+    })
+
+    it('dynamically interpolates StoreSettings into integritetspolicy.vue, villkor.vue, and angerratt.vue', () => {
+      for (const content of [privacyContent, termsContent, withdrawalContent]) {
+        expect(content).toContain('/api/settings')
+        expect(content).toContain('companyName')
+        expect(content).toContain('contactEmail')
+      }
+      expect(privacyContent).toContain('orgNumber')
+      expect(privacyContent).toContain('momsNumber')
+      expect(termsContent).toContain('orgNumber')
+      expect(termsContent).toContain('momsNumber')
+    })
+
+    it('embeds a responsive statutory entity summary card in privacy and terms pages', () => {
+      expect(privacyContent).toContain("t('legal.entityCard.title'")
+      expect(termsContent).toContain("t('legal.entityCard.title'")
+    })
+
+    it('provides parameterized legal translation templates across sv.json, en.json, and ar.json', () => {
+      const sv = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../i18n/locales/sv.json'), 'utf-8'))
+      const en = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../i18n/locales/en.json'), 'utf-8'))
+      const ar = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../i18n/locales/ar.json'), 'utf-8'))
+
+      for (const loc of [sv, en, ar]) {
+        expect(loc.legal.entityCard).toBeDefined()
+        expect(loc.legal.entityCard.company).toBeDefined()
+        expect(loc.legal.entityCard.orgNumber).toBeDefined()
+        expect(loc.legal.entityCard.momsNumber).toBeDefined()
+        expect(loc.legal.entityCard.address).toBeDefined()
+        expect(loc.legal.entityCard.email).toBeDefined()
+
+        expect(loc.legal.privacy.sec1_p1).toContain('{companyName}')
+        expect(loc.legal.privacy.sec1_p1).toContain('{orgNumber}')
+        expect(loc.legal.privacy.sec5_p2).toContain('{email}')
+
+        expect(loc.legal.terms.sec1_p1).toContain('{companyName}')
+        expect(loc.legal.terms.sec1_p1).toContain('{orgNumber}')
+        expect(loc.legal.terms.sec2_p1).toContain('{momsNumber}')
+        expect(loc.legal.terms.sec6_p1).toContain('{email}')
+
+        expect(loc.legal.withdrawal.sec3_step1).toContain('{email}')
+      }
+    })
+  })
 })
