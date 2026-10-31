@@ -232,20 +232,20 @@ function getLocalized(obj?: Record<string, string>): string {
 </script>
 
 <template>
-  <div class="space-y-8 pb-16">
+  <div class="min-h-screen container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-16">
     <!-- Top Filter & Search Controls Header -->
-    <div class="card bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 shadow-sm">
+    <div class="card bg-base-100 border-2 border-base-300 dark:border-zinc-700 shadow-md rounded-2xl">
       <div class="card-body p-4 sm:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <!-- Multilingual Search Input (AC-1) -->
-        <div class="join w-full md:max-w-md shadow-sm">
-          <span class="join-item btn no-animation !bg-emerald-600 !border-emerald-600 hover:!bg-emerald-700 !text-white">
+        <div class="join w-full md:max-w-md shadow-xs">
+          <span class="join-item btn btn-sm h-11 no-animation !bg-emerald-600 !border-emerald-600 hover:!bg-emerald-700 !text-white px-3.5">
             <Icon name="lucide:search" class="size-5" />
           </span>
           <input
             v-model="searchQuery"
             type="search"
             :placeholder="t('catalog.searchPlaceholder')"
-            class="input input-bordered border-emerald-200 focus:border-emerald-500 join-item w-full focus:outline-none"
+            class="input input-sm h-11 input-bordered border-2 border-base-300 dark:border-zinc-700 focus:border-emerald-500 join-item w-full focus:outline-none bg-base-100 dark:bg-zinc-800 text-base-content text-sm font-medium"
             @input="onSearchInput"
           />
         </div>
@@ -254,7 +254,7 @@ function getLocalized(obj?: Record<string, string>): string {
           <!-- Mobile Filter Toggle -->
           <button
             type="button"
-            class="btn btn-outline btn-sm lg:hidden gap-2 !border-emerald-300 !text-base-content dark:!text-emerald-200"
+            class="btn btn-outline btn-sm h-11 lg:hidden gap-2 border-2 border-base-300 dark:border-zinc-700 text-base-content dark:text-zinc-200 hover:border-emerald-500 rounded-xl cursor-pointer"
             @click="isMobileDrawerOpen = !isMobileDrawerOpen"
           >
             <Icon name="lucide:sliders-horizontal" class="size-4" />
@@ -270,7 +270,8 @@ function getLocalized(obj?: Record<string, string>): string {
           <!-- Sort Select -->
           <select
             v-model="selectedSort"
-            class="select select-bordered select-sm border border-emerald-400/70 bg-base-100 text-base-content font-bold shadow-sm cursor-pointer w-auto ps-4 pe-10 transition-all duration-200 dark:border-emerald-400 dark:bg-base-200 dark:shadow-[0_0_0_1px_rgba(52,211,153,0.3)] hover:border-accent hover:bg-accent hover:text-accent-content focus:border-accent focus:outline-none"            @change="applyFiltersToUrl()"
+            class="select select-bordered select-sm h-11 border-2 border-base-300 dark:border-zinc-700 bg-base-100 dark:bg-zinc-800 text-base-content font-bold shadow-xs cursor-pointer w-auto ps-4 pe-10 transition-all rounded-xl focus:border-emerald-500 focus:outline-none"
+            @change="applyFiltersToUrl()"
           >
             <option value="newest">{{ t('catalog.sort.newest') }}</option>
             <option value="price_asc">{{ t('catalog.sort.priceAsc') }}</option>
@@ -284,17 +285,17 @@ function getLocalized(obj?: Record<string, string>): string {
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
       <!-- Faceted Filter Sidebar -->
       <aside :class="['space-y-6', isMobileDrawerOpen ? 'block' : 'hidden lg:block']">
-        <div class="card bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 shadow-sm">
-          <div class="card-body p-5 space-y-6">
+        <div class="card bg-base-100 border-2 border-base-300 dark:border-zinc-700 shadow-md rounded-2xl">
+          <div class="card-body p-5 sm:p-6 space-y-6">
             <!-- Sidebar Header -->
-            <div class="flex items-center justify-between border-b border-base-200 pb-3">
+            <div class="flex items-center justify-between border-b-2 border-base-300 dark:border-zinc-700 pb-3.5">
               <h2 class="font-bold text-base flex items-center gap-2">
-                <Icon name="lucide:filter" class="size-4 text-primary" />
+                <Icon name="lucide:filter" class="size-4.5 text-emerald-600" />
                 <span>{{ t('catalog.filtersTitle') }}</span>
               </h2>
               <button
                 type="button"
-                class="btn btn-ghost btn-xs text-primary font-semibold"
+                class="btn btn-ghost btn-xs text-emerald-600 hover:text-emerald-700 font-bold hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg px-2 cursor-pointer"
                 @click="resetAllFilters"
               >
                 {{ t('catalog.resetFilters') }}
@@ -302,7 +303,7 @@ function getLocalized(obj?: Record<string, string>): string {
             </div>
 
             <!-- Only Deals Filter Toggle -->
-            <div class="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/20 p-3 flex items-center justify-between gap-2 shadow-2xs">
+            <div class="rounded-xl border-2 border-rose-300 dark:border-rose-800 bg-rose-50/80 dark:bg-rose-950/30 p-3.5 flex items-center justify-between gap-2 shadow-2xs">
               <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-rose-700 dark:text-rose-300">
                 <span class="relative flex size-2 shrink-0">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-80" />
@@ -313,81 +314,100 @@ function getLocalized(obj?: Record<string, string>): string {
               <input
                 type="checkbox"
                 :checked="onlyDeals"
-                class="toggle toggle-error toggle-sm"
+                class="toggle toggle-error toggle-sm cursor-pointer"
                 @change="toggleOnlyDeals"
               />
             </div>
 
+            <!-- 4px Thick Section Divider -->
+            <hr class="h-1 border-0 border-t-[4px] border-slate-300 dark:border-zinc-600 bg-slate-300 dark:bg-zinc-600 my-5 rounded-full" />
+
             <!-- Categories -->
             <details class="group" open>
-              <summary class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                {{ t('catalog.categories') }}
-                <Icon name="lucide:chevron-down" class="size-4 transition-transform group-open:-rotate-180" />
+              <summary class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-base-content/70 dark:text-zinc-300 mb-2.5 cursor-pointer list-none select-none hover:text-emerald-600 transition-colors [&::-webkit-details-marker]:hidden">
+                <span class="flex items-center gap-1.5">
+                  <Icon name="lucide:layout-grid" class="size-4 text-emerald-600" />
+                  <span>{{ t('catalog.categories') }}</span>
+                </span>
+                <Icon name="lucide:chevron-down" class="size-4 transition-transform duration-200 group-open:-rotate-180" />
               </summary>
-              <ul class="menu menu-compact bg-base-50 rounded-box p-0 space-y-1 mt-1">
-                  <li
-                      v-for="cat in facetOptions?.categories"
-                      :key="cat.id"
-                      @click="toggleCategory(cat)"
+              <ul class="space-y-2 mt-2.5">
+                <li
+                  v-for="cat in facetOptions?.categories"
+                  :key="cat.id"
+                >
+                  <button
+                    type="button"
+                    @click="toggleCategory(cat)"
+                    :class="[
+                      'w-full text-start flex items-center justify-between px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer select-none border-2',
+                      isCategorySelected(cat)
+                        ? '!bg-emerald-600 !text-white !border-emerald-600 shadow-sm font-bold'
+                        : 'bg-base-200/60 dark:bg-zinc-800/60 text-base-content border-base-200 dark:border-zinc-700/60 hover:border-emerald-500/70 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-300 hover:shadow-2xs'
+                    ]"
                   >
-                      <a
-                          :class="[
-                              'rounded-lg border border-transparent text-base-content transition-all hover:bg-transparent hover:border-emerald-600 hover:text-base-content focus:text-base-content',
-                              { 'active font-bold !bg-emerald-600 !text-white': isCategorySelected(cat) }
-                          ]"
-                          >
-                          {{ getLocalized(cat.name) }}
-                      </a>
-                  </li>
+                    <span>{{ getLocalized(cat.name) }}</span>
+                    <Icon 
+                      v-if="isCategorySelected(cat)" 
+                      name="lucide:check" 
+                      class="size-4 text-white shrink-0 stroke-[2.5]" 
+                    />
+                  </button>
+                </li>
               </ul>
             </details>
 
-            <hr class="border-t-[4px] border-emerald-200 dark:border-emerald-800/60 my-4" />
+            <!-- 4px Thick Section Divider -->
+            <hr class="h-1 border-0 border-t-[4px] border-slate-300 dark:border-zinc-600 bg-slate-300 dark:bg-zinc-600 my-5 rounded-full" />
 
             <!-- Allergen Exclusion (AC-2) -->
             <details class="group" open>
-              <summary class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-error/80 mb-2 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              <summary class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-2.5 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                 <div class="flex items-center gap-1.5">
-                  <Icon name="lucide:shield-ban" class="size-4" />
+                  <Icon name="lucide:shield-ban" class="size-4 text-rose-600 dark:text-rose-400" />
                   <span>{{ t('catalog.allergenExclusionTitle') }}</span>
                 </div>
-                <Icon name="lucide:chevron-down" class="size-4 transition-transform group-open:-rotate-180" />
+                <Icon name="lucide:chevron-down" class="size-4 transition-transform duration-200 group-open:-rotate-180" />
               </summary>
-              <div class="space-y-2 max-h-48 overflow-y-auto pr-1 mt-1">
+              <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1 mt-1">
                 <label
                   v-for="allergen in facetOptions?.allergens"
                   :key="allergen.id"
-                  class="flex items-center gap-2.5 text-sm cursor-pointer select-none"
+                  class="flex items-center gap-2.5 text-sm py-1 px-1.5 rounded-lg hover:bg-base-200/70 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer select-none"
                 >
-                    <input
-                        type="checkbox"
-                        :checked="excludedAllergens.includes(allergen.code || allergen.id)"
-                        class="checkbox checkbox-error checkbox-xs border-2 !border-black"
-                        @change="toggleAllergenExclusion(allergen.code || allergen.id)"
-                    />
+                  <input
+                    type="checkbox"
+                    :checked="excludedAllergens.includes(allergen.code || allergen.id)"
+                    class="checkbox checkbox-error checkbox-sm border-2 border-base-300 dark:border-zinc-500 cursor-pointer"
+                    @change="toggleAllergenExclusion(allergen.code || allergen.id)"
+                  />
                   <span>{{ getLocalized(allergen.name) }}</span>
                 </label>
               </div>
             </details>
 
-            <hr class="border-t-[4px] border-emerald-200 dark:border-emerald-800/60 my-4" />
+            <!-- 4px Thick Section Divider -->
+            <hr class="h-1 border-0 border-t-[4px] border-slate-300 dark:border-zinc-600 bg-slate-300 dark:bg-zinc-600 my-5 rounded-full" />
 
             <!-- Brands -->
             <details class="group" open>
-              <summary class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                {{ t('catalog.brands') }}
-                <Icon name="lucide:chevron-down" class="size-4 transition-transform group-open:-rotate-180" />
+              <summary class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-base-content/70 dark:text-zinc-300 mb-2.5 cursor-pointer list-none select-none hover:text-emerald-600 transition-colors [&::-webkit-details-marker]:hidden">
+                <span class="flex items-center gap-1.5">
+                  <Icon name="lucide:award" class="size-4 text-emerald-600" />
+                  <span>{{ t('catalog.brands') }}</span>
+                </span>
+                <Icon name="lucide:chevron-down" class="size-4 transition-transform duration-200 group-open:-rotate-180" />
               </summary>
-              <div class="space-y-2 max-h-44 overflow-y-auto pr-1 mt-1">
+              <div class="space-y-1.5 max-h-44 overflow-y-auto pr-1 mt-1">
                 <label
                   v-for="brand in facetOptions?.brands"
                   :key="brand"
-                  class="flex items-center gap-2.5 text-sm cursor-pointer select-none"
+                  class="flex items-center gap-2.5 text-sm py-1 px-1.5 rounded-lg hover:bg-base-200/70 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer select-none"
                 >
                   <input
                     type="checkbox"
                     :checked="selectedBrands.includes(brand)"
-                    class="checkbox checkbox-primary checkbox-xs border-2 !border-black"
+                    class="checkbox checkbox-primary checkbox-sm border-2 border-base-300 dark:border-zinc-500 cursor-pointer"
                     @change="toggleBrand(brand)"
                   />
                   <span>{{ brand }}</span>
@@ -395,24 +415,28 @@ function getLocalized(obj?: Record<string, string>): string {
               </div>
             </details>
 
-            <hr class="border-t-[4px] border-emerald-200 dark:border-emerald-800/60 my-4" />
+            <!-- 4px Thick Section Divider -->
+            <hr class="h-1 border-0 border-t-[4px] border-slate-300 dark:border-zinc-600 bg-slate-300 dark:bg-zinc-600 my-5 rounded-full" />
 
             <!-- Country of Origin -->
             <details class="group" open>
-              <summary class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                {{ t('catalog.origin') }}
-                <Icon name="lucide:chevron-down" class="size-4 transition-transform group-open:-rotate-180" />
+              <summary class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-base-content/70 dark:text-zinc-300 mb-2.5 cursor-pointer list-none select-none hover:text-emerald-600 transition-colors [&::-webkit-details-marker]:hidden">
+                <span class="flex items-center gap-1.5">
+                  <Icon name="lucide:globe" class="size-4 text-emerald-600" />
+                  <span>{{ t('catalog.origin') }}</span>
+                </span>
+                <Icon name="lucide:chevron-down" class="size-4 transition-transform duration-200 group-open:-rotate-180" />
               </summary>
-              <div class="space-y-2 max-h-40 overflow-y-auto pr-1 mt-1">
+              <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1 mt-1">
                 <label
                   v-for="origin in facetOptions?.origins"
                   :key="origin"
-                  class="flex items-center gap-2.5 text-sm cursor-pointer select-none"
+                  class="flex items-center gap-2.5 text-sm py-1 px-1.5 rounded-lg hover:bg-base-200/70 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer select-none"
                 >
                   <input
                     type="checkbox"
                     :checked="selectedOrigins.includes(origin)"
-                    class="checkbox checkbox-primary checkbox-xs border-2 !border-black"
+                    class="checkbox checkbox-primary checkbox-sm border-2 border-base-300 dark:border-zinc-500 cursor-pointer"
                     @change="toggleOrigin(origin)"
                   />
                   <span>{{ origin }}</span>
@@ -427,11 +451,16 @@ function getLocalized(obj?: Record<string, string>): string {
       <main class="lg:col-span-3">
         <!-- Loading Pulse State -->
         <div v-if="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div v-for="n in 6" :key="n" class="card bg-base-100 border border-base-200 animate-pulse">
-            <div class="h-48 bg-base-300 w-full" />
-            <div class="card-body p-4 space-y-2">
-              <div class="h-4 bg-base-300 rounded w-3/4" />
-              <div class="h-4 bg-base-300 rounded w-1/2" />
+          <div v-for="n in 6" :key="n" class="card bg-base-100 border-2 border-base-300 dark:border-zinc-700 shadow-sm rounded-2xl overflow-hidden animate-pulse">
+            <div class="h-52 bg-base-200 dark:bg-zinc-800 w-full" />
+            <div class="card-body p-4 space-y-3">
+              <div class="h-3 bg-base-300 dark:bg-zinc-700 rounded w-1/3" />
+              <div class="h-4 bg-base-300 dark:bg-zinc-700 rounded w-3/4" />
+              <div class="h-8 bg-base-200 dark:bg-zinc-800 rounded-xl w-1/2 mt-2" />
+              <div class="grid grid-cols-2 gap-2 pt-2">
+                <div class="h-9 bg-base-200 dark:bg-zinc-800 rounded-xl" />
+                <div class="h-9 bg-base-200 dark:bg-zinc-800 rounded-xl" />
+              </div>
             </div>
           </div>
         </div>
@@ -439,14 +468,14 @@ function getLocalized(obj?: Record<string, string>): string {
         <!-- Empty Results State -->
         <div
           v-else-if="!catalogData?.products || catalogData.products.length === 0"
-          class="card bg-base-100 border border-base-200 text-center p-12"
+          class="card bg-base-100 border-2 border-base-300 dark:border-zinc-700 shadow-md rounded-2xl text-center p-12"
         >
           <div class="flex flex-col items-center space-y-3">
             <Icon name="lucide:package-open" class="size-12 text-base-content/30" />
             <p class="font-semibold text-base-content">{{ t('catalog.noResults') }}</p>
             <button
               type="button"
-              class="btn btn-sm border-none bg-brand-500 px-3 text-white hover:bg-brand-700 shadow-sm transition-all duration-200"
+              class="btn btn-sm h-11 border-none !bg-emerald-600 hover:!bg-emerald-700 px-5 !text-white font-bold rounded-xl shadow-sm transition-all cursor-pointer"
               @click="resetAllFilters"
             >
               {{ t('catalog.clearSearch') }}
@@ -471,7 +500,7 @@ function getLocalized(obj?: Record<string, string>): string {
           <button
             type="button"
             :disabled="currentPage <= 1"
-            class="btn btn-outline btn-sm"
+            class="btn btn-outline btn-sm h-9 border-base-300 dark:border-zinc-700 text-base-content hover:bg-base-200 dark:hover:bg-zinc-800 font-bold rounded-xl"
             @click="changePage(currentPage - 1)"
           >
             {{ t('catalog.prev') }}
@@ -482,7 +511,7 @@ function getLocalized(obj?: Record<string, string>): string {
           <button
             type="button"
             :disabled="currentPage >= catalogData.pagination.totalPages"
-            class="btn btn-outline btn-sm"
+            class="btn btn-outline btn-sm h-9 border-base-300 dark:border-zinc-700 text-base-content hover:bg-base-200 dark:hover:bg-zinc-800 font-bold rounded-xl"
             @click="changePage(currentPage + 1)"
           >
             {{ t('catalog.next') }}
