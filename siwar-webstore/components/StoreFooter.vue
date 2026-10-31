@@ -77,7 +77,7 @@ const hasActiveSocial = computed(() => {
 </script>
 
 <template>
-  <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 mt-16 pt-12 pb-8 transition-colors duration-200">
+  <footer class="relative z-10 bg-slate-900 text-slate-300 border-t-2 border-slate-800 mt-16 pt-12 pb-8 transition-colors duration-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
       
       <!-- 4-Column Responsive Grid -->
@@ -168,10 +168,18 @@ const hasActiveSocial = computed(() => {
               </a>
             </li>
 
-            <li class="pt-2">
+            <li class="pt-2 flex flex-wrap gap-2">
+              <NuxtLink
+                :to="localePath('/contact')"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 transition-all hover:border-primary/50 shadow-xs"
+              >
+                <Icon name="lucide:mail" class="size-3.5 text-blue-400" />
+                <span>{{ t('nav.contact', 'Kontakta oss') }}</span>
+              </NuxtLink>
+
               <NuxtLink
                 :to="localePath('/order/lookup')"
-                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 transition-all hover:border-primary/50 shadow-xs"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 transition-all hover:border-primary/50 shadow-xs"
               >
                 <Icon name="lucide:package-search" class="size-3.5 text-primary" />
                 <span>{{ t('footer.customerService.orderLookup', 'Spåra beställning') }}</span>
@@ -201,6 +209,16 @@ const hasActiveSocial = computed(() => {
 
           <!-- Working Policy Links -->
           <ul class="space-y-2 text-xs">
+            <li>
+              <NuxtLink
+                :to="localePath('/about')"
+                class="flex items-center gap-2 text-slate-300 hover:text-primary transition-colors font-medium"
+              >
+                <Icon name="lucide:sparkles" class="size-3.5 text-amber-400 shrink-0" />
+                <span>{{ t('nav.about', 'Om Siwar (Vår historia)') }}</span>
+              </NuxtLink>
+            </li>
+
             <li>
               <NuxtLink
                 :to="localePath('/villkor')"
