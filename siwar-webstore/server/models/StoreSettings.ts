@@ -148,6 +148,7 @@ export interface IGeneralSettings {
     en?: string
   }
   socialLinks?: ISocialLink[]
+  carouselIntervalMs?: number
 }
 
 export interface IStoreSettings {
@@ -166,6 +167,7 @@ export interface IStoreSettings {
   pickup: IPickupSettings
   banners: IBanner[]
   socialLinks?: ISocialLink[]
+  carouselIntervalMs?: number
   updatedAt: Date
 }
 
@@ -333,6 +335,7 @@ export const DEFAULT_GENERAL_CONFIG: IGeneralSettings = {
     en: formatWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE, 'en'),
   },
   socialLinks: [],
+  carouselIntervalMs: 5000,
 }
 
 export const DEFAULT_PICKUP_CONFIG: IPickupSettings = {
@@ -431,6 +434,12 @@ const GeneralSettingsSchema = new Schema<IGeneralSettings>(
     socialLinks: {
       type: [SocialLinkSchema],
       default: [],
+    },
+    carouselIntervalMs: {
+      type: Number,
+      default: 5000,
+      min: 2000,
+      max: 30000,
     },
   },
   { _id: false }
@@ -536,6 +545,12 @@ const StoreSettingsSchema = new Schema<IStoreSettings>(
       type: [SocialLinkSchema],
       default: [],
     },
+    carouselIntervalMs: {
+      type: Number,
+      default: 5000,
+      min: 2000,
+      max: 30000,
+    },
   },
   { timestamps: true }
 )
@@ -553,7 +568,7 @@ export async function getStoreGeneralSettings(): Promise<IGeneralSettings> {
   }
 
   try {
-    const settings = await StoreSettings.findOne().select('general socialLinks').lean()
+    const settings = await StoreSettings.findOne().select('general socialLinks carouselIntervalMs').lean()
     if (!settings || !settings.general) {
       cachedGeneral = { ...DEFAULT_GENERAL_CONFIG }
     } else {
@@ -600,6 +615,7 @@ export async function getStoreGeneralSettings(): Promise<IGeneralSettings> {
           en: settings.general.openingHours?.en || formatWeeklySchedule(schedule, 'en'),
         },
         socialLinks,
+        carouselIntervalMs: (settings as any)?.carouselIntervalMs ?? settings?.general?.carouselIntervalMs ?? 5000,
       }
     }
   } catch (err) {
