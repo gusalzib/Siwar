@@ -542,49 +542,66 @@ function isDiscountActiveOrScheduled(product: any): boolean {
       </div>
     </div>
 
-    <!-- DaisyUI Confirmation Dialog Modal for Product Deletion -->
-    <dialog ref="deleteModalRef" class="modal modal-bottom sm:modal-middle">
-      <div class="modal-box bg-base-100 dark:bg-zinc-900 border-2 border-base-300 dark:border-zinc-700 shadow-2xl rounded-2xl p-6">
-        <div class="flex items-center gap-3 text-error mb-4">
-          <div class="p-3 bg-error/10 rounded-full">
-            <Icon name="lucide:alert-triangle" class="size-6 text-error" />
-          </div>
-          <div>
-            <h3 class="font-extrabold text-lg text-base-content">
-              {{ t('admin.products.deleteModal.title') }}
-            </h3>
-            <p class="text-xs text-base-content/60">ID: {{ productToDelete?.id }}</p>
-          </div>
-        </div>
+    <!-- DaisyUI Confirmation Dialog Modal for Product Deletion (Teleported to Body) -->
+    <ClientOnly>
+      <Teleport to="body">
+        <dialog ref="deleteModalRef" class="modal" @close="closeDeleteModal">
+          <div class="modal-box max-w-md bg-white dark:bg-zinc-900 border-2 border-slate-300 dark:border-zinc-700 shadow-2xl p-6 sm:p-7 rounded-3xl space-y-5 text-base-content overflow-hidden">
+            <!-- Header with Icon, Title and Styled Close (X) Button -->
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3">
+                <div class="size-10 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+                  <Icon name="lucide:trash-2" class="size-5" />
+                </div>
+                <div class="space-y-1">
+                  <h3 class="font-extrabold text-lg text-base-content leading-snug">
+                    {{ t('admin.products.deleteModal.title') }}
+                  </h3>
+                  <p class="text-xs text-base-content/60 font-mono">ID: {{ productToDelete?.id }}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm btn-circle text-base-content/60 hover:text-base-content hover:bg-slate-100 dark:hover:bg-zinc-800 shrink-0"
+                @click="closeDeleteModal"
+                title="Stäng"
+              >
+                <Icon name="lucide:x" class="size-5" />
+              </button>
+            </div>
 
-        <p class="text-sm text-base-content/80 leading-relaxed mb-6">
-          {{ t('admin.products.deleteModal.message', { name: productToDelete ? getLocalizedText(productToDelete.name) : '' }) }}
-        </p>
+            <!-- Description / Warning Message -->
+            <p class="text-sm text-base-content/80 leading-relaxed font-medium">
+              {{ t('admin.products.deleteModal.message', { name: productToDelete ? getLocalizedText(productToDelete.name) : '' }) }}
+            </p>
 
-        <div class="modal-action flex justify-end gap-3">
-          <button
-            type="button"
-            :disabled="isDeleting"
-            @click="closeDeleteModal"
-            class="btn btn-ghost btn-sm rounded-xl font-bold border-2 border-base-300 dark:border-zinc-700"
-          >
-            {{ t('admin.products.deleteModal.cancel') }}
-          </button>
-          <button
-            type="button"
-            :disabled="isDeleting"
-            @click="confirmDeleteProduct"
-            class="btn btn-error btn-sm rounded-xl font-bold text-white gap-2"
-          >
-            <span v-if="isDeleting" class="loading loading-spinner loading-xs"></span>
-            <Icon v-else name="lucide:trash-2" class="size-4" />
-            {{ isDeleting ? t('admin.products.deleteModal.deleting') : t('admin.products.deleteModal.confirm') }}
-          </button>
-        </div>
-      </div>
-      <form method="dialog" class="modal-backdrop">
-        <button type="button" @click="closeDeleteModal">close</button>
-      </form>
-    </dialog>
+            <!-- Modal Actions: Cancel and Confirm with Generous Padding and High-Contrast Theming -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-zinc-800">
+              <button
+                type="button"
+                :disabled="isDeleting"
+                @click="closeDeleteModal"
+                class="btn h-10 px-5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-slate-200 border-2 border-slate-300 dark:border-zinc-600 font-bold transition-colors shadow-xs"
+              >
+                {{ t('admin.products.deleteModal.cancel') }}
+              </button>
+              <button
+                type="button"
+                :disabled="isDeleting"
+                @click="confirmDeleteProduct"
+                class="btn h-10 px-5 rounded-xl !bg-red-600 hover:!bg-red-700 !text-white !border-none font-bold shadow-sm transition-transform active:scale-95 disabled:opacity-50 flex items-center gap-2"
+              >
+                <span v-if="isDeleting" class="loading loading-spinner loading-xs"></span>
+                <Icon v-else name="lucide:trash-2" class="size-4" />
+                <span>{{ isDeleting ? t('admin.products.deleteModal.deleting') : t('admin.products.deleteModal.confirm') }}</span>
+              </button>
+            </div>
+          </div>
+          <form method="dialog" class="modal-backdrop bg-black/60 backdrop-blur-xs" @click="closeDeleteModal">
+            <button type="button" class="sr-only">close</button>
+          </form>
+        </dialog>
+      </Teleport>
+    </ClientOnly>
   </div>
 </template>

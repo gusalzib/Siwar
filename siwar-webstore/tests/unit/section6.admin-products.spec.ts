@@ -102,7 +102,8 @@ describe('Section 6. Admin Products View Overhaul & Filters (pages/admin/product
       expect(adminProductsContent).toContain('openDeleteModal(product)')
     })
 
-    it('replaces window.confirm with a DaisyUI dialog modal matching brand tokens', () => {
+    it('replaces window.confirm with a DaisyUI dialog modal matching brand tokens and teleported to body', () => {
+      expect(adminProductsContent).toContain('<Teleport to="body">')
       expect(adminProductsContent).toContain('<dialog ref="deleteModalRef"')
       expect(adminProductsContent).toContain('class="modal')
       expect(adminProductsContent).toContain('confirmDeleteProduct')
