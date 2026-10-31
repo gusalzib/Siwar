@@ -1,13 +1,42 @@
 // server/api/admin/settings/banners.put.ts
-import { StoreSettings } from '~/server/models/StoreSettings'
+import { StoreSettings, clearGeneralSettingsCache } from '~/server/models/StoreSettings'
 
 /**
  * Route: PUT /api/admin/settings/banners
  * Access: Admin only (protected by server/middleware/admin-auth.ts)
- * Purpose: Persists updated promotional banners array with payload validation.
+ * Purpose: Persists updated promotional banners array and carousel interval with payload validation.
  */
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
+
+  // 1. Fetch or initialize the StoreSettings singleton
+  let settings = await StoreSettings.findOne()
+  if (!settings) {
+    settings = new StoreSettings()
+  }
+
+  // Update carousel interval if provided
+  if (body.carouselIntervalMs !== undefined) {
+    let ms = Number(body.carouselIntervalMs)
+    if (ms >= 2 && ms <= 30) {
+      ms = ms * 1000
+    }
+    ms = Math.max(2000, Math.min(30000, ms || 5000))
+    settings.carouselIntervalMs = ms
+    if (settings.general) {
+      settings.general.carouselIntervalMs = ms
+    }
+  }
+
+  // If this request is only updating the carousel interval
+  if (!body.banners && body.carouselIntervalMs !== undefined) {
+    await settings.save()
+    clearGeneralSettingsCache()
+    return {
+      statusCode: 200,
+      carouselIntervalMs: settings.carouselIntervalMs,
+    }
+  }
 
   if (!body.banners || !Array.isArray(body.banners)) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid banners array payload' })
@@ -42,12 +71,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // 1. Fetch or initialize the StoreSettings singleton
-  let settings = await StoreSettings.findOne()
-  if (!settings) {
-    settings = new StoreSettings()
-  }
-
   // 2. Map and sanitize banners
   settings.banners = body.banners.map((b: any, index: number) => ({
     _id: b._id || b.id || undefined,
@@ -77,6 +100,7 @@ export default defineEventHandler(async (event) => {
 
   // 3. Persist to MongoDB
   await settings.save()
+  clearGeneralSettingsCache()
 
   // 4. Return formatted response
   const updatedBanners = (settings.banners || []).map((b: any) => ({
@@ -87,5 +111,6 @@ export default defineEventHandler(async (event) => {
   return {
     statusCode: 200,
     banners: updatedBanners,
+    carouselIntervalMs: settings.carouselIntervalMs ?? 5000,
   }
 })

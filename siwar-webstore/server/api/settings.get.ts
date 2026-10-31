@@ -18,6 +18,7 @@ export default defineEventHandler(async () => {
     address: general.address,
     schedule: general.schedule,
     openingHours: general.openingHours,
+    carouselIntervalMs: general.carouselIntervalMs ?? 5000,
     pickup: {
       enabled: pickup.enabled,
       address: pickup.address,

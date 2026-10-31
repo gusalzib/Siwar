@@ -47,6 +47,15 @@ export default defineEventHandler(async (event) => {
       : []
   }
 
+  // 3.5 Process carouselIntervalMs if provided
+  let carouselIntervalMs = settings.carouselIntervalMs || settings.general?.carouselIntervalMs || 5000
+  if (body.carouselIntervalMs !== undefined) {
+    let ms = Number(body.carouselIntervalMs)
+    if (ms >= 2 && ms <= 30) ms = ms * 1000
+    carouselIntervalMs = Math.max(2000, Math.min(30000, ms || 5000))
+    settings.carouselIntervalMs = carouselIntervalMs
+  }
+
   // 4. Assemble general settings
   settings.general = {
     storeName: {
@@ -77,6 +86,7 @@ export default defineEventHandler(async (event) => {
     schedule,
     openingHours,
     socialLinks,
+    carouselIntervalMs,
   }
 
   settings.socialLinks = socialLinks

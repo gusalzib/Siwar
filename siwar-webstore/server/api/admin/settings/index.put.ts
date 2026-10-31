@@ -83,12 +83,25 @@ export default defineEventHandler(async (event) => {
       schedule,
       openingHours,
       socialLinks: settings.socialLinks || [],
+      carouselIntervalMs: settings.carouselIntervalMs || 5000,
     }
 
     if (body.syncPickup !== false && settings.pickup) {
       settings.pickup.address = { ...settings.general.address }
       settings.pickup.schedule = schedule.map((d) => ({ ...d }))
       settings.pickup.pickupHours = { ...openingHours }
+    }
+  }
+
+  // Process top-level carouselIntervalMs if provided
+  const incomingInterval = body.carouselIntervalMs !== undefined ? body.carouselIntervalMs : genPayload?.carouselIntervalMs
+  if (incomingInterval !== undefined) {
+    let ms = Number(incomingInterval)
+    if (ms >= 2 && ms <= 30) ms = ms * 1000
+    const clamped = Math.max(2000, Math.min(30000, ms || 5000))
+    settings.carouselIntervalMs = clamped
+    if (settings.general) {
+      settings.general.carouselIntervalMs = clamped
     }
   }
 

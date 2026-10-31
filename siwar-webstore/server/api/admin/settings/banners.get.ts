@@ -7,18 +7,23 @@ import { StoreSettings, type IBanner } from '~/server/models/StoreSettings'
  * Purpose: Retrieves all configured promotional banners sorted by sortOrder.
  */
 export default defineEventHandler(async () => {
-  let settings = await StoreSettings.findOne().select('banners').lean()
+  let settings = await StoreSettings.findOne().select('banners carouselIntervalMs').lean()
 
   if (!settings) {
-    settings = await StoreSettings.create({ banners: [] })
+    settings = await StoreSettings.create({ banners: [], carouselIntervalMs: 5000 })
   }
 
   const banners = (settings.banners || []).slice().sort((a: IBanner, b: IBanner) => {
     return (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
   })
 
-  return banners.map((b: any) => ({
+  const result = banners.map((b: any) => ({
     ...b,
     id: b._id ? String(b._id) : b.id,
   }))
+
+  const interval = (settings as any)?.carouselIntervalMs ?? (settings as any)?.general?.carouselIntervalMs ?? 5000
+  ;(result as any).carouselIntervalMs = interval
+
+  return result
 })
