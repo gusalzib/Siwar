@@ -757,21 +757,30 @@
     "backToCheckout": "Tillbaka till kassan",
     "readTerms": "Läs Köpvillkor",
     "readWithdrawal": "Läs om Ångerrätt",
+    "entityCard": {
+      "title": "Företagsinformation & Juridisk person",
+      "company": "Juridiskt namn",
+      "orgNumber": "Organisationsnummer",
+      "momsNumber": "Momsregistreringsnummer",
+      "address": "Sätes- & butiksadress",
+      "email": "Officiell e-post",
+      "phone": "Telefon"
+    },
     "terms": {
       "title": "Köpvillkor",
       "metaTitle": "Köpvillkor",
-      "metaDesc": "Allmänna köpvillkor och leveransregler för köp i Siwars webbutik.",
+      "metaDesc": "Allmänna köpvillkor och leveransregler för köp i {storeName}s webbutik.",
       "sec1_title": "1. Allmänt och Företagsinformation",
-      "sec1_p1": "Dessa köpvillkor gäller för alla beställningar som görs via webbutiken Siwar. Avtal ingås mellan dig som konsument och Siwar Butik AB, Halmstad, Sverige.",
+      "sec1_p1": "Dessa köpvillkor gäller för alla beställningar som görs via webbutiken {storeName}. Avtal ingås mellan dig som konsument och {companyName}, organisationsnummer {orgNumber}, {address}.",
       "sec1_p2": "För att handla hos oss måste du vara minst 18 år eller ha målsmans godkännande.",
       "sec2_title": "2. Priser, Valutor och Moms",
-      "sec2_p1": "Samtliga konsumentpriser i butiken anges inklusive svensk mervärdesskatt (moms) i enlighet med prisinformationslagen. Momsen specificeras uppdelad i 12% moms för livsmedel samt 25% moms för övriga artiklar och fraktavgifter.",
+      "sec2_p1": "Samtliga konsumentpriser i butiken anges inklusive svensk mervärdesskatt (moms) i enlighet med prisinformationslagen. Momsregistreringsnummer: {momsNumber}. Momsen specificeras uppdelad i 12% moms för livsmedel samt 25% moms för övriga artiklar och fraktavgifter.",
       "sec2_p2": "Siwar erbjuder fasta katalogpriser i SEK, EUR och USD oberoende av varandra utan dynamiska valutapåslag i kassan. Beställningen debiteras i den valuta du valt.",
       "sec3_title": "3. Beställning och Lagerreservation",
       "sec3_p1": "Efter lagd beställning skickas en automatisk orderbekräftelse till din e-post. Eftersom butiken har fysisk butiksförsäljning tillämpas automatiska säkerhetsbuffertar. Om en vara mot förmodan saknas vid packning i butik kontaktas du omgående för ersättningsvara eller direkt kreditering.",
       "sec4_title": "4. Leveranssätt och Frakt",
       "sec4_pickup_title": "Hämta i butik (In-Store Pickup)",
-      "sec4_pickup_desc": "Kostnadsfritt. Beställningen packas och finns normalt redo för avhämtning i vår butik i Halmstad inom 2 timmar under ordinarie öppettider.",
+      "sec4_pickup_desc": "Kostnadsfritt. Beställningen packas och finns normalt redo för avhämtning i vår butik på {street}, {city} inom 2 timmar under ordinarie öppettider.",
       "sec4_delivery_title": "Paketleverans / Postombud",
       "sec4_delivery_desc": "Leverans sker med DHL (normalt 1–5 helgfria vardagar). Fraktkostnaden baseras på försändelsens sammanlagda bruttovikt och inkluderar 25% moms.",
       "sec5_title": "5. Ångerrätt och Undantag för Livsmedel",
@@ -780,7 +789,7 @@
       "sec5_link_prefix": "För fullständiga villkor, läs vår särskilda sida för",
       "sec5_link_text": "Ångerrätt och Livsmedelsundantag",
       "sec6_title": "6. Reklamation och Skadat Gods",
-      "sec6_p1": "Om en vara är defekt, saknas eller har skadats under transport ber vi dig kontakta vår kundtjänst inom skälig tid med fotodokumentation och ordernummer för ersättning eller kreditering."
+      "sec6_p1": "Om en vara är defekt, saknas eller har skadats under transport ber vi dig kontakta vår kundtjänst ({email}) inom skälig tid med fotodokumentation och ordernummer för ersättning eller kreditering."
     },
     "withdrawal": {
       "title": "Ångerrätt och Livsmedelsundantag",
@@ -801,7 +810,7 @@
       "sec2_exemption2_desc": "Detta omfattar öppnade kryddburkar, oljeflaskor, konserver, tahini och torrvaror med bruten försegling.",
       "sec2_conclusion": "Genom att slutföra din beställning i kassan godkänner du att dessa livsmedelsartiklar är undantagna från ångerrätten.",
       "sec3_title": "3. Hur du utövar din ångerrätt (icke-livsmedel)",
-      "sec3_step1": "Meddela kundtjänst skriftligen inom 14 dagar från mottagandet via e-post till order{'@'}siwar.se med ditt ordernummer.",
+      "sec3_step1": "Meddela kundtjänst skriftligen inom 14 dagar från mottagandet via e-post till {email} med ditt ordernummer.",
       "sec3_step2": "Du kan även använda Konsumentverkets standardformulär för ångerrätt.",
       "sec3_step3": "Skicka tillbaka varan inom 14 dagar från meddelandet. Returfrakten bekostas av konsumenten.",
       "sec4_title": "4. Återbetalning",
@@ -810,10 +819,10 @@
     "privacy": {
       "title": "Integritetspolicy & Dataskydd",
       "metaTitle": "Integritetspolicy",
-      "metaDesc": "Information om hur Siwar Butik AB hanterar personuppgifter i enlighet med GDPR.",
+      "metaDesc": "Information om hur {companyName} hanterar personuppgifter i enlighet med GDPR.",
       "gdprBadge": "Dataskyddsförordningen (GDPR)",
       "sec1_title": "1. Personuppgiftsansvarig",
-      "sec1_p1": "Siwar Butik AB, Åttingsstigen 41, 302 54 Halmstad, organisationsnummer 559123-4567, är personuppgiftsansvarig för behandlingen av dina personuppgifter.",
+      "sec1_p1": "{companyName}, {address}, organisationsnummer {orgNumber}, är personuppgiftsansvarig för behandlingen av dina personuppgifter.",
       "sec1_p2": "Vi värnar om din personliga integritet och eftersträvar alltid en hög nivå av dataskydd i enlighet med EU:s dataskyddsförordning (GDPR).",
       "sec2_title": "2. Vilka personuppgifter vi samlar in",
       "sec2_p1": "Vi samlar in information som du lämnar till oss vid genomförande av köp eller kontakt med vår kundtjänst:",
@@ -829,7 +838,7 @@
       "sec4_item2": "Betaltjänstleverantörer (t.ex. Swish och kortinlösare) för säker betalningshantering.",
       "sec5_title": "5. Dina rättigheter",
       "sec5_p1": "Enligt GDPR har du rätt att kostnadsfritt begära ett registerutdrag över vilka uppgifter vi har lagrade om dig, begära rättelse av felaktiga uppgifter samt under vissa förutsättningar begära radering eller begränsning av behandlingen.",
-      "sec5_p2": "För att utöva dina rättigheter, kontakta oss via order{'@'}siwar.se. Du har även rätt att inge klagomål till Integritetsskyddsmyndigheten (IMY)."
+      "sec5_p2": "För att utöva dina rättigheter, kontakta oss via {email}. Du har även rätt att inge klagomål till Integritetsskyddsmyndigheten (IMY)."
     }
   },
   "checkout": {

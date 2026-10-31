@@ -753,21 +753,30 @@
     "backToCheckout": "Back to checkout",
     "readTerms": "Read Terms of Purchase",
     "readWithdrawal": "Read Withdrawal Policy",
+    "entityCard": {
+      "title": "Company & Statutory Legal Entity",
+      "company": "Legal Name",
+      "orgNumber": "Corporate ID (Org.nr)",
+      "momsNumber": "VAT Registration Number",
+      "address": "Registered & Store Address",
+      "email": "Official Email",
+      "phone": "Telephone"
+    },
     "terms": {
       "title": "Terms of Purchase",
       "metaTitle": "Terms of Purchase",
-      "metaDesc": "General terms and conditions for orders placed in the Siwar online store.",
+      "metaDesc": "General terms and conditions for orders placed in the {storeName} online store.",
       "sec1_title": "1. General & Company Information",
-      "sec1_p1": "These Terms of Purchase apply to all orders placed in the Siwar webstore. Contracts are concluded between the consumer and Siwar Butik AB, Halmstad, Sweden.",
+      "sec1_p1": "These Terms of Purchase apply to all orders placed in the {storeName} webstore. Contracts are concluded between the consumer and {companyName}, corporate registration number {orgNumber}, {address}.",
       "sec1_p2": "To complete a purchase, you must be at least 18 years of age or have parental consent.",
       "sec2_title": "2. Prices, Currencies, and VAT (Moms)",
-      "sec2_p1": "All consumer prices are displayed inclusive of Swedish VAT (moms) in compliance with the Swedish Price Information Act. VAT is itemized at 12% for food and pantry items, and 25% for non-food merchandise and shipping fees.",
+      "sec2_p1": "All consumer prices are displayed inclusive of Swedish VAT (moms) in compliance with the Swedish Price Information Act. VAT registration number: {momsNumber}. VAT is itemized at 12% for food and pantry items, and 25% for non-food merchandise and shipping fees.",
       "sec2_p2": "Siwar sets fixed catalog prices independently in SEK, EUR, and USD without dynamic checkout conversions. Orders are settled in the customer's selected store currency.",
       "sec3_title": "3. Ordering & In-Store Safety Buffers",
       "sec3_p1": "An automated confirmation is dispatched to your email immediately upon ordering. Because Siwar operates a physical retail store, automated safety buffers isolate shelf stock from online overselling. In the rare event of an inventory discrepancy during packing, staff will contact you promptly to substitute or refund the missing item.",
       "sec4_title": "4. Delivery Methods & Shipping",
       "sec4_pickup_title": "In-Store Pickup (Hämta i butik)",
-      "sec4_pickup_desc": "Free of charge. Orders are prepared and ready for collection at our Halmstad store within 2 business hours.",
+      "sec4_pickup_desc": "Free of charge. Orders are prepared and ready for collection at our store at {street}, {city} within 2 business hours.",
       "sec4_delivery_title": "Parcel Delivery",
       "sec4_delivery_desc": "Delivered via DHL (normally 1–5 business days). Shipping fees are based on gross packaging weight and include 25% VAT.",
       "sec5_title": "5. Right of Withdrawal & Food Exemptions",
@@ -776,7 +785,7 @@
       "sec5_link_prefix": "For complete legal details and conditions, see our dedicated",
       "sec5_link_text": "Right of Withdrawal & Food Exemption Policy",
       "sec6_title": "6. Defective Items & Complaints (Reklamation)",
-      "sec6_p1": "If an item is damaged or defective upon arrival, notify customer support within a reasonable time with photographic documentation and your order number for a replacement or prompt refund."
+      "sec6_p1": "If an item is damaged or defective upon arrival, notify customer support ({email}) within a reasonable time with photographic documentation and your order number for a replacement or prompt refund."
     },
     "withdrawal": {
       "title": "Right of Withdrawal & Food Exemption",
@@ -797,7 +806,7 @@
       "sec2_exemption2_desc": "Covers opened jars of spices, olive oils, tahini, canned products, and dry pantry staples once the seal is broken.",
       "sec2_conclusion": "By completing checkout, you acknowledge that food products and opened consumables are non-returnable under these statutory exceptions.",
       "sec3_title": "3. How to Exercise Withdrawal (Non-Food Goods)",
-      "sec3_step1": "Send written notice within 14 days of delivery to order{'@'}siwar.se with your order number and the product you wish to return.",
+      "sec3_step1": "Send written notice within 14 days of delivery to {email} with your order number and the product you wish to return.",
       "sec3_step2": "You may also utilize the standard withdrawal template provided by Konsumentverket (Swedish Consumer Agency).",
       "sec3_step3": "Ship the goods back within 14 days of your notification. In accordance with law, return shipping costs are paid by the consumer.",
       "sec4_title": "4. Refunds",
@@ -806,10 +815,10 @@
     "privacy": {
       "title": "Privacy Policy & GDPR",
       "metaTitle": "Privacy Policy",
-      "metaDesc": "Information on how Siwar Butik AB processes personal data under the EU GDPR regulation.",
+      "metaDesc": "Information on how {companyName} processes personal data under the EU GDPR regulation.",
       "gdprBadge": "General Data Protection Regulation (GDPR)",
       "sec1_title": "1. Data Controller",
-      "sec1_p1": "Siwar Butik AB, Åttingsstigen 41, 302 54 Halmstad, Sweden, corporate registration number 559123-4567, is the data controller for the processing of your personal data.",
+      "sec1_p1": "{companyName}, {address}, corporate registration number {orgNumber}, is the data controller for the processing of your personal data.",
       "sec1_p2": "We respect your personal privacy and are committed to ensuring high data protection standards in full compliance with the EU GDPR.",
       "sec2_title": "2. Personal Data We Collect",
       "sec2_p1": "We collect information you provide directly when placing an order or communicating with customer service:",
@@ -825,7 +834,7 @@
       "sec4_item2": "Payment service providers (e.g., Swish and card processors) for secure checkout authorization.",
       "sec5_title": "5. Your Rights",
       "sec5_p1": "Under GDPR, you have the right to request a register extract of your personal data free of charge, request rectification of inaccurate data, and under certain circumstances request erasure or restriction of processing.",
-      "sec5_p2": "To exercise your rights, contact us at order{'@'}siwar.se. You also have the right to lodge a complaint with the Swedish Data Protection Authority (Integritetsskyddsmyndigheten, IMY)."
+      "sec5_p2": "To exercise your rights, contact us at {email}. You also have the right to lodge a complaint with the Swedish Data Protection Authority (Integritetsskyddsmyndigheten, IMY)."
     }
   },
   "checkout": {
