@@ -118,16 +118,16 @@ function calculateComparisonPrice(
 
 <template>
   <article
-    class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition flex flex-col justify-between overflow-hidden group rounded-2xl"
+    class="card bg-base-100 border-2 border-base-300 dark:border-zinc-700 hover:border-emerald-600/70 dark:hover:border-emerald-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between overflow-hidden group rounded-2xl"
   >
-    <!-- Thumbnail Image & Badges -->
-    <figure class="relative h-48 w-full bg-base-200 overflow-hidden">
+    <!-- Thumbnail Image & Badges with Uniform Aspect Ratio & Neutral Backdrop -->
+    <figure class="relative h-52 w-full bg-neutral-50 dark:bg-zinc-900/60 overflow-hidden flex items-center justify-center p-3 border-b border-base-200 dark:border-zinc-800">
       <NuxtLink :to="localePath(`/products/${product.id}`)" class="block h-full w-full">
         <img
           v-if="product.primaryImage?.url"
           :src="product.primaryImage.url"
           :alt="product.primaryImage.altText || getLocalized(product.name)"
-          class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+          class="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-sm"
           loading="lazy"
         />
         <div v-else class="flex h-full w-full items-center justify-center text-base-content/30">
@@ -135,10 +135,10 @@ function calculateComparisonPrice(
         </div>
       </NuxtLink>
 
-      <!-- Bold Discount Tag & Urgent Expiry Badge -->
+      <!-- Distinctive Discount Tag & Urgent Expiry Badge -->
       <div v-if="product.discount && product.discount > 0" class="absolute top-2.5 start-2.5 z-10 pointer-events-none flex flex-col items-start gap-1">
         <span
-          class="relative inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-600 shadow-md shadow-red-500/40 border border-white/20 select-none overflow-hidden tracking-wide"
+          class="relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-600 shadow-md shadow-red-500/40 border border-white/20 select-none overflow-hidden tracking-wide"
         >
           <span class="absolute inset-0 bg-white/15 animate-pulse pointer-events-none" />
           <span class="relative flex size-2 shrink-0">
@@ -146,7 +146,7 @@ function calculateComparisonPrice(
             <span class="relative inline-flex rounded-full size-2 bg-amber-400" />
           </span>
           <span class="relative drop-shadow-xs">
-            {{ t('home.deals.save', { percent: product.discount }) }}
+            -{{ product.discount }}%
           </span>
         </span>
 
@@ -165,7 +165,7 @@ function calculateComparisonPrice(
         type="button"
         :aria-label="isFav ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
         :title="isFav ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
-        class="absolute top-2.5 end-2.5 z-20 btn btn-circle btn-sm bg-base-100 hover:bg-base-200 dark:bg-base-200 dark:hover:bg-base-300 border border-base-300/80 shadow-md transition-all duration-200 active:scale-90"
+        class="absolute top-2.5 end-2.5 z-20 btn btn-circle btn-sm bg-base-100 hover:bg-base-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-base-300/80 dark:border-zinc-700 shadow-md transition-all duration-200 active:scale-90"
         @click.stop.prevent="handleToggleFavorite"
       >
         <Icon
@@ -179,18 +179,6 @@ function calculateComparisonPrice(
           ]"
         />
       </button>
-
-      <!-- Inventory Status Badge -->
-      <div v-if="product.statusCode === 'OUT_OF_STOCK_ONLINE'" class="absolute bottom-2.5 end-2.5 z-10 pointer-events-none">
-        <span class="badge badge-warning badge-sm shadow-md font-semibold">
-          {{ t('inventory.OUT_OF_STOCK_ONLINE', 'Tillfälligt slut online') }}
-        </span>
-      </div>
-      <div v-else-if="product.statusCode === 'OUT_OF_STOCK'" class="absolute bottom-2.5 end-2.5 z-10 pointer-events-none">
-        <span class="badge badge-error badge-sm text-white shadow-md font-semibold">
-          {{ t('inventory.OUT_OF_STOCK', 'Slut i lager') }}
-        </span>
-      </div>
     </figure>
 
     <!-- Card Content -->
@@ -207,20 +195,47 @@ function calculateComparisonPrice(
         </h4>
       </div>
 
-      <!-- Middle: Price & Jämförpris -->
-      <div class="pt-3 border-t border-base-200 mt-4">
-        <div v-if="product.discount && product.discount > 0 && (product.discountedPrice || (product as any).discountPrice)" class="flex items-baseline gap-2 flex-wrap">
-          <span class="text-lg font-black text-error">
-            {{ (((product.discountedPrice || (product as any).discountPrice)[activeCurrency] ?? (product.discountedPrice || (product as any).discountPrice).SEK ?? 0) / 100).toFixed(2) }} {{ activeCurrency }}
-          </span>
-          <span class="text-xs font-semibold text-base-content/50 line-through">
-            {{ ((product.price[activeCurrency] ?? product.price.SEK ?? 0) / 100).toFixed(2) }} {{ activeCurrency }}
-          </span>
+      <!-- Middle: Rounded Price Pill & Jämförpris -->
+      <div class="pt-3 border-t border-base-200 dark:border-zinc-800 mt-3 space-y-1.5">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <!-- Rounded Price Pill with High-Contrast Currency Display -->
+          <div class="inline-flex items-baseline gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs">
+            <template v-if="product.discount && product.discount > 0 && (product.discountedPrice || (product as any).discountPrice)">
+              <span class="text-base sm:text-lg font-black text-rose-600 dark:text-rose-400 tracking-tight">
+                {{ (((product.discountedPrice || (product as any).discountPrice)[activeCurrency] ?? (product.discountedPrice || (product as any).discountPrice).SEK ?? 0) / 100).toFixed(2) }}
+              </span>
+              <span class="text-xs font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-tight">
+                {{ activeCurrency }}
+              </span>
+              <span class="text-xs font-semibold text-base-content/40 dark:text-zinc-500 line-through ms-1">
+                {{ ((product.price[activeCurrency] ?? product.price.SEK ?? 0) / 100).toFixed(2) }}
+              </span>
+            </template>
+            <template v-else>
+              <span class="text-base sm:text-lg font-black text-base-content dark:text-emerald-300 tracking-tight">
+                {{ ((product.price[activeCurrency] ?? product.price.SEK ?? 0) / 100).toFixed(2) }}
+              </span>
+              <span class="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-tight">
+                {{ activeCurrency }}
+              </span>
+            </template>
+          </div>
+
+          <!-- Stock Status Badge if Out of Stock -->
+          <div v-if="product.statusCode === 'OUT_OF_STOCK_ONLINE'">
+            <span class="badge badge-warning badge-sm shadow-xs font-semibold">
+              {{ t('inventory.OUT_OF_STOCK_ONLINE', 'Slut online') }}
+            </span>
+          </div>
+          <div v-else-if="product.statusCode === 'OUT_OF_STOCK'">
+            <span class="badge badge-error badge-sm text-white shadow-xs font-semibold">
+              {{ t('inventory.OUT_OF_STOCK', 'Slut i lager') }}
+            </span>
+          </div>
         </div>
-        <div v-else class="text-lg font-black text-base-content">
-          {{ ((product.price[activeCurrency] ?? product.price.SEK ?? 0) / 100).toFixed(2) }} {{ activeCurrency }}
-        </div>
-        <div class="text-[11px] text-base-content/60 mt-0.5">
+
+        <!-- Jämförpris -->
+        <div class="text-[11px] font-medium text-base-content/60 dark:text-zinc-400">
           {{
             calculateComparisonPrice(
               (product.discount && product.discount > 0 && (product.discountedPrice || (product as any).discountPrice))
@@ -233,11 +248,11 @@ function calculateComparisonPrice(
       </div>
 
       <!-- Bottom: Dual Action Row -->
-      <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-base-200">
+      <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-base-200 dark:border-zinc-800">
         <!-- View Product -->
         <NuxtLink
           :to="localePath(`/products/${product.id}`)"
-          class="btn btn-sm btn-outline h-auto min-h-8 py-1.5 leading-tight border-base-content/20 text-base-content hover:bg-base-200 hover:border-base-content/30 gap-1.5 font-semibold transition-all rounded-xl text-center flex items-center justify-center"
+          class="btn btn-sm h-9 min-h-9 py-0 border border-base-300 dark:border-zinc-700 hover:border-emerald-500 bg-base-100 hover:bg-base-200 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 text-base-content font-bold transition-all rounded-xl text-center flex items-center justify-center gap-1.5 shadow-2xs"
         >
           <Icon name="lucide:eye" class="size-4 shrink-0" />
           <span>{{ t('catalog.viewProduct', 'Visa') }}</span>
@@ -248,7 +263,7 @@ function calculateComparisonPrice(
           type="button"
           :disabled="!product.canAddToCart"
           @click.stop="handleAddToCart"
-          class="btn btn-sm h-auto min-h-8 py-1.5 leading-tight !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none gap-1.5 font-bold hover:scale-[1.02] transition-all shadow-sm rounded-xl disabled:opacity-50 disabled:hover:scale-100 text-center flex items-center justify-center"
+          class="btn btn-sm h-9 min-h-9 py-0 !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none gap-1.5 font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-sm rounded-xl disabled:opacity-50 disabled:hover:scale-100 text-center flex items-center justify-center"
         >
           <Icon name="lucide:shopping-cart" class="size-4 shrink-0" />
           <span>{{ t('cart.add', 'Köp') }}</span>
