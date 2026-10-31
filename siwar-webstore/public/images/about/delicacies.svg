@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="delicacyGlow" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="100%" stop-color="#022c22"/>
+    </radialGradient>
+    <linearGradient id="oliveOil" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#ca8a04"/>
+      <stop offset="100%" stop-color="#65a30d"/>
+    </linearGradient>
+    <linearGradient id="pomegranate" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e11d48"/>
+      <stop offset="100%" stop-color="#881337"/>
+    </linearGradient>
+    <linearGradient id="shelfGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Mediterranean Grocery Deep Emerald Background -->
+  <rect width="800" height="600" fill="url(#delicacyGlow)"/>
+
+  <!-- Grocery Shelving Unit -->
+  <!-- Top Shelf -->
+  <rect x="60" y="240" width="680" height="24" rx="4" fill="url(#shelfGrad)" stroke="#64748b" stroke-width="2"/>
+  <!-- Bottom Shelf -->
+  <rect x="60" y="470" width="680" height="28" rx="4" fill="url(#shelfGrad)" stroke="#64748b" stroke-width="2"/>
+
+  <!-- Top Shelf Items: Artisanal Bottles & Canned Delicacies -->
+  <!-- Extra Virgin Olive Oil Bottle 1 -->
+  <g transform="translate(130, 80)">
+    <rect x="18" y="0" width="14" height="30" rx="3" fill="#ca8a04"/>
+    <rect x="0" y="30" width="50" height="130" rx="10" fill="url(#oliveOil)" stroke="#65a30d" stroke-width="2"/>
+    <rect x="8" y="70" width="34" height="50" rx="4" fill="#fef9c3"/>
+    <text x="25" y="95" fill="#14532d" font-family="system-ui, sans-serif" font-size="8" font-weight="900" text-anchor="middle">EXTRA</text>
+    <text x="25" y="107" fill="#14532d" font-family="system-ui, sans-serif" font-size="8" font-weight="900" text-anchor="middle">VIRGIN</text>
+  </g>
+
+  <!-- Pomegranate Molasses Bottle 2 -->
+  <g transform="translate(210, 95)">
+    <rect x="14" y="0" width="12" height="25" rx="2" fill="#be123c"/>
+    <rect x="0" y="25" width="40" height="120" rx="8" fill="url(#pomegranate)" stroke="#9f1239" stroke-width="2"/>
+    <rect x="6" y="60" width="28" height="45" rx="3" fill="#ffe4e6"/>
+    <text x="20" y="85" fill="#881337" font-family="system-ui, sans-serif" font-size="7" font-weight="800" text-anchor="middle">DIBIS</text>
+  </g>
+
+  <!-- Pickled Olives Glass Jar 3 -->
+  <g transform="translate(285, 115)">
+    <rect x="5" y="0" width="55" height="15" rx="4" fill="#fbbf24"/>
+    <rect x="0" y="15" width="65" height="110" rx="12" fill="#365314" stroke="#65a30d" stroke-width="2" opacity="0.9"/>
+    <!-- Olives inside -->
+    <circle cx="20" cy="50" r="10" fill="#14532d"/>
+    <circle cx="45" cy="45" r="9" fill="#166534"/>
+    <circle cx="32" cy="75" r="10" fill="#14532d"/>
+    <circle cx="50" cy="90" r="8" fill="#15803d"/>
+    <circle cx="18" cy="95" r="9" fill="#14532d"/>
+  </g>
+
+  <!-- Tahini Ceramic Jar 4 -->
+  <g transform="translate(385, 110)">
+    <rect x="5" y="0" width="60" height="15" rx="4" fill="#d97706"/>
+    <rect x="0" y="15" width="70" height="115" rx="14" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+    <rect x="8" y="50" width="54" height="45" rx="4" fill="#d97706"/>
+    <text x="35" y="75" fill="#ffffff" font-family="system-ui, sans-serif" font-size="10" font-weight="900" text-anchor="middle">TAHINI</text>
+    <text x="35" y="87" fill="#fef3c7" font-family="system-ui, sans-serif" font-size="7" font-weight="700" text-anchor="middle">100% SESAME</text>
+  </g>
+
+  <!-- Rose Water Bottle 5 -->
+  <g transform="translate(490, 85)">
+    <rect x="15" y="0" width="12" height="25" rx="2" fill="#f43f5e"/>
+    <rect x="0" y="25" width="42" height="130" rx="8" fill="#fbcfe8" stroke="#f43f5e" stroke-width="2"/>
+    <rect x="6" y="65" width="30" height="50" rx="3" fill="#ffffff"/>
+    <text x="21" y="90" fill="#be185d" font-family="system-ui, sans-serif" font-size="8" font-weight="800" text-anchor="middle">ROSE</text>
+    <text x="21" y="102" fill="#be185d" font-family="system-ui, sans-serif" font-size="7" font-weight="800" text-anchor="middle">WATER</text>
+  </g>
+
+  <!-- Turkish Coffee Tins 6 -->
+  <g transform="translate(565, 125)">
+    <rect x="0" y="0" width="60" height="100" rx="8" fill="#78350f" stroke="#ca8a04" stroke-width="2"/>
+    <rect x="6" y="25" width="48" height="45" rx="4" fill="#ca8a04"/>
+    <text x="30" y="48" fill="#451a03" font-family="system-ui, sans-serif" font-size="9" font-weight="900" text-anchor="middle">KAHVE</text>
+    <text x="30" y="60" fill="#451a03" font-family="system-ui, sans-serif" font-size="7" font-weight="700" text-anchor="middle">M/ KARDEM.</text>
+  </g>
+
+  <!-- Bottom Shelf: Bulk Grains & Legumes (Basmati, Lentils, Chickpeas) -->
+  <g transform="translate(110, 310)">
+    <!-- Rice Bag -->
+    <rect x="0" y="0" width="120" height="160" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+    <rect x="10" y="30" width="100" height="60" rx="4" fill="#0284c7"/>
+    <text x="60" y="60" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="900" text-anchor="middle">BASMATI</text>
+    <text x="60" y="75" fill="#e0f2fe" font-family="system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle">PREMIUM 5KG</text>
+  </g>
+
+  <g transform="translate(270, 320)">
+    <!-- Red Lentils Bag -->
+    <rect x="0" y="0" width="110" height="150" rx="10" fill="#ea580c" stroke="#c2410c" stroke-width="2"/>
+    <rect x="10" y="30" width="90" height="50" rx="4" fill="#fef08a"/>
+    <text x="55" y="58" fill="#9a3412" font-family="system-ui, sans-serif" font-size="11" font-weight="900" text-anchor="middle">RÖDA LINSER</text>
+  </g>
+
+  <g transform="translate(420, 320)">
+    <!-- Chickpeas Jar -->
+    <rect x="0" y="0" width="110" height="150" rx="10" fill="#ca8a04" stroke="#a16207" stroke-width="2"/>
+    <rect x="10" y="30" width="90" height="50" rx="4" fill="#ffffff"/>
+    <text x="55" y="58" fill="#713f12" font-family="system-ui, sans-serif" font-size="11" font-weight="900" text-anchor="middle">KIKÄRTOR</text>
+  </g>
+
+  <g transform="translate(570, 310)">
+    <!-- Bulgur Bag -->
+    <rect x="0" y="0" width="120" height="160" rx="10" fill="#fbbf24" stroke="#d97706" stroke-width="2"/>
+    <rect x="10" y="30" width="100" height="60" rx="4" fill="#15803d"/>
+    <text x="60" y="60" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="900" text-anchor="middle">BULGUR</text>
+    <text x="60" y="75" fill="#dcfce7" font-family="system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle">GROV / FIN</text>
+  </g>
+
+  <!-- Caption Banner -->
+  <rect x="190" y="520" width="420" height="32" rx="16" fill="#0f172a" opacity="0.85"/>
+  <text x="400" y="541" fill="#fef08a" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">Kvalitetskolonial • Olivolja, Tahini &amp; Äkta Skafferivaror</text>
+</svg>
