@@ -68,20 +68,20 @@ watch(
   { deep: true }
 )
 
-const clearModalRef = ref<HTMLDialogElement | null>(null)
+const isClearModalOpen = ref(false)
 
 function openClearModal() {
-  clearModalRef.value?.showModal()
+  isClearModalOpen.value = true
 }
 
 function closeClearModal() {
-  clearModalRef.value?.close()
+  isClearModalOpen.value = false
 }
 
 function confirmClearFavorites() {
   favoritesStore.clearFavorites()
   products.value = []
-  clearModalRef.value?.close()
+  isClearModalOpen.value = false
 }
 
 useSeoMeta({
@@ -222,48 +222,18 @@ useSeoMeta({
       />
     </div>
 
-    <!-- Clear Favorites Confirmation Modal (Teleported to Body) -->
-    <ClientOnly>
-      <Teleport to="body">
-        <dialog ref="clearModalRef" class="modal" @close="closeClearModal">
-          <div class="modal-box max-w-md bg-base-100 dark:bg-base-200 border border-base-300 shadow-2xl p-6 sm:p-7 rounded-3xl space-y-5 text-base-content">
-            <div class="flex items-start gap-3.5">
-              <div class="p-3 bg-error/10 text-error rounded-2xl shrink-0 mt-0.5">
-                <Icon name="lucide:trash-2" class="size-6 text-error" />
-              </div>
-              <div class="space-y-1.5 flex-1">
-                <h3 class="font-black text-lg text-base-content leading-snug">
-                  {{ t('favorites.clearModalTitle', 'Rensa alla favoriter?') }}
-                </h3>
-                <p class="text-sm text-base-content/70 leading-relaxed font-normal">
-                  {{ t('favorites.clearModalDesc', 'Är du säker på att du vill ta bort alla dina sparade favoriter? Denna åtgärd kan inte ångras.') }}
-                </p>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-base-300">
-              <button
-                type="button"
-                class="btn btn-sm h-10 px-4 rounded-xl btn-ghost hover:bg-base-300 text-base-content font-semibold"
-                @click="closeClearModal"
-              >
-                {{ t('favorites.clearCancel', 'Avbryt') }}
-              </button>
-              <button
-                type="button"
-                class="btn btn-sm h-10 px-4 rounded-xl !bg-red-600 hover:!bg-red-700 !text-white !border-none font-bold shadow-sm gap-1.5"
-                @click="confirmClearFavorites"
-              >
-                <Icon name="lucide:trash-2" class="size-4" />
-                <span>{{ t('favorites.clearConfirmBtn', 'Ja, rensa alla') }}</span>
-              </button>
-            </div>
-          </div>
-          <form method="dialog" class="modal-backdrop bg-black/60 backdrop-blur-xs" @click="closeClearModal">
-            <button type="button" class="sr-only">close</button>
-          </form>
-        </dialog>
-      </Teleport>
-    </ClientOnly>
+    <!-- Clear Favorites Confirmation Modal -->
+    <ConfirmModal
+      :is-open="isClearModalOpen"
+      :title="t('favorites.clearModalTitle', 'Rensa alla favoriter?')"
+      :message="t('favorites.clearModalDesc', 'Är du säker på att du vill ta bort alla dina sparade favoriter? Denna åtgärd kan inte ångras.')"
+      icon="lucide:trash-2"
+      variant="danger"
+      :confirm-text="t('favorites.clearConfirmBtn', 'Ja, rensa alla')"
+      :cancel-text="t('favorites.clearCancel', 'Avbryt')"
+      confirm-icon="lucide:trash-2"
+      @confirm="confirmClearFavorites"
+      @close="closeClearModal"
+    />
   </div>
 </template>
