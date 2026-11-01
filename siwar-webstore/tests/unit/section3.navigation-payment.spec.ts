@@ -29,11 +29,18 @@ describe('Section 3. Navigation & Payment Refinements', () => {
       expect(paymentPageContent).not.toMatch(/confirm\(/)
     })
 
-    it('renders a DaisyUI dialog modal with teleport and accessibility tokens', () => {
-      expect(paymentPageContent).toContain('<dialog ref="cancelModalRef" class="modal"')
-      expect(paymentPageContent).toContain('<Teleport to="body">')
-      expect(paymentPageContent).toContain('class="modal-box')
-      expect(paymentPageContent).toContain('class="modal-backdrop')
+    it('renders a reusable confirmation modal with accessibility and brand tokens', () => {
+      expect(paymentPageContent).toContain('<ConfirmModal')
+      expect(paymentPageContent).toContain('isCancelModalOpen')
+      expect(paymentPageContent).toContain('confirmCancelOrder')
+      expect(paymentPageContent).toContain('closeCancelModal')
+
+      const baseModalPath = path.resolve(__dirname, '../../components/BaseModal.vue')
+      const baseModalContent = fs.readFileSync(baseModalPath, 'utf-8')
+      expect(baseModalContent).toContain('<Teleport to="body">')
+      expect(baseModalContent).toContain('<dialog')
+      expect(baseModalContent).toContain('class="modal"')
+      expect(baseModalContent).toContain('modal-backdrop')
     })
 
     it('provides both "Keep shopping" and "Cancel order" actions', () => {
@@ -42,12 +49,14 @@ describe('Section 3. Navigation & Payment Refinements', () => {
     })
 
     it('uses high contrast non-glassmorphism brand colors for buttons', () => {
+      const confirmModalPath = path.resolve(__dirname, '../../components/ConfirmModal.vue')
+      const confirmModalContent = fs.readFileSync(confirmModalPath, 'utf-8')
       // Cancel button must have explicit !text-white on error red
-      expect(paymentPageContent).toContain('!bg-red-600')
-      expect(paymentPageContent).toContain('!text-white')
+      expect(confirmModalContent).toContain('!bg-red-600')
+      expect(confirmModalContent).toContain('!text-white')
       // No backdrop blur on modal box
-      expect(paymentPageContent).not.toContain('backdrop-blur-md')
-      expect(paymentPageContent).not.toContain('backdrop-blur-lg')
+      expect(confirmModalContent).not.toContain('backdrop-blur-md')
+      expect(confirmModalContent).not.toContain('backdrop-blur-lg')
     })
   })
 
