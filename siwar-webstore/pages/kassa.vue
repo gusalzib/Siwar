@@ -633,9 +633,9 @@ async function handleProceedToPayment() {
                   :title="t('footer.payment.swish', 'Swish Handel')"
                 >
                   
-                  <img src="/public/images/patterns/Swish Logo Primary Dark-BG SVG.svg" alt="Swish" class="h-5 w-auto object-contain" />
+                  <img src="/public/images/patterns/Swish logo secondary light-bg 720.svg" alt="Swish" class="h-5 w-auto object-contain" />
 
-                  <span class="tracking-tight text-slate-900 font-extrabold">swish</span>
+                  <!-- <span class="tracking-tight text-slate-900 font-extrabold">swish</span> -->
                 </div>
               </label>
             </div>

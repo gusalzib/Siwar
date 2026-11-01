@@ -267,18 +267,18 @@ const hasActiveSocial = computed(() => {
             
             <!-- Swish Badge -->
             <div
-              class="h-9 px-3 rounded-lg bg-white text-slate-900 flex items-center gap-1.5 shadow-xs font-bold text-xs"
+              class="h-24 px-10 rounded-lg bg-white text-slate-900 flex items-center gap-1.5 shadow-xs font-bold text-xs"
               :title="t('footer.payment.swish', 'Swish Handel')"
             >
               
-              <img src="/public/images/patterns/Swish Logo Primary Dark-BG SVG.svg" alt="Swish" class="h-5 w-auto object-contain" />
+              <img src="/public/images/patterns/Swish Logo Primary Light-BG SVG.svg" alt="Swish" class="h-20 w-auto object-contain" />
 
-              <span class="tracking-tight text-slate-900 font-extrabold">swish</span>
+              <!-- <span class="tracking-tight text-slate-900 font-extrabold">swish</span> -->
             </div>
 
             <!-- Visa Badge -->
             <div
-              class="h-9 px-3 rounded-lg bg-white text-[#1a1f71] flex items-center justify-center shadow-xs font-black text-sm italic tracking-widest"
+              class="h-24 px-10 rounded-lg bg-white text-[#1a1f71] flex items-center justify-center shadow-xs font-black text-sm italic tracking-widest"
               :title="t('footer.payment.visa', 'Visa')"
             >
               VISA
@@ -286,14 +286,14 @@ const hasActiveSocial = computed(() => {
 
             <!-- Mastercard Badge -->
             <div
-              class="h-9 px-3 rounded-lg bg-white flex items-center gap-1 shadow-xs font-bold text-xs"
+              class="h-24 px-10 rounded-lg bg-white flex items-center gap-1 shadow-xs font-bold text-xs"
               :title="t('footer.payment.mastercard', 'Mastercard')"
             >
               <div class="flex -space-x-1.5">
                 <span class="size-4 rounded-full bg-[#eb001b] inline-block" />
                 <span class="size-4 rounded-full bg-[#f79e1b] inline-block opacity-90" />
               </div>
-              <span class="text-slate-800 text-[10px] font-extrabold tracking-tight">mastercard</span>
+              <span class="text-slate-800 text-[14px] font-extrabold tracking-tight">mastercard</span>
             </div>
 
           </div>
