@@ -394,7 +394,7 @@ async function handleProceedToPayment() {
                   />
                 </div>
                 <span class="text-xs text-base-content/60 mt-1">
-                  {{ t('checkout.parcelDeliveryDesc', '1–3 vardagar via PostNord') }}
+                  {{ t('checkout.parcelDeliveryDesc', '1–3 vardagar via DHL') }}
                 </span>
                 <span class="text-xs font-semibold mt-2 font-mono">
                   {{

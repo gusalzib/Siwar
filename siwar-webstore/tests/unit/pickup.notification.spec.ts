@@ -190,7 +190,7 @@ describe('AC-4: Ready for Pickup Notification (In-Store Pickup)', () => {
       const html = mailService.generatePackedHtml(order, 'sv', DEFAULT_PICKUP_CONFIG)
 
       expect(html).toContain('Din order är färdigpackad!')
-      expect(html).toContain('Paketet inväntar upphämtning av PostNord')
+      expect(html).toContain('Paketet inväntar upphämtning av DHL')
       expect(html).not.toContain('Information för utlämning i butik')
       expect(html).not.toContain('Öppettider för utlämning')
     })

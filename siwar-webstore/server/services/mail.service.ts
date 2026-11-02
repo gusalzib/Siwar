@@ -154,7 +154,7 @@ export const mailService = {
     params: { order: IOrder; trackingCode?: string; carrier?: string },
     locale: EmailLocale = 'sv'
   ) {
-    const { order, trackingCode, carrier = 'PostNord' } = params
+    const { order, trackingCode, carrier = 'DHL' } = params
     const resend = getResendClient()
     const from = getMailFrom()
     const to = order.customer?.email
@@ -475,7 +475,7 @@ function generatePackedHtml(
       greeting: `مرحباً ${customerName}،`,
       body: isPickup
         ? `يسعدنا إبلاغك بأن طلبك رقم <strong>${order.orderReference}</strong> أصبح مجهزاً بالكامل ومتاحاً للاستلام الآن في المتجر.`
-        : `لقد انتهينا من تجهيز وتغليف طلبك رقم <strong>${order.orderReference}</strong>. الطرد جاهز الآن وفي انتظار تسليمه لشركة الشحن (PostNord). سنرسل لك رسالة أخرى برابط التتبع بمجرد خروج الشحنة.`,
+        : `لقد انتهينا من تجهيز وتغليف طلبك رقم <strong>${order.orderReference}</strong>. الطرد جاهز الآن وفي انتظار تسليمه لشركة الشحن (DHL). سنرسل لك رسالة أخرى برابط التتبع بمجرد خروج الشحنة.`,
       pickupCardTitle: 'معلومات الاستلام من المتجر',
       addressLabel: 'عنوان المتجر',
       hoursLabel: 'أوقات الاستلام',
@@ -487,7 +487,7 @@ function generatePackedHtml(
       greeting: `Hej ${customerName},`,
       body: isPickup
         ? `Din order <strong>${order.orderReference}</strong> är nu färdigpackad och finns redo för avhämtning i vår butik.`
-        : `Vi har nu packat din order <strong>${order.orderReference}</strong>. Paketet inväntar upphämtning av PostNord. Vi meddelar dig med spårningslänk så snart transportören har hämtat paketet.`,
+        : `Vi har nu packat din order <strong>${order.orderReference}</strong>. Paketet inväntar upphämtning av DHL. Vi meddelar dig med spårningslänk så snart transportören har hämtat paketet.`,
       pickupCardTitle: 'Information för utlämning i butik',
       addressLabel: 'Hämtadress',
       hoursLabel: 'Öppettider för utlämning',
@@ -499,7 +499,7 @@ function generatePackedHtml(
       greeting: `Hello ${customerName},`,
       body: isPickup
         ? `Your order <strong>${order.orderReference}</strong> is packed and ready for collection at our store.`
-        : `We have packed your order <strong>${order.orderReference}</strong>. It is now awaiting courier collection by PostNord. We will notify you with tracking details as soon as it is dispatched.`,
+        : `We have packed your order <strong>${order.orderReference}</strong>. It is now awaiting courier collection by DHL. We will notify you with tracking details as soon as it is dispatched.`,
       pickupCardTitle: 'In-Store Pickup Information',
       addressLabel: 'Pickup Address',
       hoursLabel: 'Pickup Hours',
@@ -587,7 +587,7 @@ function generateDispatchedReceiptHtml(
       greeting: `مرحباً ${order.customer.fullName}،`,
       intro: `يسرنا إبلاغك بأن طلبك رقم <strong>${order.orderReference}</strong> قد تم تسليمه لشركة الشحن (${carrier}) وهو الآن في طريقه إليك.`,
       settlementNotice: 'تم سحب المبلغ النهائي بنجاح من وسيلة الدفع الخاصة بك.',
-      trackingBtn: 'تتبع الشحنة على PostNord',
+      trackingBtn: 'تتبع الشحنة على DHL',
       trackingCodeLabel: 'رقم التتبع (Kolli-ID):',
       receiptBtn: 'عرض الفاتورة الضريبية الكاملة',
       addressTitle: 'عنوان التسليم:',
@@ -597,7 +597,7 @@ function generateDispatchedReceiptHtml(
       greeting: `Hej ${order.customer.fullName},`,
       intro: `Ditt paket för order <strong>${order.orderReference}</strong> har lämnats över till ${carrier} och är nu på väg till dig.`,
       settlementNotice: 'Det slutgiltiga beloppet har nu dragits från ditt betalkort.',
-      trackingBtn: 'Spåra paketet hos PostNord',
+      trackingBtn: 'Spåra paketet hos DHL',
       trackingCodeLabel: 'Kolli-ID / Försändelse-ID:',
       receiptBtn: 'Öppna fullständigt kvitto',
       addressTitle: 'Leveransadress:',
@@ -607,7 +607,7 @@ function generateDispatchedReceiptHtml(
       greeting: `Hello ${order.customer.fullName},`,
       intro: `Your package for order <strong>${order.orderReference}</strong> has been handed over to ${carrier} and is on its way.`,
       settlementNotice: 'The final fulfilled amount has now been captured from your payment method.',
-      trackingBtn: 'Track Package on PostNord',
+      trackingBtn: 'Track Package on DHL',
       trackingCodeLabel: 'Tracking Number (Kolli-ID):',
       receiptBtn: 'Open Complete Tax Receipt',
       addressTitle: 'Delivery Address:',
