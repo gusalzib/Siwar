@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   
   const body = await readBody(event)
   try {
-    const updated = await Allergen.findByIdAndUpdate(id, body, { new: true })
+    const updated = await Allergen.findByIdAndUpdate(id, body, { returnDocument: 'after' })
     if (!updated) throw createError({ statusCode: 404, statusMessage: 'Not found' })
     return updated
   } catch (error: any) {
