@@ -26,6 +26,11 @@ const city = computed(() => settings.value?.address?.city || 'Halmstad')
 const country = computed(() => settings.value?.address?.country || 'Sverige')
 const fullAddress = computed(() => `${street.value}, ${postalCode.value} ${city.value}, ${country.value}`)
 
+// Dynamic delivery days from StoreSettings
+const shipping = computed(() => settings.value?.shipping || {})
+const deliveryMin = computed(() => shipping.value?.deliveryDays?.min ?? 1)
+const deliveryMax = computed(() => shipping.value?.deliveryDays?.max ?? 5)
+
 useSeoMeta({
   title: () => `${t('legal.terms.metaTitle')} | ${storeName.value}`,
   description: () => t('legal.terms.metaDesc', { storeName: storeName.value }),
@@ -127,7 +132,11 @@ useSeoMeta({
               <strong>{{ t('legal.terms.sec4_pickup_title') }}:</strong> {{ t('legal.terms.sec4_pickup_desc', { street, city }) }}
             </li>
             <li>
-              <strong>{{ t('legal.terms.sec4_delivery_title') }}:</strong> {{ t('legal.terms.sec4_delivery_desc') }}
+              <strong>{{ t('legal.terms.sec4_delivery_title') }}:</strong>
+                {{ t('legal.terms.sec4_delivery_desc', { min: deliveryMin, max: deliveryMax }) }}
+              <NuxtLink :to="localePath('/frakt')" class="text-primary underline font-medium ms-1">
+                {{ t('legal.terms.readShippingPolicy', 'Läs mer om frakt & priser') }}
+              </NuxtLink>.
             </li>
           </ul>
         </section>
