@@ -4,12 +4,13 @@ import { getPaymentGateway } from '~/server/services/payments'
 
 interface CancelSessionBody {
   orderReference: string
+  status?: 'CANCELLED' | 'ABANDONED'
 }
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<CancelSessionBody>(event)
 
-  if (!body.orderReference) {
+  if (!body?.orderReference) {
     throw createError({ statusCode: 400, statusMessage: 'Missing order reference' })
   }
 
@@ -36,9 +37,9 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Mutate database status to CANCELLED
-  order.paymentStatus = 'CANCELLED'
+  // Mutate database status to CANCELLED or ABANDONED
+  order.paymentStatus = body.status === 'ABANDONED' ? 'ABANDONED' : 'CANCELLED'
   await order.save()
 
-  return { success: true }
+  return { success: true, paymentStatus: order.paymentStatus }
 })

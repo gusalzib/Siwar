@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { usePreferencesStore, type CurrencyCode } from './preferences'
-import { DEFAULT_SHIPPING_CONFIG } from '~/utils/shipping'
+import { DEFAULT_SHIPPING_CONFIG, type ShippingConfig } from '~/utils/shipping'
 
 export interface MultilingualText {
   ar?: string
@@ -26,6 +26,7 @@ export interface CartItem {
   grossWeight: number // Packaging weight in grams
   availableStock: number // Clamped by MAX(0, Total_Stock - Buffer)
   quantity: number
+  freeShipping?: boolean
 }
 
 export type CartActionStatus =
@@ -55,10 +56,37 @@ export const useCartStore = defineStore('cart', () => {
   const items = ref<CartItem[]>([])
   const isDrawerOpen = ref(false)
   const isHydrated = ref(false)
+  const shippingConfig = ref<ShippingConfig>({ ...DEFAULT_SHIPPING_CONFIG })
 
   // ---------------------------------------------------------------------------
   // Session Persistence (AC-3)
   // ---------------------------------------------------------------------------
+  async function fetchShippingConfig(): Promise<void> {
+    if (!isClient()) return
+    try {
+      const res = await $fetch<any>('/api/settings')
+      if (res?.shipping) {
+        const s = res.shipping
+        shippingConfig.value.freeShippingItemGrantsEntireOrder = Boolean(s.freeShippingItemGrantsEntireOrder)
+        if (typeof s.freeShippingThresholdMinorSEK === 'number') {
+          shippingConfig.value.freeShippingThreshold.SEK = s.freeShippingThresholdMinorSEK
+        }
+        if (Array.isArray(s.tiers) && s.tiers.length > 0) {
+          shippingConfig.value.tiers = s.tiers.map((t: any) => ({
+            maxWeightGrams: t.maxWeightGrams,
+            price: {
+              SEK: t.feeMinorSEK ?? t.price?.SEK ?? 7700,
+              EUR: t.feeMinorEUR ?? t.price?.EUR ?? Math.round((t.feeMinorSEK ?? 7700) / 10),
+              USD: t.feeMinorUSD ?? t.price?.USD ?? Math.round((t.feeMinorSEK ?? 7700) / 10),
+            },
+          }))
+        }
+      }
+    } catch {
+      // Fallback silently to DEFAULT_SHIPPING_CONFIG
+    }
+  }
+
   function hydrateCart(): void {
     if (isClient() && !isHydrated.value) {
       try {
@@ -73,12 +101,16 @@ export const useCartStore = defineStore('cart', () => {
         console.error('Failed to hydrate cart from localStorage:', err)
       } finally {
         isHydrated.value = true
+        fetchShippingConfig()
         if (items.value.length > 0) {
           refreshCartPricesAndStock()
         }
       }
-    } else if (isClient() && isHydrated.value && items.value.length > 0) {
-      refreshCartPricesAndStock()
+    } else if (isClient() && isHydrated.value) {
+      fetchShippingConfig()
+      if (items.value.length > 0) {
+        refreshCartPricesAndStock()
+      }
     }
   }
 
@@ -106,6 +138,8 @@ export const useCartStore = defineStore('cart', () => {
 
   const totalGrossWeightGrams = computed<number>(() => {
     return items.value.reduce((sum, item) => {
+      // Exclude promotional free shipping items from parcel gross weight
+      if (item.freeShipping) return sum
       const weight = Number(item.grossWeight) || 0
       return sum + (weight * item.quantity)
     }, 0)
@@ -154,6 +188,28 @@ export const useCartStore = defineStore('cart', () => {
   // ---------------------------------------------------------------------------
   // Shipping Calculations (Tiered by weight & SEK subtotal)
   // ---------------------------------------------------------------------------
+  // 1. Evaluate if free shipping threshold is met in the current currency
+  //    OR if all items are free shipping
+  //    OR if freeShippingItemGrantsEntireOrder is enabled and >= 1 item has freeShipping
+  const isFreeShippingQualified = computed<boolean>(() => {
+    if (items.value.length === 0) return false
+
+    const hasFreeShippingItem = items.value.some((item) => Boolean(item.freeShipping))
+    const allFreeShipping = items.value.every((item) => Boolean(item.freeShipping))
+
+    if (allFreeShipping) {
+      return true
+    }
+
+    if (shippingConfig.value.freeShippingItemGrantsEntireOrder && hasFreeShippingItem) {
+      return true
+    }
+
+    const curr = activeCurrency.value
+    const threshold = shippingConfig.value.freeShippingThreshold[curr] ?? shippingConfig.value.freeShippingThreshold.SEK
+    return cartSubtotalMinor.value >= threshold
+  })
+
   const shippingFeeMinor = computed<number>(() => {
     if (items.value.length === 0 || isFreeShippingQualified.value) {
       return 0
@@ -161,28 +217,29 @@ export const useCartStore = defineStore('cart', () => {
 
     const curr = activeCurrency.value
     const weightGrams = totalGrossWeightGrams.value
-    const matchedTier = DEFAULT_SHIPPING_CONFIG.tiers.find(
+    if (weightGrams <= 0) {
+      return 0
+    }
+
+    const tiers = shippingConfig.value.tiers && shippingConfig.value.tiers.length > 0
+      ? shippingConfig.value.tiers
+      : DEFAULT_SHIPPING_CONFIG.tiers
+
+    const matchedTier = tiers.find(
       (tier) => weightGrams <= tier.maxWeightGrams
     )
 
-    const fallbackTier = DEFAULT_SHIPPING_CONFIG.tiers[DEFAULT_SHIPPING_CONFIG.tiers.length - 1]
+    const fallbackTier = tiers[tiers.length - 1]
     const targetTier = matchedTier || fallbackTier
 
     return targetTier?.price[curr] ?? targetTier?.price.SEK ?? 10900
   })
 
-  // 1. Evaluate if free shipping threshold is met in the current currency
-  const isFreeShippingQualified = computed<boolean>(() => {
-    if (items.value.length === 0) return false
-    const curr = activeCurrency.value
-    const threshold = DEFAULT_SHIPPING_CONFIG.freeShippingThreshold[curr] ?? DEFAULT_SHIPPING_CONFIG.freeShippingThreshold.SEK
-    return cartSubtotalMinor.value >= threshold
-  })
-
   // 2. Remaining amount needed for free shipping in active currency
   const remainingForFreeShippingMinor = computed<number>(() => {
+    if (isFreeShippingQualified.value) return 0
     const curr = activeCurrency.value
-    const threshold = DEFAULT_SHIPPING_CONFIG.freeShippingThreshold[curr] ?? DEFAULT_SHIPPING_CONFIG.freeShippingThreshold.SEK
+    const threshold = shippingConfig.value.freeShippingThreshold[curr] ?? shippingConfig.value.freeShippingThreshold.SEK
     return Math.max(0, threshold - cartSubtotalMinor.value)
   })
 
@@ -250,6 +307,9 @@ export const useCartStore = defineStore('cart', () => {
       // Update available stock and price snapshot if passed afresh
       existing.availableStock = item.availableStock
       existing.price = item.price
+      if (typeof item.freeShipping === 'boolean') {
+        existing.freeShipping = item.freeShipping
+      }
 
       const targetQty = existing.quantity + requestedQuantity
 
@@ -423,6 +483,12 @@ export const useCartStore = defineStore('cart', () => {
           hasMutated = true
         }
 
+        // Synchronize free shipping status
+        if (typeof live.freeShipping === 'boolean' && item.freeShipping !== live.freeShipping) {
+          item.freeShipping = live.freeShipping
+          hasMutated = true
+        }
+
         // Clamp quantity if live stock is below current cart quantity
         if (typeof live.availableStock === 'number' && item.quantity > live.availableStock) {
           item.quantity = Math.max(0, live.availableStock)
@@ -443,6 +509,7 @@ export const useCartStore = defineStore('cart', () => {
     items,
     isDrawerOpen,
     isHydrated,
+    shippingConfig,
     // Metrics & Preferences
     activeCurrency,
     totalItemCount,
@@ -459,6 +526,7 @@ export const useCartStore = defineStore('cart', () => {
     grandTotalMinor,
     // Actions
     hydrateCart,
+    fetchShippingConfig,
     refreshCartPricesAndStock,
     addItem,
     incrementQuantity,
