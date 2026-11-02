@@ -113,6 +113,9 @@ export interface IProduct {
   // Visibility toggle to draft or archive products without deleting them
   isActive: boolean
 
+  // Promotional free shipping override
+  freeShipping: boolean
+
   createdAt: Date
   updatedAt: Date
 }
@@ -239,6 +242,10 @@ const ProductSchema = new Schema<IProduct>(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    freeShipping: {
+      type: Boolean,
+      default: false,
     },
   },
   {

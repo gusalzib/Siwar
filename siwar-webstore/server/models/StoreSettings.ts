@@ -154,6 +154,7 @@ export interface IGeneralSettings {
 export interface IStoreSettings {
   shipping: {
     freeShippingThresholdMinorSEK: number // e.g., 89900 (899.00 SEK)
+    freeShippingItemGrantsEntireOrder?: boolean // When true, 1 promotional free shipping item grants free shipping on the whole order
     deliveryDays: {
       min: number // e.g., 1
       max: number // e.g., 3
@@ -513,6 +514,7 @@ const StoreSettingsSchema = new Schema<IStoreSettings>(
   {
     shipping: {
       freeShippingThresholdMinorSEK: { type: Number, default: 89900 },
+      freeShippingItemGrantsEntireOrder: { type: Boolean, default: false },
       deliveryDays: {
         min: { type: Number, default: 1 },
         max: { type: Number, default: 3 },

@@ -10,6 +10,7 @@ export type OrderPaymentStatus =
   | 'CAPTURED'
   | 'FAILED'
   | 'CANCELLED'
+  | 'ABANDONED'
 
 
 export type OrderFulfillmentStatus =
@@ -207,6 +208,7 @@ const OrderSchema = new Schema<IOrder>(
         'CAPTURED',
         'FAILED',
         'CANCELLED',
+        'ABANDONED',
       ],
       default: 'PENDING',
       index: true,

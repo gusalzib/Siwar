@@ -47,6 +47,7 @@ export interface StorefrontProduct {
     EUR: number
     USD: number
   } | null
+  freeShipping?: boolean
   netQuantity: {
     value: number
     unit: SupportedUnit
