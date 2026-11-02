@@ -130,6 +130,7 @@ export default defineEventHandler(async (event) => {
         images: Array.isArray(body.images) ? body.images : [],
         nutritionTable: body.nutritionTable || undefined,
         isActive: body.isActive !== false,
+        freeShipping: Boolean(body.freeShipping),
       },
     },
     { returnDocument: 'after', runValidators: true } // non-deprecated syntax the { new: true } will be deprecated

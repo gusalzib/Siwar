@@ -209,6 +209,7 @@ export default defineEventHandler(async (event) => {
       momsRate: p.momsRate,
       stockQuantity: p.stockQuantity,
       availableStock,
+      freeShipping: Boolean(p.freeShipping),
       statusCode,
       canAddToCart: availableStock > 0,
     }

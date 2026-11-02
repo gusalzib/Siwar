@@ -53,5 +53,6 @@ export default defineEventHandler(async (event) => {
     images: product.images || [],
     nutritionTable: product.nutritionTable || undefined,
     isActive: product.isActive,
+    freeShipping: Boolean(product.freeShipping),
   }
 })

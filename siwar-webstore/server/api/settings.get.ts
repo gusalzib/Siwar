@@ -1,14 +1,16 @@
 // server/api/settings.get.ts
 import { getStoreGeneralSettings, getStorePickupSettings } from '~/server/models/StoreSettings'
+import { getCachedShippingSettings } from '~/server/services/shipping.service'
 
 /**
  * Route: GET /api/settings
  * Access: Public storefront endpoint
- * Purpose: Returns general store settings for footer, contact details, physical address, pickup configuration, and opening hours.
+ * Purpose: Returns general store settings for footer, contact details, physical address, pickup configuration, shipping rules, and opening hours.
  */
 export default defineEventHandler(async () => {
   const general = await getStoreGeneralSettings()
   const pickup = await getStorePickupSettings()
+  const shipping = await getCachedShippingSettings()
 
   return {
     storeName: general.storeName,
@@ -33,6 +35,12 @@ export default defineEventHandler(async () => {
       instructions: pickup.instructions,
     },
     socialLinks: (general.socialLinks || []).slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+    shipping: {
+      freeShippingThresholdMinorSEK: (shipping as any).freeShippingThresholdMinorSEK ?? 89900,
+      freeShippingItemGrantsEntireOrder: Boolean((shipping as any).freeShippingItemGrantsEntireOrder),
+      deliveryDays: (shipping as any).deliveryDays || { min: 1, max: 3 },
+      tiers: (shipping as any).tiers || [],
+    },
     paymentMethods: ['swish', 'visa', 'mastercard'],
   }
 })
