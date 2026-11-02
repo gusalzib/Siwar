@@ -51,6 +51,11 @@ describe('Section 5. Storefront Visual Polish (Catalog & Product Cards)', () => 
       expect(productCardContent).toContain('!text-white')
       expect(productCardContent).toContain('btn-sm h-9 min-h-9')
     })
+
+    it('displays free shipping badge when product.freeShipping is true', () => {
+      expect(productCardContent).toContain('product.freeShipping')
+      expect(productCardContent).toContain("t('products.freeShipping'")
+    })
   })
 
   describe('2. Catalog Page Overhaul (pages/catalog/index.vue)', () => {

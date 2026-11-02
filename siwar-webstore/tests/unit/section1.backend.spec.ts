@@ -311,5 +311,26 @@ describe('Section 1. Backend & Configuration', () => {
       await getCatalogHandler(dummyEvent)
       expect(mockState.capturedFilter.allergens).toBeUndefined()
     })
+
+    it('projects freeShipping field on catalog product cards', async () => {
+      mockProductModel.find.mockReturnValueOnce({
+        populate: vi.fn().mockReturnThis(),
+        sort: vi.fn().mockReturnThis(),
+        skip: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        lean: vi.fn().mockResolvedValue([
+          {
+            _id: '65fa2c9e83b1d2001e4a9f10',
+            name: { ar: 'شاي', sv: 'Te', en: 'Tea' },
+            price: { SEK: 4900, EUR: 450, USD: 500 },
+            freeShipping: true,
+            stockQuantity: 10,
+          },
+        ]),
+      })
+
+      const res = await getCatalogHandler(dummyEvent)
+      expect(res.products[0]?.freeShipping).toBe(true)
+    })
   })
 })

@@ -208,6 +208,34 @@ describe('Issue #12: Order Fulfillment & Shortage Engine', () => {
       expect(pricing.shippingFeeMinor).toBe(0) // Free shipping!
       expect(pricing.grandTotalMinor).toBe(9500)
     })
+
+    it('respects dynamic free shipping threshold override (e.g. 2000 SEK)', () => {
+      const item: IOrderItem = {
+        productId: itemA_Id,
+        sku: 'EXP-01',
+        name: { ar: 'منتج', sv: 'Produkt', en: 'Product' },
+        quantity: 1,
+        fulfilledQuantity: 1,
+        unitPriceMinor: 195000, // 1950.00 SEK (< 2000 SEK threshold override)
+        momsRate: 12,
+        shortageStatus: 'NONE',
+      }
+      const items = [item]
+
+      // 1950 SEK subtotal with 2000 SEK threshold: retains shipping fee (89 SEK)
+      const pricingBelow = computeOrderPricing(items, 'DELIVERY', 8900, 203900, 'SEK', 200000)
+      expect(pricingBelow.itemsTotalMinor).toBe(195000)
+      expect(pricingBelow.shippingFeeMinor).toBe(8900)
+      expect(pricingBelow.grandTotalMinor).toBe(203900)
+      expect(pricingBelow.releasedOrRefundedMinor).toBe(0)
+
+      // When items total reaches or exceeds 2000 SEK (200000 minor): free shipping
+      item.unitPriceMinor = 205000
+      const pricingAbove = computeOrderPricing(items, 'DELIVERY', 8900, 213900, 'SEK', 200000)
+      expect(pricingAbove.itemsTotalMinor).toBe(205000)
+      expect(pricingAbove.shippingFeeMinor).toBe(0)
+      expect(pricingAbove.grandTotalMinor).toBe(205000)
+    })
   })
 
   // -------------------------------------------------------------------------
