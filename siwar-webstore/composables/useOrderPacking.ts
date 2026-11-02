@@ -41,13 +41,26 @@ export interface ShortageActionDraft {
   note?: string
 }
 
-export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<void>) {
+export function useOrderPacking(
+  order: Ref<any>,
+  refreshOrder: () => Promise<void>,
+  settingsOverride?: Ref<any>
+) {
   const router = useRouter()
   const localePath = useLocalePath()
   const localItems = ref<LineItemState[]>([])
   const pendingActions = ref<Map<string, ShortageActionDraft>>(new Map())
   const isSubmitting = ref(false)
   const errorMessage = ref<string | null>(null)
+
+  // Fetch dynamic store settings if not provided by caller
+  const { data: fetchedSettings } = settingsOverride
+    ? { data: settingsOverride }
+    : useAsyncData(
+        'packing-store-settings',
+        () => $fetch<any>('/api/settings')
+      )
+  const storeSettings = settingsOverride || fetchedSettings
 
   // Helper to extract clean string ID whether it is a string or an object { _id: "..." }
   function extractId(val: any): string {
@@ -259,8 +272,13 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
     let shippingFee = 0
     if (itemsTotal > 0 && order.value.customer?.fulfillmentMethod === 'DELIVERY') {
       const curr = (order.value.currency || 'SEK') as 'SEK' | 'EUR' | 'USD'
-      const threshold = DEFAULT_SHIPPING_CONFIG.freeShippingThreshold[curr] ?? DEFAULT_SHIPPING_CONFIG.freeShippingThreshold.SEK
-      const fallbackFee = DEFAULT_SHIPPING_CONFIG.tiers[0]?.price[curr] ?? DEFAULT_SHIPPING_CONFIG.tiers[0]?.price.SEK ?? 7700
+      const threshold = (curr === 'SEK' && typeof storeSettings.value?.shipping?.freeShippingThresholdMinorSEK === 'number')
+        ? storeSettings.value.shipping.freeShippingThresholdMinorSEK
+        : (DEFAULT_SHIPPING_CONFIG.freeShippingThreshold[curr] ?? DEFAULT_SHIPPING_CONFIG.freeShippingThreshold.SEK)
+
+      const fallbackFee = (curr === 'SEK' && storeSettings.value?.shipping?.tiers?.[0]?.feeMinorSEK)
+        ? storeSettings.value.shipping.tiers[0].feeMinorSEK
+        : (DEFAULT_SHIPPING_CONFIG.tiers[0]?.price[curr] ?? DEFAULT_SHIPPING_CONFIG.tiers[0]?.price.SEK ?? 7700)
 
       if (itemsTotal >= threshold) {
         shippingFee = 0 // Free shipping

@@ -28,7 +28,9 @@ export function computeOrderPricing(
   fulfillmentMethod: string | undefined = 'DELIVERY',
   existingShippingFee: number = 0,
   authorizedTotalMinor: number = 0,
-  currency: 'SEK' | 'EUR' | 'USD' = 'SEK'
+  currency: 'SEK' | 'EUR' | 'USD' = 'SEK',
+  thresholdOverrideMinor?: number,
+  fallbackFeeOverrideMinor?: number
 ) {
   const lineCalculationInputs: LineItemInput[] = []
   let itemsTotalMinor = 0
@@ -47,11 +49,15 @@ export function computeOrderPricing(
 
   // Dynamic shipping recalculation:
   // 1. If 0 items or In-Store Pickup, shipping is 0
-  // 2. Multi-currency free shipping threshold: 899 SEK / 85 EUR / 90 USD
+  // 2. Multi-currency free shipping threshold: dynamic from StoreSettings, fallback to 899 SEK / 85 EUR / 90 USD
   let shippingFeeMinor = 0
   const curr = (currency || 'SEK') as 'SEK' | 'EUR' | 'USD'
-  const freeThreshold = DEFAULT_SHIPPING_CONFIG.freeShippingThreshold[curr] ?? DEFAULT_SHIPPING_CONFIG.freeShippingThreshold.SEK
-  const fallbackFee = DEFAULT_SHIPPING_CONFIG.tiers[0]?.price[curr] ?? DEFAULT_SHIPPING_CONFIG.tiers[0]?.price.SEK ?? 7700
+  const freeThreshold = (curr === 'SEK' && typeof thresholdOverrideMinor === 'number')
+    ? thresholdOverrideMinor
+    : (DEFAULT_SHIPPING_CONFIG.freeShippingThreshold[curr] ?? DEFAULT_SHIPPING_CONFIG.freeShippingThreshold.SEK)
+  const fallbackFee = (curr === 'SEK' && typeof fallbackFeeOverrideMinor === 'number')
+    ? fallbackFeeOverrideMinor
+    : (DEFAULT_SHIPPING_CONFIG.tiers[0]?.price[curr] ?? DEFAULT_SHIPPING_CONFIG.tiers[0]?.price.SEK ?? 7700)
 
   if (itemsTotalMinor > 0 && fulfillmentMethod === 'DELIVERY') {
     if (itemsTotalMinor >= freeThreshold) {
@@ -95,7 +101,9 @@ export function computeOrderPricing(
 export function recalculateOrderShortage(
   order: IOrder,
   actions: ShortageActionInput[],
-  performedBy: string = 'Admin'
+  performedBy: string = 'Admin',
+  thresholdOverrideMinor?: number,
+  fallbackFeeOverrideMinor?: number
 ) {
   const adjustments: IShortageAdjustment[] = []
 
@@ -198,7 +206,9 @@ export function recalculateOrderShortage(
     order.customer?.fulfillmentMethod,
     order.pricing?.shippingFeeMinor || 0,
     order.pricing?.authorizedTotalMinor || 0,
-    order.currency as any
+    order.currency as any,
+    thresholdOverrideMinor,
+    fallbackFeeOverrideMinor
   )
 
   return {

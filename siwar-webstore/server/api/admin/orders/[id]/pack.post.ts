@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 import { Order } from '~/server/models/Order'
 import { Product } from '~/server/models/Product'
 import { recalculateOrderShortage, computeOrderPricing, type ShortageActionInput } from '~/server/services/fulfillment.service'
+import { getCachedShippingSettings } from '~/server/services/shipping.service'
 import { getPaymentGateway } from '~/server/services/payments'
 import { mailService, type EmailLocale } from '~/server/services/mail.service'
 
@@ -41,10 +42,16 @@ export default defineEventHandler(async (event) => {
   //    can match new actions against original product IDs and produce
   //    the correct audit trail entries (shortageAdjustments).
   // ──────────────────────────────────────────────────────────────────────
+  const shippingConfig = await getCachedShippingSettings()
+  const thresholdOverride = (shippingConfig as any)?.freeShippingThresholdMinorSEK
+  const fallbackFeeOverride = (shippingConfig as any)?.tiers?.[0]?.feeMinorSEK
+
   const { updatedItems, shortageAdjustments } = recalculateOrderShortage(
     order,
     body.actions || [],
-    'Admin'
+    'Admin',
+    thresholdOverride,
+    fallbackFeeOverride
   )
 
   // ──────────────────────────────────────────────────────────────────────
@@ -136,7 +143,9 @@ export default defineEventHandler(async (event) => {
     order.customer?.fulfillmentMethod,
     order.pricing?.shippingFeeMinor || 0,
     order.pricing?.authorizedTotalMinor || 0,
-    order.currency as any
+    order.currency as any,
+    thresholdOverride,
+    fallbackFeeOverride
   )
 
   const capturedTotal = finalPricing.capturedTotalMinor ?? finalPricing.grandTotalMinor
