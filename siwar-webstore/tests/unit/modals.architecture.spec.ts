@@ -138,5 +138,20 @@ describe('Reusable Modal Architecture (BaseModal & ConfirmModal)', () => {
       expect(bannerManagerContent).toContain('openDeleteModal(banner)')
       expect(bannerManagerContent).not.toMatch(/confirm\(/)
     })
+
+    it('verifies settings modal strings and common actions exist across sv, en, ar', () => {
+      const sv = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../i18n/locales/sv.json'), 'utf-8'))
+      const en = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../i18n/locales/en.json'), 'utf-8'))
+      const ar = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../i18n/locales/ar.json'), 'utf-8'))
+
+      for (const loc of [sv, en, ar]) {
+        expect(loc.common?.save).toBeTruthy()
+        expect(loc.common?.cancel).toBeTruthy()
+        expect(loc.admin?.banners?.deleteModalTitle).toBeTruthy()
+        expect(loc.admin?.banners?.cancel).toBeTruthy()
+        expect(loc.admin?.categories?.deleteModalTitle).toBeTruthy()
+        expect(loc.admin?.allergens?.deleteModalTitle).toBeTruthy()
+      }
+    })
   })
 })
