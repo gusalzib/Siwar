@@ -2,6 +2,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { toMajorUnits } from '~~/utils/currency'
+import AdminStockAdjustModal from '~/components/admin/AdminStockAdjustModal.vue'
+import AdminDiscountAdjustModal from '~/components/admin/AdminDiscountAdjustModal.vue'
 
 definePageMeta({
   middleware: 'admin',
@@ -24,9 +26,16 @@ const currentPage = ref(1)
 const itemsPerPage = ref(10)
 
 // Delete modal state
-const deleteModalRef = ref<HTMLDialogElement | null>(null)
+const isDeleteModalOpen = ref(false)
 const productToDelete = ref<any | null>(null)
 const isDeleting = ref(false)
+
+// Quick stock & discount adjust modals state
+const isStockModalOpen = ref(false)
+const productForStock = ref<any | null>(null)
+
+const isDiscountModalOpen = ref(false)
+const productForDiscount = ref<any | null>(null)
 
 // 1. Fetch available categories for the dropdown filter
 const { data: categories } = await useFetch<Array<{ id: string; name: Record<string, string> }>>(
@@ -162,12 +171,12 @@ async function toggleArchive(productId: string) {
 // 5. Open / Close Delete Confirmation Modal
 function openDeleteModal(product: any) {
   productToDelete.value = product
-  deleteModalRef.value?.showModal()
+  isDeleteModalOpen.value = true
 }
 
 function closeDeleteModal() {
   productToDelete.value = null
-  deleteModalRef.value?.close()
+  isDeleteModalOpen.value = false
 }
 
 // 6. Confirm Permanent Product Deletion
@@ -186,6 +195,67 @@ async function confirmDeleteProduct() {
     alert(err?.data?.statusMessage || err?.message || 'Error deleting product')
   } finally {
     isDeleting.value = false
+  }
+}
+
+// 7. Quick Stock Adjustment Handlers
+function openStockModal(product: any) {
+  productForStock.value = product
+  isStockModalOpen.value = true
+}
+
+function closeStockModal() {
+  productForStock.value = null
+  isStockModalOpen.value = false
+}
+
+function onStockSaved(payload: any) {
+  if (!payload?.id) return
+  const list = Array.isArray(productsResponse.value)
+    ? productsResponse.value
+    : productsResponse.value?.products
+  if (!list) return
+  const found = list.find((p: any) => p.id === payload.id || p._id === payload.id)
+  if (found) {
+    found.stockQuantity = payload.stockQuantity
+    found.safetyBuffer = payload.safetyBuffer
+    found.availableStock = payload.availableStock
+    if (payload.effectiveBuffer !== undefined) {
+      found.effectiveBuffer = payload.effectiveBuffer
+    }
+    if (payload.updatedAt) {
+      found.updatedAt = payload.updatedAt
+    }
+  }
+}
+
+// 8. Quick Discount Adjustment Handlers
+function openDiscountModal(product: any) {
+  productForDiscount.value = product
+  isDiscountModalOpen.value = true
+}
+
+function closeDiscountModal() {
+  productForDiscount.value = null
+  isDiscountModalOpen.value = false
+}
+
+function onDiscountSaved(payload: any) {
+  if (!payload?.id) return
+  const list = Array.isArray(productsResponse.value)
+    ? productsResponse.value
+    : productsResponse.value?.products
+  if (!list) return
+  const found = list.find((p: any) => p.id === payload.id || p._id === payload.id)
+  if (found) {
+    found.discount = payload.discount
+    found.discountStartsAt = payload.discountStartsAt
+    found.discountExpiresAt = payload.discountExpiresAt
+    found.discountStatus = payload.discountStatus
+    found.showDiscountBadge = payload.showDiscountBadge
+    if (payload.updatedAt) {
+      found.updatedAt = payload.updatedAt
+    }
   }
 }
 
@@ -558,6 +628,28 @@ function isDiscountActiveOrScheduled(product: any): boolean {
 
               <!-- Action Buttons -->
               <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <!-- Quick Stock Button -->
+                <button
+                  type="button"
+                  @click="openStockModal(product)"
+                  class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 text-base-content hover:border-emerald-600 hover:bg-emerald-600 hover:text-white dark:hover:text-white transition group"
+                  :title="t('admin.products.actions.quickStock')"
+                >
+                  <Icon name="lucide:boxes" class="size-3.5 text-emerald-600 dark:text-emerald-400 group-hover:text-white" />
+                  <span class="hidden xl:inline">{{ t('admin.products.actions.quickStock') }}</span>
+                </button>
+
+                <!-- Quick Discount Button -->
+                <button
+                  type="button"
+                  @click="openDiscountModal(product)"
+                  class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 text-base-content hover:border-rose-600 hover:bg-rose-600 hover:text-white dark:hover:text-white transition group"
+                  :title="t('admin.products.actions.quickDiscount')"
+                >
+                  <Icon name="lucide:percent" class="size-3.5 text-rose-600 dark:text-rose-400 group-hover:text-white" />
+                  <span class="hidden xl:inline">{{ t('admin.products.actions.quickDiscount') }}</span>
+                </button>
+
                 <!-- Edit Button -->
                 <NuxtLink
                   :to="localePath(`/admin/products/${product.id}`)"
@@ -674,66 +766,36 @@ function isDiscountActiveOrScheduled(product: any): boolean {
       </div>
     </div>
 
-    <!-- DaisyUI Confirmation Dialog Modal for Product Deletion (Teleported to Body) -->
-    <ClientOnly>
-      <Teleport to="body">
-        <dialog ref="deleteModalRef" class="modal" @close="closeDeleteModal">
-          <div class="modal-box max-w-md bg-white dark:bg-zinc-900 border-2 border-slate-300 dark:border-zinc-700 shadow-2xl p-6 sm:p-7 rounded-3xl space-y-5 text-base-content overflow-hidden">
-            <!-- Header with Icon, Title and Styled Close (X) Button -->
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex items-start gap-3">
-                <div class="size-10 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <Icon name="lucide:trash-2" class="size-5" />
-                </div>
-                <div class="space-y-1">
-                  <h3 class="font-extrabold text-lg text-base-content leading-snug">
-                    {{ t('admin.products.deleteModal.title') }}
-                  </h3>
-                  <p class="text-xs text-base-content/60 font-mono">ID: {{ productToDelete?.id }}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                class="btn btn-ghost btn-sm btn-circle text-base-content/60 hover:text-base-content hover:bg-slate-100 dark:hover:bg-zinc-800 shrink-0"
-                @click="closeDeleteModal"
-                title="Stäng"
-              >
-                <Icon name="lucide:x" class="size-5" />
-              </button>
-            </div>
+    <!-- DaisyUI Confirmation Dialog Modal for Product Deletion -->
+    <ConfirmModal
+      :is-open="isDeleteModalOpen"
+      :title="t('admin.products.deleteModal.title')"
+      :subtitle="productToDelete ? `ID: ${productToDelete.id}` : undefined"
+      :message="t('admin.products.deleteModal.message', { name: productToDelete ? getLocalizedText(productToDelete.name) : '' })"
+      icon="lucide:trash-2"
+      variant="danger"
+      :confirm-text="isDeleting ? t('admin.products.deleteModal.deleting') : t('admin.products.deleteModal.confirm')"
+      :cancel-text="t('admin.products.deleteModal.cancel')"
+      :is-submitting="isDeleting"
+      confirm-icon="lucide:trash-2"
+      @confirm="confirmDeleteProduct"
+      @close="closeDeleteModal"
+    />
 
-            <!-- Description / Warning Message -->
-            <p class="text-sm text-base-content/80 leading-relaxed font-medium">
-              {{ t('admin.products.deleteModal.message', { name: productToDelete ? getLocalizedText(productToDelete.name) : '' }) }}
-            </p>
+    <!-- Quick Stock Adjustment Fast-Path Modal -->
+    <AdminStockAdjustModal
+      :is-open="isStockModalOpen"
+      :product="productForStock"
+      @saved="onStockSaved"
+      @close="closeStockModal"
+    />
 
-            <!-- Modal Actions: Cancel and Confirm with Generous Padding and High-Contrast Theming -->
-            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-zinc-800">
-              <button
-                type="button"
-                :disabled="isDeleting"
-                @click="closeDeleteModal"
-                class="btn h-10 px-5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-slate-200 border-2 border-slate-300 dark:border-zinc-600 font-bold transition-colors shadow-xs"
-              >
-                {{ t('admin.products.deleteModal.cancel') }}
-              </button>
-              <button
-                type="button"
-                :disabled="isDeleting"
-                @click="confirmDeleteProduct"
-                class="btn h-10 px-5 rounded-xl !bg-red-600 hover:!bg-red-700 !text-white !border-none font-bold shadow-sm transition-transform active:scale-95 disabled:opacity-50 flex items-center gap-2"
-              >
-                <span v-if="isDeleting" class="loading loading-spinner loading-xs"></span>
-                <Icon v-else name="lucide:trash-2" class="size-4" />
-                <span>{{ isDeleting ? t('admin.products.deleteModal.deleting') : t('admin.products.deleteModal.confirm') }}</span>
-              </button>
-            </div>
-          </div>
-          <form method="dialog" class="modal-backdrop bg-black/60 backdrop-blur-xs" @click="closeDeleteModal">
-            <button type="button" class="sr-only">close</button>
-          </form>
-        </dialog>
-      </Teleport>
-    </ClientOnly>
+    <!-- Quick Discount Adjustment Fast-Path Modal -->
+    <AdminDiscountAdjustModal
+      :is-open="isDiscountModalOpen"
+      :product="productForDiscount"
+      @saved="onDiscountSaved"
+      @close="closeDiscountModal"
+    />
   </div>
 </template>

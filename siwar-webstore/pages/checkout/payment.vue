@@ -190,18 +190,17 @@ async function handleConfirmCardPayment() {
 }
 
 
-const cancelModalRef = ref<HTMLDialogElement | null>(null)
+const isCancelModalOpen = ref(false)
 
 function openCancelModal() {
-  cancelModalRef.value?.showModal()
+  isCancelModalOpen.value = true
 }
 
 function closeCancelModal() {
-  cancelModalRef.value?.close()
+  isCancelModalOpen.value = false
 }
 
 async function confirmCancelOrder() {
-  closeCancelModal()
   isCancelling.value = true
   try {
     if (activeOrderReference.value) {
@@ -216,6 +215,7 @@ async function confirmCancelOrder() {
     sessionStorage.removeItem('siwar_checkout_payload')
     sessionStorage.removeItem('siwar_active_payment_session') // Purge session cache
     isCancelling.value = false
+    isCancelModalOpen.value = false
     await router.push(localePath('/catalog'))
   }
 }
@@ -298,50 +298,19 @@ async function confirmCancelOrder() {
       </div>
     </div>
 
-    <!-- Cancellation Confirmation Modal (DaisyUI <dialog class="modal"> matching brand tokens) -->
-    <ClientOnly>
-      <Teleport to="body">
-        <dialog ref="cancelModalRef" class="modal" @close="closeCancelModal">
-          <div class="modal-box max-w-md bg-base-100 dark:bg-base-200 border-2 border-slate-200 dark:border-zinc-700/80 shadow-2xl p-6 sm:p-7 rounded-3xl space-y-5 text-base-content">
-            <div class="flex items-start gap-3.5">
-              <div class="p-3 bg-warning/10 dark:bg-warning/20 text-warning rounded-2xl shrink-0 mt-0.5">
-                <Icon name="lucide:alert-triangle" class="size-6 text-warning" />
-              </div>
-              <div class="space-y-1.5 flex-1">
-                <h3 class="font-black text-lg text-base-content leading-snug">
-                  {{ t('checkout.cancelModalTitle', 'Avbryta beställning?') }}
-                </h3>
-                <p class="text-sm text-base-content/70 leading-relaxed font-normal">
-                  {{ t('checkout.cancelModalWarning', 'Är du säker på att du vill avbryta din betalningssession?') }}
-                </p>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-base-200 dark:border-zinc-700/60">
-              <button
-                type="button"
-                class="btn btn-sm h-10 px-4 rounded-xl btn-ghost hover:bg-base-200 dark:hover:bg-zinc-800 text-base-content font-semibold"
-                @click="closeCancelModal"
-              >
-                {{ t('checkout.keepShopping', 'Fortsätt handla') }}
-              </button>
-              <button
-                type="button"
-                :disabled="isCancelling"
-                class="btn btn-sm h-10 px-4 rounded-xl !bg-red-600 hover:!bg-red-700 !text-white !border-none font-bold shadow-xs gap-1.5"
-                @click="confirmCancelOrder"
-              >
-                <span v-if="isCancelling" class="loading loading-spinner loading-xs" />
-                <Icon v-else name="lucide:x-circle" class="size-4" />
-                <span>{{ t('checkout.confirmCancelOrder', 'Avbryt beställning') }}</span>
-              </button>
-            </div>
-          </div>
-          <form method="dialog" class="modal-backdrop bg-black/60" @click="closeCancelModal">
-            <button type="button" class="sr-only">close</button>
-          </form>
-        </dialog>
-      </Teleport>
-    </ClientOnly>
+    <!-- Cancellation Confirmation Modal -->
+    <ConfirmModal
+      :is-open="isCancelModalOpen"
+      :title="t('checkout.cancelModalTitle', 'Avbryta beställning?')"
+      :message="t('checkout.cancelModalWarning', 'Är du säker på att du vill avbryta din betalningssession?')"
+      icon="lucide:alert-triangle"
+      variant="danger"
+      :confirm-text="t('checkout.confirmCancelOrder', 'Avbryt beställning')"
+      :cancel-text="t('checkout.keepShopping', 'Fortsätt handla')"
+      :is-submitting="isCancelling"
+      confirm-icon="lucide:x-circle"
+      @confirm="confirmCancelOrder"
+      @close="closeCancelModal"
+    />
   </div>
 </template>

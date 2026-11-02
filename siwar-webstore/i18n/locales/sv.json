@@ -3,6 +3,14 @@
   "storeName": "Siwar Webstore",
   
   "welcomeMessage": "Upptäck orienten med Siwar",
+  "common": {
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "delete": "Ta bort",
+    "edit": "Redigera",
+    "close": "Stäng",
+    "confirm": "Bekräfta"
+  },
   "nav": {
       "home": "Hem",
       "catalog": "Produktkatalog",
@@ -199,7 +207,9 @@
         "archive": "Arkivera",
         "unarchive": "Återaktivera",
         "delete": "Radera",
-        "deleteConfirm": "Är du säker på att du vill radera denna produkt permanent? Åtgärden kan inte ångras."
+        "deleteConfirm": "Är du säker på att du vill radera denna produkt permanent? Åtgärden kan inte ångras.",
+        "quickStock": "Snabbjustera lager",
+        "quickDiscount": "Snabbjustera rabatt"
       },
       "empty": {
         "title": "Inga produkter hittades",
@@ -207,8 +217,53 @@
       },
       "loading": "Laddar produkter..."
     },
-
-
+    "stockModal": {
+      "title": "Snabbjustera lager",
+      "physicalStock": "Fysiskt",
+      "safetyBuffer": "Buffert",
+      "onlineStock": "Online",
+      "statusLabel": "Status i webbutik:",
+      "inStockBadge": "I lager",
+      "outOfStockOnlineBadge": "Tillfälligt slut online",
+      "outOfStockBadge": "Slut i lager",
+      "quickDeltas": "Snabbjustering (Delta)",
+      "setExactStock": "Ange exakt fysiskt lagersaldo",
+      "cannotBeNegative": "Lagersaldot kan inte vara negativt.",
+      "bufferConfiguration": "Säkerhetsbuffert",
+      "customBufferActive": "Anpassad buffert aktiv",
+      "globalDefaultActive": "Standard (3 st)",
+      "inheritGlobal": "Standard (3 st)",
+      "useCustomBuffer": "Anpassad buffert",
+      "resetBuffer": "Återställ",
+      "bufferPlaceholder": "T.ex. 5",
+      "bufferHelp": "Enheter under detta tröskelvärde reserveras för butiksförsäljning och säljs ej online.",
+      "cancel": "Avbryt",
+      "save": "Spara lager",
+      "saving": "Sparar...",
+      "error": "Kunde inte uppdatera lagersaldot."
+    },
+    "discountModal": {
+      "title": "Snabbjustera rabatt",
+      "campaignStatus": "Kampanjstatus",
+      "statusScheduled": "Schemalagd",
+      "statusActive": "Aktiv nu",
+      "statusExpired": "Utgången",
+      "statusNone": "Ingen aktiv rabatt",
+      "presetsLabel": "Snabbval rabattsats",
+      "presetZero": "0% (Ingen)",
+      "manualDiscountLabel": "Ange exakt procentsats (0–90%)",
+      "percentRangeError": "Rabattsats måste vara mellan 0% och 90%.",
+      "scheduleHeading": "Schemalägg kampanjperiod (valfritt)",
+      "clearDates": "Rensa datum",
+      "startDate": "Startdatum & tid",
+      "endDate": "Slutdatum & tid",
+      "scheduleHelp": "Lämna tomt för att aktivera omedelbart utan slutdatum. Om 0% väljs nollställs alla datum automatiskt.",
+      "dateOrderError": "Slutdatum måste vara efter startdatum.",
+      "cancel": "Avbryt",
+      "save": "Spara rabatt",
+      "saving": "Sparar...",
+      "error": "Kunde inte uppdatera rabatten."
+    },
 
     "productForm": {
       "newTitle": "Skapa ny produkt",
@@ -347,6 +402,9 @@
       "timerSaved": "Bildväxlingstid sparad!",
       "edit": "Redigera",
       "delete": "Ta bort",
+      "deleteModalTitle": "Ta bort banner?",
+      "deleting": "Tar bort...",
+      "cancel": "Avbryt",
       "empty": "Inga kampanjbanners konfigurerade ännu.",
       "confirmDelete": "Är du säker på att du vill ta bort denna banner?",
       "success": "Banners har sparats!",
@@ -416,6 +474,8 @@
       "editTitle": "Redigera kategori",
       "edit": "Redigera",
       "delete": "Ta bort",
+      "deleteModalTitle": "Ta bort kategori?",
+      "deleting": "Tar bort...",
       "name": "Kategorinamn",
       "slug": "URL-slug",
       "actions": "Åtgärder",
@@ -445,6 +505,8 @@
       "editTitle": "Redigera allergen",
       "edit": "Redigera",
       "delete": "Ta bort",
+      "deleteModalTitle": "Ta bort allergen?",
+      "deleting": "Tar bort...",
       "code": "Kod",
       "codeLabel": "Allergenkod (t.ex. GLUTEN eller MILK)",
       "name": "Namn",

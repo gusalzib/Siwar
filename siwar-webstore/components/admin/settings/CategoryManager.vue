@@ -144,26 +144,40 @@ async function handleSubmit() {
   }
 }
 
-async function handleDelete(id: string) {
-  if (
-    !confirm(
-      t(
-        'admin.categories.confirmDelete',
-        'Är du säker på att du vill ta bort denna kategori?'
-      )
-    )
-  )
-    return
+// Delete Confirmation Modal State
+const isDeleteModalOpen = ref(false)
+const categoryToDelete = ref<any | null>(null)
+const isDeleting = ref(false)
+const deleteErrorMessage = ref<string | null>(null)
 
+function openDeleteModal(category: any) {
+  categoryToDelete.value = category
+  deleteErrorMessage.value = null
+  isDeleteModalOpen.value = true
+}
+
+function closeDeleteModal() {
+  categoryToDelete.value = null
+  deleteErrorMessage.value = null
+  isDeleteModalOpen.value = false
+}
+
+async function confirmDeleteCategory() {
+  if (!categoryToDelete.value) return
+
+  isDeleting.value = true
+  deleteErrorMessage.value = null
   try {
-    await $fetch(`/api/admin/categories/${id}`, { method: 'DELETE' })
+    await $fetch(`/api/admin/categories/${categoryToDelete.value.id}`, { method: 'DELETE' })
+    closeDeleteModal()
     await refresh()
   } catch (err: any) {
-    alert(
+    deleteErrorMessage.value =
       err?.data?.statusMessage ||
-        err?.data?.message ||
-        t('admin.categories.error', 'Kunde inte ta bort kategorin.')
-    )
+      err?.data?.message ||
+      t('admin.categories.error', 'Kunde inte ta bort kategorin.')
+  } finally {
+    isDeleting.value = false
   }
 }
 </script>
@@ -344,7 +358,7 @@ async function handleDelete(id: string) {
                     type="button"
                     class="btn btn-sm btn-ghost text-error hover:bg-error/10 rounded-lg"
                     :title="t('admin.categories.delete', 'Ta bort')"
-                    @click="handleDelete(category.id)"
+                    @click="openDeleteModal(category)"
                   >
                     <Icon name="lucide:trash-2" class="size-4" />
                   </button>
@@ -411,7 +425,7 @@ async function handleDelete(id: string) {
                 type="button"
                 class="btn btn-sm btn-ghost text-error font-bold gap-1.5 rounded-xl hover:bg-error/10"
                 :title="t('admin.categories.delete', 'Ta bort')"
-                @click="handleDelete(category.id)"
+                @click="openDeleteModal(category)"
               >
                 <Icon name="lucide:trash-2" class="size-3.5" />
                 <span>{{ t('admin.categories.delete', 'Ta bort') }}</span>
@@ -559,5 +573,25 @@ async function handleDelete(id: string) {
         <button class="sr-only">close</button>
       </form>
     </dialog>
+
+    <!-- Delete Category Confirmation Modal -->
+    <ConfirmModal
+      :is-open="isDeleteModalOpen"
+      :title="t('admin.categories.deleteModalTitle', 'Ta bort kategori?')"
+      :subtitle="categoryToDelete ? (categoryToDelete.slug ? `${getLocalizedText(categoryToDelete.name)} (${categoryToDelete.slug})` : getLocalizedText(categoryToDelete.name)) : undefined"
+      :message="t('admin.categories.confirmDelete', 'Är du säker på att du vill ta bort denna kategori?')"
+      icon="lucide:trash-2"
+      variant="danger"
+      :confirm-text="isDeleting ? t('admin.categories.deleting', 'Tar bort...') : t('admin.categories.delete', 'Ta bort')"
+      :cancel-text="t('admin.categories.cancel', 'Avbryt')"
+      :is-submitting="isDeleting"
+      confirm-icon="lucide:trash-2"
+      @confirm="confirmDeleteCategory"
+      @close="closeDeleteModal"
+    >
+      <div v-if="deleteErrorMessage" class="alert alert-error text-xs py-2 px-3 rounded-xl mt-2">
+        <span>{{ deleteErrorMessage }}</span>
+      </div>
+    </ConfirmModal>
   </div>
 </template>

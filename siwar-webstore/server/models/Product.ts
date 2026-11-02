@@ -187,7 +187,7 @@ const ProductSchema = new Schema<IProduct>(
       type: Number,
       required: true,
       min: 0,
-      default: 0, // Set to 2 or 3 for fast-moving items to protect shelf inventory
+      default: 0,
     },
     netQuantity: {
       value: { type: Number, required: true, min: 0 },

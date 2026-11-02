@@ -523,13 +523,32 @@ async function handleSubmit() {
   }
 }
 
-// Delete Banner
-async function handleDelete(banner: any) {
-  if (!confirm(t('admin.banners.confirmDelete', 'Är du säker på att du vill ta bort denna banner?'))) return
+// Delete Confirmation Modal State
+const isDeleteModalOpen = ref(false)
+const bannerToDelete = ref<any | null>(null)
+const isDeleting = ref(false)
+const deleteErrorMessage = ref<string | null>(null)
 
-  isSubmitting.value = true
+function openDeleteModal(banner: any) {
+  bannerToDelete.value = banner
+  deleteErrorMessage.value = null
+  isDeleteModalOpen.value = true
+}
+
+function closeDeleteModal() {
+  bannerToDelete.value = null
+  deleteErrorMessage.value = null
+  isDeleteModalOpen.value = false
+}
+
+// Delete Banner
+async function confirmDeleteBanner() {
+  if (!bannerToDelete.value) return
+
+  isDeleting.value = true
+  deleteErrorMessage.value = null
   try {
-    const targetId = banner.id || banner._id
+    const targetId = bannerToDelete.value.id || bannerToDelete.value._id
     const currentList = Array.isArray(banners.value) ? [...banners.value] : []
     const newList = currentList.filter((b) => (b.id && b.id !== targetId) && (b._id && b._id !== targetId))
     const sanitizedList = sanitizeBannerList(newList)
@@ -540,11 +559,15 @@ async function handleDelete(banner: any) {
     })
 
     successMessage.value = t('admin.banners.success', 'Banners har sparats!')
+    closeDeleteModal()
     await refresh()
   } catch (err: any) {
-    alert(err?.data?.statusMessage || err?.data?.message || t('admin.banners.error', 'Kunde inte ta bort banner.'))
+    deleteErrorMessage.value =
+      err?.data?.statusMessage ||
+      err?.data?.message ||
+      t('admin.banners.error', 'Kunde inte ta bort banner.')
   } finally {
-    isSubmitting.value = false
+    isDeleting.value = false
   }
 }
 
@@ -831,7 +854,7 @@ async function moveBanner(index: number, direction: 'up' | 'down') {
                     type="button"
                     class="btn btn-sm btn-ghost text-error hover:bg-error/10 rounded-lg"
                     :title="t('admin.banners.delete', 'Ta bort')"
-                    @click="handleDelete(banner)"
+                    @click="openDeleteModal(banner)"
                   >
                     <Icon name="lucide:trash-2" class="size-4" />
                   </button>
@@ -946,7 +969,7 @@ async function moveBanner(index: number, direction: 'up' | 'down') {
                     type="button"
                     class="btn btn-sm btn-ghost text-error font-bold gap-1.5 rounded-xl hover:bg-error/10"
                     :title="t('admin.banners.delete', 'Ta bort')"
-                    @click="handleDelete(banner)"
+                    @click="openDeleteModal(banner)"
                   >
                     <Icon name="lucide:trash-2" class="size-3.5" />
                     <span>{{ t('admin.banners.delete', 'Ta bort') }}</span>
@@ -1357,5 +1380,25 @@ async function moveBanner(index: number, direction: 'up' | 'down') {
         <button class="sr-only">close</button>
       </form>
     </dialog>
+
+    <!-- Delete Banner Confirmation Modal -->
+    <ConfirmModal
+      :is-open="isDeleteModalOpen"
+      :title="t('admin.banners.deleteModalTitle', 'Ta bort banner?')"
+      :subtitle="bannerToDelete ? getLocalizedText(bannerToDelete.title) : undefined"
+      :message="t('admin.banners.confirmDelete', 'Är du säker på att du vill ta bort denna banner?')"
+      icon="lucide:trash-2"
+      variant="danger"
+      :confirm-text="isDeleting ? t('admin.banners.deleting', 'Tar bort...') : t('admin.banners.delete', 'Ta bort')"
+      :cancel-text="t('admin.banners.cancel', 'Avbryt')"
+      :is-submitting="isDeleting"
+      confirm-icon="lucide:trash-2"
+      @confirm="confirmDeleteBanner"
+      @close="closeDeleteModal"
+    >
+      <div v-if="deleteErrorMessage" class="alert alert-error text-xs py-2 px-3 rounded-xl mt-2">
+        <span>{{ deleteErrorMessage }}</span>
+      </div>
+    </ConfirmModal>
   </div>
 </template>

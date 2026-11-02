@@ -102,13 +102,18 @@ describe('Section 6. Admin Products View Overhaul & Filters (pages/admin/product
       expect(adminProductsContent).toContain('openDeleteModal(product)')
     })
 
-    it('replaces window.confirm with a DaisyUI dialog modal matching brand tokens and teleported to body', () => {
-      expect(adminProductsContent).toContain('<Teleport to="body">')
-      expect(adminProductsContent).toContain('<dialog ref="deleteModalRef"')
-      expect(adminProductsContent).toContain('class="modal')
+    it('replaces window.confirm with a reusable DaisyUI dialog modal matching brand tokens and teleported to body', () => {
+      expect(adminProductsContent).toContain('<ConfirmModal')
+      expect(adminProductsContent).toContain('isDeleteModalOpen')
       expect(adminProductsContent).toContain('confirmDeleteProduct')
       expect(adminProductsContent).toContain('closeDeleteModal')
       expect(adminProductsContent).not.toContain('confirm(')
+
+      const baseModalPath = path.resolve(__dirname, '../../components/BaseModal.vue')
+      const baseModalContent = fs.readFileSync(baseModalPath, 'utf-8')
+      expect(baseModalContent).toContain('<Teleport to="body">')
+      expect(baseModalContent).toContain('<dialog')
+      expect(baseModalContent).toContain('class="modal"')
     })
   })
 
