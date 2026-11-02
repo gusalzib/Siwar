@@ -3,6 +3,10 @@
   "storeName": "Siwar Webstore",
   
   "welcomeMessage": "Upptäck orienten med Siwar",
+  "products": {
+    "freeShipping": "Fri frakt",
+    "freeShippingBadgeDesc": "Fri frakt på denna vara"
+  },
   "common": {
     "save": "Spara",
     "cancel": "Avbryt",
@@ -209,7 +213,9 @@
         "delete": "Radera",
         "deleteConfirm": "Är du säker på att du vill radera denna produkt permanent? Åtgärden kan inte ångras.",
         "quickStock": "Snabbjustera lager",
-        "quickDiscount": "Snabbjustera rabatt"
+        "quickDiscount": "Snabbjustera rabatt",
+        "freeShippingActive": "Fri frakt aktiv",
+        "addFreeShipping": "Fri frakt"
       },
       "empty": {
         "title": "Inga produkter hittades",
@@ -332,6 +338,9 @@
         "barcode": "Streckkod (EAN / GTIN)",
         "barcodePlaceholder": "7350000000000",
         "isActive": "Publicera produkten omedelbart i butiken",
+        "isActiveHelp": "Produkten är synlig och kan köpas i webbutiken",
+        "freeShipping": "Fri frakt på denna produkt",
+        "freeShippingHelp": "Undantar denna produkt från paketets fraktviktsberäkning.",
         "imageUrl": "Bild-URL (CDN)",
         "imageUrlPlaceholder": "https://cdn.siwar.se/products/sample.webp",
         "imageAlt": "Alt-text för tillgänglighet",
@@ -385,6 +394,39 @@
         "categories": "Kategorier",
         "allergens": "Allergener",
         "banners": "Banners"
+      },
+      "shipping": {
+        "loading": "Laddar fraktinställningar...",
+        "campaignRuleTitle": "Kampanjregel: Produkter med fri frakt",
+        "campaignRuleSubtitle": "Styr hur kampanjprodukter med fri frakt påverkar hela varukorgen.",
+        "campaignActive": "Kampanjläge På",
+        "standardMode": "Standardläge",
+        "campaignRuleLabel": "1 produkt med fri frakt bjuder på frakten för hela beställningen",
+        "campaignRuleActive": "Om varukorgen innehåller minst en produkt med fri frakt bjuder vi på fraktkostnaden för hela beställningen oavsett vikt eller andra varor.",
+        "campaignRuleInactive": "Produkter med fri frakt är undantagna från fraktviktsberäkningen, men ger inte automatiskt fri frakt för hela ordern om kunden också köper vanliga varor.",
+        "campaignRuleGuideTitle": "När ska denna inställning användas?",
+        "campaignRuleExplanation": "Under intensiva marknadsföringskampanjer kan du aktivera detta som en konverteringshöjare (\"Köp valfri presentlåda så bjuder vi på frakten för hela din beställning!\"). I normal butiksdrift hålls detta avstängt så att kunder inte kan kringgå fraktkostnaden på tunga bulkköp (t.ex. 20 kg ris och matolja) genom att bara lägga till en liten 50 g kryddpåse med fri frakt.",
+        "thresholdTitle": "Beloppsgräns för fri frakt & Leveranstid",
+        "thresholdDesc": "Automatiskt fri frakt när varuvärdet når denna nivå.",
+        "thresholdLabel": "Gräns för fri frakt (SEK)",
+        "thresholdHelp": "T.ex. 899 SEK (motsvarar 89 900 öre)",
+        "minDaysLabel": "Minsta antal leveransdagar",
+        "maxDaysLabel": "Högsta antal leveransdagar",
+        "deliveryDaysHelp": "Uppskattad leveranstid som visas i kassan (t.ex. 1-3 vardagar)",
+        "tiersTitle": "Viktbaserade fraktklasser",
+        "tiersDesc": "Fraktkostnad baserat på total bruttovikt för varor i varukorgen som inte är undantagna med fri frakt.",
+        "addTier": "Lägg till intervall",
+        "maxWeight": "Maxvikt",
+        "shippingFee": "Fraktpris",
+        "action": "Åtgärd",
+        "unlimitedWeight": "Obegränsad (högsta klassen)",
+        "minOneTierError": "Minst ett viktintervall måste konfigureras.",
+        "invalidThreshold": "Tröskelvärde för fri frakt kan inte vara negativt.",
+        "invalidDeliveryDays": "Ogiltiga leveransdagar: Högsta antal dagar kan inte vara lägre än minsta.",
+        "savedSuccess": "Fraktinställningarna har sparats framgångsrikt!",
+        "saveError": "Ett fel uppstod vid sparande.",
+        "saving": "Sparar ändringar...",
+        "saveChanges": "Spara fraktinställningar"
       },
       "comingSoon": "Snart",
       "searchPlaceholder": "Sök..."
@@ -851,7 +893,8 @@
       "sec5_link_prefix": "För fullständiga villkor, läs vår särskilda sida för",
       "sec5_link_text": "Ångerrätt och Livsmedelsundantag",
       "sec6_title": "6. Reklamation och Skadat Gods",
-      "sec6_p1": "Om en vara är defekt, saknas eller har skadats under transport ber vi dig kontakta vår kundtjänst ({email}) inom skälig tid med fotodokumentation och ordernummer för ersättning eller kreditering."
+      "sec6_p1": "Om en vara är defekt, saknas eller har skadats under transport ber vi dig kontakta vår kundtjänst ({email}) inom skälig tid med fotodokumentation och ordernummer för ersättning eller kreditering.",
+      "readShippingPolicy": "Läs fullständiga fraktvillkor och priser här"
     },
     "withdrawal": {
       "title": "Ångerrätt och Livsmedelsundantag",
@@ -903,6 +946,36 @@
       "sec5_p2": "För att utöva dina rättigheter, kontakta oss via {email}. Du har även rätt att inge klagomål till Integritetsskyddsmyndigheten (IMY)."
     }
   },
+
+  "shippingPage": {
+    "metaTitle": "Frakt & Leveransvillkor",
+    "metaDesc": "Information om leveranstid ({min}–{max} vardagar), fraktklasser, fri frakt och utlämning i butik.",
+    "title": "Frakt & Leveransinformation",
+    "subtitle": "Här hittar du detaljerad information om leveranstider, fraktkostnader och avhämtning.",
+    "deliveryEstimateBadge": "Beräknad leveranstid: {min}–{max} vardagar",
+    "transitTitle": "Snabba leveranser",
+    "transitDesc": "Vi packar och skickar din order så snart som möjligt. Normal leveranstid är {min}–{max} vardagar via DHL.",
+    "freeThresholdTitle": "Fri frakt över gränsen",
+    "freeThresholdDesc": "Handla för minst {threshold} SEK så bjuder vi på fraktkostnaden för hela din beställning.",
+    "pickupOptionTitle": "Hämta i butik (0 kr)",
+    "pickupOptionDesc": "Kostnadsfri avhämtning i vår fysiska butik i Halmstad så snart ordern har packats.",
+    "tableHeading": "Viktbaserade fraktklasser & avgifter",
+    "tableSubheading": "Fraktkostnaden baseras på den sammanlagda bruttovikten på dina varor.",
+    "colWeight": "Maxvikt",
+    "colPrice": "Fraktpris (SEK)",
+    "colVat": "Varav 25% moms",
+    "colCondition": "Villkor",
+    "underThresholdCondition": "Order under {threshold} SEK",
+    "unlimitedWeight": "Över 7 kg",
+    "anyWeight": "Alla vikter (Fri frakt)",
+    "campaignNoticeTitle": "Aktiv kampanjregel",
+    "campaignNoticeBody": "Om du lägger en kampanjartikel märkt med 'Fri frakt' i varukorgen bjuder vi på fraktavgiften för hela beställningen, oavsett totalvikt.",
+    "pickupSectionTitle": "Hämta i butik (Halmstad)",
+    "pickupSectionSub": "Du kan kostnadsfritt hämta din beställning i vår butik.",
+    "pickupAddressLabel": "Butiksadress",
+    "pickupHoursLabel": "Öppettider för avhämtning",
+    "pickupInstructionsLabel": "Instruktioner vid avhämtning"
+  },
   "checkout": {
     "title": "Kassa",
     "subtitle": "Slutför ditt köp snabbt och säkert.",
@@ -945,6 +1018,10 @@
     "confirmCancel": "Är du säker på att du vill avbryta köpet?",
     "cancelModalTitle": "Avbryta beställning?",
     "cancelModalWarning": "Är du säker på att du vill avbryta din betalningssession?",
+    "leavePaymentModalTitle": "Lämna betalningen?",
+    "leavePaymentWarning": "Är du säker på att du vill lämna betalningen? Din beställning är inte slutförd ännu.",
+    "confirmLeavePayment": "Lämna sidan",
+    "stayOnPayment": "Stanna kvar",
     "keepShopping": "Fortsätt handla",
     "confirmCancelOrder": "Avbryt beställning",
     "cancelOrder": "Avbryt beställning",
