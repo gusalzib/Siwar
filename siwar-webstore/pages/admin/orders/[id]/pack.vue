@@ -10,6 +10,12 @@ const localePath = useLocalePath()
 const orderId = route.params.id as string
 const { data: order, pending, error, refresh } = await useFetch<any>(`/api/admin/orders/${orderId}`)
 
+// Fetch dynamic StoreSettings for currency-aware threshold & shipping settings
+const { data: storeSettings } = await useAsyncData(
+  'packing-store-settings',
+  () => $fetch<any>('/api/settings')
+)
+
 const {
   localItems,
   isSubmitting,
@@ -22,7 +28,7 @@ const {
   resetLineItem,
   applyShortageAction,
   submitPacking,
-} = useOrderPacking(order, refresh)
+} = useOrderPacking(order, refresh, storeSettings)
 
 // Modal states
 const activeShortageItem = ref<LineItemState | null>(null) // manages which specific item is currently being addressed in a shortage modal.
