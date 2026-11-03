@@ -18,6 +18,7 @@ interface PackItemInput {
   name?: { ar: string; sv: string; en: string }
   unitPriceMinor?: number
   momsRate?: 12 | 25
+  freeShipping?: boolean
   isPacked?: boolean
 }
 
@@ -37,6 +38,20 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Order not found' })
   }
 
+  // Ensure freeShipping is populated on original items if missing
+  const unpopulatedProductIds = order.items
+    .filter((it: any) => typeof it.freeShipping !== 'boolean' && it.productId)
+    .map((it: any) => it.productId)
+  if (unpopulatedProductIds.length > 0) {
+    const prods = await Product.find({ _id: { $in: unpopulatedProductIds } }, { freeShipping: 1 }).lean()
+    const pMap = new Map(prods.map((p) => [String(p._id), Boolean(p.freeShipping)]))
+    for (const it of order.items as any[]) {
+      if (typeof it.freeShipping !== 'boolean' && it.productId) {
+        it.freeShipping = pMap.get(String(it.productId)) ?? false
+      }
+    }
+  }
+
   // ──────────────────────────────────────────────────────────────────────
   // 1. Run recalculate FIRST on the untouched DB items so the service
   //    can match new actions against original product IDs and produce
@@ -45,13 +60,15 @@ export default defineEventHandler(async (event) => {
   const shippingConfig = await getCachedShippingSettings()
   const thresholdOverride = (shippingConfig as any)?.freeShippingThresholdMinorSEK
   const fallbackFeeOverride = (shippingConfig as any)?.tiers?.[0]?.feeMinorSEK
+  const freeShippingItemGrantsEntireOrder = Boolean((shippingConfig as any)?.freeShippingItemGrantsEntireOrder)
 
   const { updatedItems, shortageAdjustments } = recalculateOrderShortage(
     order,
     body.actions || [],
     'Admin',
     thresholdOverride,
-    fallbackFeeOverride
+    fallbackFeeOverride,
+    freeShippingItemGrantsEntireOrder
   )
 
   // ──────────────────────────────────────────────────────────────────────
@@ -85,6 +102,9 @@ export default defineEventHandler(async (event) => {
         }
         if (submittedItem.unitPriceMinor != null) match.unitPriceMinor = submittedItem.unitPriceMinor
         if (submittedItem.momsRate != null) match.momsRate = submittedItem.momsRate
+        if (typeof submittedItem.freeShipping === 'boolean') {
+          match.freeShipping = submittedItem.freeShipping
+        }
         if (submittedItem.name) match.name = submittedItem.name
         if (submittedItem.sku !== undefined) match.sku = submittedItem.sku
         if (submittedItem.imageUrl !== undefined) match.imageUrl = submittedItem.imageUrl
@@ -145,7 +165,8 @@ export default defineEventHandler(async (event) => {
     order.pricing?.authorizedTotalMinor || 0,
     order.currency as any,
     thresholdOverride,
-    fallbackFeeOverride
+    fallbackFeeOverride,
+    freeShippingItemGrantsEntireOrder
   )
 
   const capturedTotal = finalPricing.capturedTotalMinor ?? finalPricing.grandTotalMinor
@@ -205,7 +226,7 @@ export default defineEventHandler(async (event) => {
       order.dispatchedAt = new Date()
       if (body.trackingCode) {
         order.trackingCode = body.trackingCode
-        order.carrier = 'PostNord'
+        order.carrier = 'DHL'
       }
     }
 
@@ -260,7 +281,7 @@ export default defineEventHandler(async (event) => {
           {
             order,
             trackingCode: body.trackingCode, // e.g. PostNord Kolli-ID
-            carrier: 'PostNord',
+            carrier: 'DHL',
           },
           preferredLocale
         )
