@@ -15,6 +15,7 @@ export interface ShortageActionInput {
     name: { ar: string; sv: string; en: string }
     priceMinor: number
     momsRate: 12 | 25
+    freeShipping?: boolean
   }
   note?: string
 }
@@ -30,13 +31,16 @@ export function computeOrderPricing(
   authorizedTotalMinor: number = 0,
   currency: 'SEK' | 'EUR' | 'USD' = 'SEK',
   thresholdOverrideMinor?: number,
-  fallbackFeeOverrideMinor?: number
+  fallbackFeeOverrideMinor?: number,
+  freeShippingItemGrantsEntireOrder: boolean = false
 ) {
   const lineCalculationInputs: LineItemInput[] = []
   let itemsTotalMinor = 0
+  const fulfilledItems: IOrderItem[] = []
 
   for (const item of items) {
     if (item.fulfilledQuantity > 0) {
+      fulfilledItems.push(item)
       const lineGross = item.unitPriceMinor * item.fulfilledQuantity
       itemsTotalMinor += lineGross
       lineCalculationInputs.push({
@@ -50,6 +54,9 @@ export function computeOrderPricing(
   // Dynamic shipping recalculation:
   // 1. If 0 items or In-Store Pickup, shipping is 0
   // 2. Multi-currency free shipping threshold: dynamic from StoreSettings, fallback to 899 SEK / 85 EUR / 90 USD
+  // 3. Item-level promotional free shipping rules:
+  //    - If all remaining fulfilled items have freeShipping === true, fee is 0 SEK
+  //    - If freeShippingItemGrantsEntireOrder is true and >= 1 fulfilled item has freeShipping === true, fee is 0 SEK
   let shippingFeeMinor = 0
   const curr = (currency || 'SEK') as 'SEK' | 'EUR' | 'USD'
   const freeThreshold = (curr === 'SEK' && typeof thresholdOverrideMinor === 'number')
@@ -59,8 +66,13 @@ export function computeOrderPricing(
     ? fallbackFeeOverrideMinor
     : (DEFAULT_SHIPPING_CONFIG.tiers[0]?.price[curr] ?? DEFAULT_SHIPPING_CONFIG.tiers[0]?.price.SEK ?? 7700)
 
-  if (itemsTotalMinor > 0 && fulfillmentMethod === 'DELIVERY') {
+  if (fulfilledItems.length > 0 && fulfillmentMethod === 'DELIVERY') {
+    const allFreeShipping = fulfilledItems.every((i) => Boolean(i.freeShipping))
+    const hasFreeShipping = fulfilledItems.some((i) => Boolean(i.freeShipping))
+
     if (itemsTotalMinor >= freeThreshold) {
+      shippingFeeMinor = 0
+    } else if (allFreeShipping || (freeShippingItemGrantsEntireOrder && hasFreeShipping)) {
       shippingFeeMinor = 0
     } else {
       shippingFeeMinor = existingShippingFee > 0 ? existingShippingFee : fallbackFee
@@ -103,7 +115,8 @@ export function recalculateOrderShortage(
   actions: ShortageActionInput[],
   performedBy: string = 'Admin',
   thresholdOverrideMinor?: number,
-  fallbackFeeOverrideMinor?: number
+  fallbackFeeOverrideMinor?: number,
+  freeShippingItemGrantsEntireOrder: boolean = false
 ) {
   const adjustments: IShortageAdjustment[] = []
 
@@ -112,6 +125,7 @@ export function recalculateOrderShortage(
     const raw = typeof (item as any).toObject === 'function' ? (item as any).toObject() : item
     return {
       ...raw,
+      freeShipping: typeof raw.freeShipping === 'boolean' ? raw.freeShipping : false,
       fulfilledQuantity: typeof raw.fulfilledQuantity === 'number' ? raw.fulfilledQuantity : raw.quantity,
       shortageStatus: raw.shortageStatus || 'NONE',
       isPacked: typeof raw.isPacked === 'boolean' ? raw.isPacked : false,
@@ -194,6 +208,7 @@ export function recalculateOrderShortage(
         fulfilledQuantity: newQty,
         unitPriceMinor: sub.priceMinor,
         momsRate: sub.momsRate,
+        freeShipping: typeof sub.freeShipping === 'boolean' ? sub.freeShipping : false,
         shortageStatus: 'SUBSTITUTED',
         isPacked: line.isPacked ?? false,
       }
@@ -208,7 +223,8 @@ export function recalculateOrderShortage(
     order.pricing?.authorizedTotalMinor || 0,
     order.currency as any,
     thresholdOverrideMinor,
-    fallbackFeeOverrideMinor
+    fallbackFeeOverrideMinor,
+    freeShippingItemGrantsEntireOrder
   )
 
   return {

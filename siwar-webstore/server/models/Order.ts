@@ -65,6 +65,7 @@ export interface IOrderItem {
   originalUnitPriceMinor?: number
   discount?: number
   momsRate: 12 | 25
+  freeShipping?: boolean
   shortageStatus: LineItemShortageStatus
   isPacked?: boolean
 }
@@ -144,6 +145,7 @@ const OrderItemSchema = new Schema<IOrderItem>(
     originalUnitPriceMinor: { type: Number },
     discount: { type: Number },
     momsRate: { type: Number, required: true, enum: [12, 25] },
+    freeShipping: { type: Boolean, default: false },
     shortageStatus: {
       type: String,
       enum: ['NONE', 'REDUCED', 'REMOVED', 'SUBSTITUTED'],
