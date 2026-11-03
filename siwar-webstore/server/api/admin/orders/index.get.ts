@@ -44,8 +44,11 @@ export default defineEventHandler(async (event) => {
   if (typeof (Order as any).countDocuments === 'function') {
     try {
       totalCount = await Order.countDocuments(filter)
-      // Overall store summary metrics (hybrid: regardless of active search/status filter, across all orders)
-      pendingPackingCount = await Order.countDocuments({ fulfillmentStatus: 'PENDING_PACKING' })
+      // Overall store summary metrics: only count orders that are legitimately ready to be packed (authorized or paid)
+      pendingPackingCount = await Order.countDocuments({
+        fulfillmentStatus: 'PENDING_PACKING',
+        paymentStatus: { $in: ['AUTHORIZED', 'PAID'] },
+      })
       dispatchedCount = await Order.countDocuments({ fulfillmentStatus: 'DISPATCHED' })
     } catch {
       // Mock / fallback
