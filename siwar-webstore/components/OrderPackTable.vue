@@ -78,6 +78,10 @@ function getLocalizedName(nameObj?: { ar?: string; sv?: string; en?: string }) {
               <span v-if="item.discount" class="badge badge-error badge-xs text-white font-black font-mono">
                 -{{ item.discount }}%
               </span>
+              <span v-if="item.freeShipping" class="badge badge-success badge-xs text-white font-bold gap-1">
+                <Icon name="lucide:truck" class="size-2.5" />
+                {{ t('products.freeShipping', 'Fri frakt') }}
+              </span>
               <span v-if="item.shortageStatus === 'REDUCED'" class="badge badge-warning badge-xs font-bold">
                 {{ t('admin.orders.pack.badges.reduced') }}
               </span>
