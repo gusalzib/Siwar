@@ -4,6 +4,7 @@ import { DEFAULT_SHIPPING_CONFIG } from '~/utils/shipping'
 export interface LineItemState {
   productId: string
   originalProductId?: string
+  freeShipping?: boolean
   originalItem?: {
     productId: string
     sku?: string
@@ -12,6 +13,7 @@ export interface LineItemState {
     quantity: number
     unitPriceMinor: number
     momsRate: 12 | 25
+    freeShipping?: boolean
   }
   sku?: string
   imageUrl?: string
@@ -37,6 +39,7 @@ export interface ShortageActionDraft {
     name: { ar: string; sv: string; en: string }
     priceMinor: number
     momsRate: 12 | 25
+    freeShipping?: boolean
   }
   note?: string
 }
@@ -104,6 +107,9 @@ export function useOrderPacking(
               quantity: subAdjustment.originalQuantity || i.quantity,
               unitPriceMinor: subAdjustment.originalUnitPriceMinor || i.unitPriceMinor,
               momsRate: subAdjustment.originalMomsRate || i.momsRate || 12,
+              freeShipping: typeof (subAdjustment as any).originalFreeShipping === 'boolean'
+                ? (subAdjustment as any).originalFreeShipping
+                : (typeof i.freeShipping === 'boolean' ? i.freeShipping : false),
             }
           } else if (dbOriginalProductId && dbOriginalProductId !== idStr) {
             // Item has originalProductId in DB but no adjustment record (shouldn't happen but handle gracefully).
@@ -117,6 +123,7 @@ export function useOrderPacking(
               quantity: i.quantity,
               unitPriceMinor: i.unitPriceMinor,
               momsRate: i.momsRate,
+              freeShipping: typeof i.freeShipping === 'boolean' ? i.freeShipping : false,
             }
           } else {
             // Normal intact item
@@ -128,6 +135,7 @@ export function useOrderPacking(
               quantity: i.quantity,
               unitPriceMinor: i.unitPriceMinor,
               momsRate: i.momsRate,
+              freeShipping: typeof i.freeShipping === 'boolean' ? i.freeShipping : false,
             }
           }
         }
@@ -141,6 +149,7 @@ export function useOrderPacking(
           ...i,
           productId: idStr,
           imageUrl: i.imageUrl || existing?.imageUrl || '',
+          freeShipping: typeof i.freeShipping === 'boolean' ? i.freeShipping : (existing?.freeShipping ?? false),
           originalProductId: resolvedOriginalProductId && resolvedOriginalProductId !== idStr
             ? resolvedOriginalProductId
             : undefined,
@@ -169,6 +178,7 @@ export function useOrderPacking(
         quantity: target.quantity,
         unitPriceMinor: target.unitPriceMinor,
         momsRate: target.momsRate,
+        freeShipping: target.freeShipping ?? false,
       }
     }
 
@@ -182,6 +192,7 @@ export function useOrderPacking(
       target.fulfilledQuantity = draft.adjustedQuantity
       target.unitPriceMinor = sub.priceMinor
       target.momsRate = sub.momsRate || 12
+      target.freeShipping = Boolean(sub.freeShipping)
       target.shortageStatus = 'SUBSTITUTED'
       pendingActions.value.set(target.originalProductId, draft)
     } else if (draft.action === 'REMOVE_LINE') {
@@ -222,6 +233,7 @@ export function useOrderPacking(
       item.momsRate = orig.momsRate
       item.quantity = orig.quantity
       item.fulfilledQuantity = orig.quantity
+      item.freeShipping = orig.freeShipping ?? false
     }
 
     item.originalProductId = undefined
@@ -252,7 +264,7 @@ export function useOrderPacking(
     return localItems.value.every((item) => item.fulfilledQuantity === 0 || item.isPacked)
   })
 
-  // 4. Dynamic Live Pricing (Handles free shipping threshold dynamically)
+  // 4. Dynamic Live Pricing (Handles free shipping threshold & promotional item rules dynamically)
   const livePricing = computed(() => {
     if (!order.value) {
       return { fulfilledItemsTotal: 0, grandTotal: 0, moms12Amount: 0, moms25Amount: 0, totalMoms: 0, releaseAmount: 0, shippingFee: 0 }
@@ -268,7 +280,7 @@ export function useOrderPacking(
       else moms25Gross += lineGross
     }
 
-    // Dynamic Shipping calculation (currency-aware threshold & tier fallback)
+    // Dynamic Shipping calculation (currency-aware threshold & tier fallback & free-shipping items)
     let shippingFee = 0
     if (itemsTotal > 0 && order.value.customer?.fulfillmentMethod === 'DELIVERY') {
       const curr = (order.value.currency || 'SEK') as 'SEK' | 'EUR' | 'USD'
@@ -280,8 +292,19 @@ export function useOrderPacking(
         ? storeSettings.value.shipping.tiers[0].feeMinorSEK
         : (DEFAULT_SHIPPING_CONFIG.tiers[0]?.price[curr] ?? DEFAULT_SHIPPING_CONFIG.tiers[0]?.price.SEK ?? 7700)
 
+      const freeShippingItemGrantsEntireOrder = Boolean(
+        storeSettings.value?.shipping?.freeShippingItemGrantsEntireOrder
+      )
+
+      const fulfilledLines = localItems.value.filter((line) => line.fulfilledQuantity > 0)
+      const allFulfilledFreeShipping =
+        fulfilledLines.length > 0 && fulfilledLines.every((line) => Boolean(line.freeShipping))
+      const hasFulfilledFreeShipping = fulfilledLines.some((line) => Boolean(line.freeShipping))
+
       if (itemsTotal >= threshold) {
-        shippingFee = 0 // Free shipping
+        shippingFee = 0 // Free shipping via threshold
+      } else if (allFulfilledFreeShipping || (freeShippingItemGrantsEntireOrder && hasFulfilledFreeShipping)) {
+        shippingFee = 0 // Free shipping via item-level promotional rule
       } else {
         shippingFee = order.value.pricing?.shippingFeeMinor > 0 ? order.value.pricing.shippingFeeMinor : fallbackFee
       }
@@ -334,6 +357,7 @@ export function useOrderPacking(
           name: i.name,
           unitPriceMinor: i.unitPriceMinor,
           momsRate: i.momsRate,
+          freeShipping: Boolean(i.freeShipping),
           isPacked: i.isPacked,
         })),
         actions: Array.from(pendingActions.value.values()),
