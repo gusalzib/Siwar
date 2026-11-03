@@ -589,6 +589,9 @@
         "captured": "مسحوب (Captured)",
         "partiallyCaptured": "مسحوب جزئياً (Partially Captured)",
         "paid": "مدفوع (Paid)",
+        "pending": "قيد الانتظار (Pending)",
+        "abandoned": "متروك (Abandoned)",
+        "failed": "فاشل (Failed)",
         "resetFilters": "إعادة ضبط الفلاتر"
       },
       "table": {
@@ -612,6 +615,18 @@
         "pack": "تجهيز"
       },
       "pack": {
+        "unpackable": {
+          "cancelledTitle": "الطلب ملغى",
+          "cancelledMessage": "هذا الطلب ملغى ولا يمكن تجهيزه أو إرساله.",
+          "abandonedTitle": "جلسة دفع متروكة",
+          "abandonedMessage": "قام العميل بمغادرة صفحة الدفع دون إتمام الدفع. لا يمكن تجهيز هذا الطلب.",
+          "pendingTitle": "بانتظار تأكيد الدفع",
+          "pendingMessage": "لم يتم تأكيد أو حجز عملية الدفع بعد. لا يمكن تجهيز الطلب.",
+          "failedTitle": "فشلت عملية الدفع",
+          "failedMessage": "فشلت عملية الدفع. لا يمكن تجهيز هذا الطلب.",
+          "dispatchedTitle": "تم إرسال الطلب بالفعل",
+          "dispatchedMessage": "تم إرسال هذا الطلب بالفعل ومحتوياته مقفلة."
+        },
         "errors": {
           "loadFailed": "تعذر تحميل الطلب.",
           "cancelFailed": "فشل في إلغاء الطلب."

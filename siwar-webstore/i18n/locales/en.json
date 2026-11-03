@@ -589,6 +589,9 @@
         "captured": "Captured",
         "partiallyCaptured": "Partially Captured",
         "paid": "Paid",
+        "pending": "Pending",
+        "abandoned": "Abandoned",
+        "failed": "Failed",
         "resetFilters": "Reset filters"
       },
       "table": {
@@ -612,6 +615,18 @@
         "pack": "Pack"
       },
       "pack": {
+        "unpackable": {
+          "cancelledTitle": "Order is cancelled",
+          "cancelledMessage": "This order is cancelled and cannot be packed or dispatched.",
+          "abandonedTitle": "Abandoned payment session",
+          "abandonedMessage": "The customer abandoned checkout without completing payment. The order cannot be packed.",
+          "pendingTitle": "Awaiting payment",
+          "pendingMessage": "Payment has not been authorized or confirmed yet. The order cannot be packed.",
+          "failedTitle": "Payment failed",
+          "failedMessage": "Payment failed. The order cannot be fulfilled.",
+          "dispatchedTitle": "Order is already dispatched",
+          "dispatchedMessage": "This order has already been dispatched and its contents are locked."
+        },
         "errors": {
           "loadFailed": "Could not load the order.",
           "cancelFailed": "Failed to cancel order."

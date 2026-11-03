@@ -588,6 +588,9 @@
         "captured": "Dragen (Captured)",
         "partiallyCaptured": "Delvis dragen (Partially Captured)",
         "paid": "Betald (Paid)",
+        "pending": "Väntande (Pending)",
+        "abandoned": "Övergiven (Abandoned)",
+        "failed": "Misslyckad (Failed)",
         "resetFilters": "Återställ filter"
       },
       "table": {
@@ -611,6 +614,18 @@
         "pack": "Packa"
       },
       "pack": {
+        "unpackable": {
+          "cancelledTitle": "Ordern är avbruten",
+          "cancelledMessage": "Denna order är avbruten och kan inte packas eller skickas.",
+          "abandonedTitle": "Övergiven betalsession",
+          "abandonedMessage": "Kunden avbröt eller lämnade kassan utan att slutföra betalningen. Ordern kan inte packas.",
+          "pendingTitle": "Väntar på betalning",
+          "pendingMessage": "Betalningen har inte auktoriserats eller bekräftats ännu. Ordern kan inte packas.",
+          "failedTitle": "Misslyckad betalning",
+          "failedMessage": "Betalningen misslyckades. Ordern kan inte expedieras.",
+          "dispatchedTitle": "Ordern är redan skickad",
+          "dispatchedMessage": "Ordern har redan expedierats och dess innehåll är låst."
+        },
         "errors": {
           "loadFailed": "Kunde inte läsa in ordern.",
           "cancelFailed": "Kunde inte avbryta ordern."
