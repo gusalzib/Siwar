@@ -4,6 +4,7 @@ import { DEFAULT_SHIPPING_CONFIG } from '~/utils/shipping'
 export interface LineItemState {
   productId: string
   originalProductId?: string
+  freeShipping?: boolean
   originalItem?: {
     productId: string
     sku?: string
@@ -12,6 +13,7 @@ export interface LineItemState {
     quantity: number
     unitPriceMinor: number
     momsRate: 12 | 25
+    freeShipping?: boolean
   }
   sku?: string
   imageUrl?: string
@@ -37,17 +39,31 @@ export interface ShortageActionDraft {
     name: { ar: string; sv: string; en: string }
     priceMinor: number
     momsRate: 12 | 25
+    freeShipping?: boolean
   }
   note?: string
 }
 
-export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<void>) {
+export function useOrderPacking(
+  order: Ref<any>,
+  refreshOrder: () => Promise<void>,
+  settingsOverride?: Ref<any>
+) {
   const router = useRouter()
   const localePath = useLocalePath()
   const localItems = ref<LineItemState[]>([])
   const pendingActions = ref<Map<string, ShortageActionDraft>>(new Map())
   const isSubmitting = ref(false)
   const errorMessage = ref<string | null>(null)
+
+  // Fetch dynamic store settings if not provided by caller
+  const { data: fetchedSettings } = settingsOverride
+    ? { data: settingsOverride }
+    : useAsyncData(
+        'packing-store-settings',
+        () => $fetch<any>('/api/settings')
+      )
+  const storeSettings = settingsOverride || fetchedSettings
 
   // Helper to extract clean string ID whether it is a string or an object { _id: "..." }
   function extractId(val: any): string {
@@ -91,6 +107,9 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
               quantity: subAdjustment.originalQuantity || i.quantity,
               unitPriceMinor: subAdjustment.originalUnitPriceMinor || i.unitPriceMinor,
               momsRate: subAdjustment.originalMomsRate || i.momsRate || 12,
+              freeShipping: typeof (subAdjustment as any).originalFreeShipping === 'boolean'
+                ? (subAdjustment as any).originalFreeShipping
+                : (typeof i.freeShipping === 'boolean' ? i.freeShipping : false),
             }
           } else if (dbOriginalProductId && dbOriginalProductId !== idStr) {
             // Item has originalProductId in DB but no adjustment record (shouldn't happen but handle gracefully).
@@ -104,6 +123,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
               quantity: i.quantity,
               unitPriceMinor: i.unitPriceMinor,
               momsRate: i.momsRate,
+              freeShipping: typeof i.freeShipping === 'boolean' ? i.freeShipping : false,
             }
           } else {
             // Normal intact item
@@ -115,6 +135,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
               quantity: i.quantity,
               unitPriceMinor: i.unitPriceMinor,
               momsRate: i.momsRate,
+              freeShipping: typeof i.freeShipping === 'boolean' ? i.freeShipping : false,
             }
           }
         }
@@ -128,6 +149,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
           ...i,
           productId: idStr,
           imageUrl: i.imageUrl || existing?.imageUrl || '',
+          freeShipping: typeof i.freeShipping === 'boolean' ? i.freeShipping : (existing?.freeShipping ?? false),
           originalProductId: resolvedOriginalProductId && resolvedOriginalProductId !== idStr
             ? resolvedOriginalProductId
             : undefined,
@@ -156,6 +178,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
         quantity: target.quantity,
         unitPriceMinor: target.unitPriceMinor,
         momsRate: target.momsRate,
+        freeShipping: target.freeShipping ?? false,
       }
     }
 
@@ -169,6 +192,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
       target.fulfilledQuantity = draft.adjustedQuantity
       target.unitPriceMinor = sub.priceMinor
       target.momsRate = sub.momsRate || 12
+      target.freeShipping = Boolean(sub.freeShipping)
       target.shortageStatus = 'SUBSTITUTED'
       pendingActions.value.set(target.originalProductId, draft)
     } else if (draft.action === 'REMOVE_LINE') {
@@ -209,6 +233,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
       item.momsRate = orig.momsRate
       item.quantity = orig.quantity
       item.fulfilledQuantity = orig.quantity
+      item.freeShipping = orig.freeShipping ?? false
     }
 
     item.originalProductId = undefined
@@ -239,7 +264,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
     return localItems.value.every((item) => item.fulfilledQuantity === 0 || item.isPacked)
   })
 
-  // 4. Dynamic Live Pricing (Handles free shipping threshold dynamically)
+  // 4. Dynamic Live Pricing (Handles free shipping threshold & promotional item rules dynamically)
   const livePricing = computed(() => {
     if (!order.value) {
       return { fulfilledItemsTotal: 0, grandTotal: 0, moms12Amount: 0, moms25Amount: 0, totalMoms: 0, releaseAmount: 0, shippingFee: 0 }
@@ -255,15 +280,31 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
       else moms25Gross += lineGross
     }
 
-    // Dynamic Shipping calculation (currency-aware threshold & tier fallback)
+    // Dynamic Shipping calculation (currency-aware threshold & tier fallback & free-shipping items)
     let shippingFee = 0
     if (itemsTotal > 0 && order.value.customer?.fulfillmentMethod === 'DELIVERY') {
       const curr = (order.value.currency || 'SEK') as 'SEK' | 'EUR' | 'USD'
-      const threshold = DEFAULT_SHIPPING_CONFIG.freeShippingThreshold[curr] ?? DEFAULT_SHIPPING_CONFIG.freeShippingThreshold.SEK
-      const fallbackFee = DEFAULT_SHIPPING_CONFIG.tiers[0]?.price[curr] ?? DEFAULT_SHIPPING_CONFIG.tiers[0]?.price.SEK ?? 7700
+      const threshold = (curr === 'SEK' && typeof storeSettings.value?.shipping?.freeShippingThresholdMinorSEK === 'number')
+        ? storeSettings.value.shipping.freeShippingThresholdMinorSEK
+        : (DEFAULT_SHIPPING_CONFIG.freeShippingThreshold[curr] ?? DEFAULT_SHIPPING_CONFIG.freeShippingThreshold.SEK)
+
+      const fallbackFee = (curr === 'SEK' && storeSettings.value?.shipping?.tiers?.[0]?.feeMinorSEK)
+        ? storeSettings.value.shipping.tiers[0].feeMinorSEK
+        : (DEFAULT_SHIPPING_CONFIG.tiers[0]?.price[curr] ?? DEFAULT_SHIPPING_CONFIG.tiers[0]?.price.SEK ?? 7700)
+
+      const freeShippingItemGrantsEntireOrder = Boolean(
+        storeSettings.value?.shipping?.freeShippingItemGrantsEntireOrder
+      )
+
+      const fulfilledLines = localItems.value.filter((line) => line.fulfilledQuantity > 0)
+      const allFulfilledFreeShipping =
+        fulfilledLines.length > 0 && fulfilledLines.every((line) => Boolean(line.freeShipping))
+      const hasFulfilledFreeShipping = fulfilledLines.some((line) => Boolean(line.freeShipping))
 
       if (itemsTotal >= threshold) {
-        shippingFee = 0 // Free shipping
+        shippingFee = 0 // Free shipping via threshold
+      } else if (allFulfilledFreeShipping || (freeShippingItemGrantsEntireOrder && hasFulfilledFreeShipping)) {
+        shippingFee = 0 // Free shipping via item-level promotional rule
       } else {
         shippingFee = order.value.pricing?.shippingFeeMinor > 0 ? order.value.pricing.shippingFeeMinor : fallbackFee
       }
@@ -288,9 +329,23 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
     }
   })
 
+  // Unpackable payment statuses: an order cannot be packed or dispatched if payment was abandoned, cancelled, failed or still pending
+  const UNPACKABLE_PAYMENT_STATUSES = ['ABANDONED', 'CANCELLED', 'FAILED', 'PENDING']
+
+  const isOrderUnpackable = computed(() => {
+    if (!order.value) return false
+    return (
+      order.value.fulfillmentStatus === 'CANCELLED' ||
+      order.value.fulfillmentStatus === 'DISPATCHED' ||
+      UNPACKABLE_PAYMENT_STATUSES.includes(order.value.paymentStatus)
+    )
+  })
+
   const canDispatch = computed(() => {
     if (isSubmitting.value) return false
     if (['DISPATCHED', 'CANCELLED'].includes(order.value?.fulfillmentStatus)) return false
+    // Payment must be legitimately authorized (Stripe hold) or paid (Swish capture) before dispatch
+    if (!['AUTHORIZED', 'PAID'].includes(order.value?.paymentStatus)) return false
     if (totalFulfilledUnits.value === 0) return false
     if (order.value?.pricing?.authorizedTotalMinor && livePricing.value.grandTotal > order.value.pricing.authorizedTotalMinor) {
       return false
@@ -300,6 +355,11 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
 
   // 5. Submit with positional indexing
   async function submitPacking(markDispatched: boolean) {
+    if (isOrderUnpackable.value && markDispatched) {
+      errorMessage.value = 'Ordern kan inte skickas eftersom den är avbruten eller saknar giltig betalning.'
+      return
+    }
+
     isSubmitting.value = true
     errorMessage.value = null
 
@@ -316,6 +376,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
           name: i.name,
           unitPriceMinor: i.unitPriceMinor,
           momsRate: i.momsRate,
+          freeShipping: Boolean(i.freeShipping),
           isPacked: i.isPacked,
         })),
         actions: Array.from(pendingActions.value.values()),
@@ -347,6 +408,7 @@ export function useOrderPacking(order: Ref<any>, refreshOrder: () => Promise<voi
     errorMessage,
     totalFulfilledUnits,
     isFullyPacked,
+    isOrderUnpackable,
     canDispatch,
     livePricing,
     toggleItemPicked,

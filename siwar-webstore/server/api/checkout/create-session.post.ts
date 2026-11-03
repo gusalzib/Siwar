@@ -111,6 +111,7 @@ export default defineEventHandler(async (event) => {
       originalUnitPriceMinor: discount > 0 ? baseUnitPrice : undefined,
       discount: discount > 0 ? discount : undefined,
       momsRate: product.momsRate as 12 | 25,
+      freeShipping: Boolean(product.freeShipping),
     })
   }
 

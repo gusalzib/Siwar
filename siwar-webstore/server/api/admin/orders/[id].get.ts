@@ -22,21 +22,24 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Populate product image for items if missing (for legacy or substituted items)
+  // Populate product image and freeShipping for items if missing (for legacy or substituted items)
   if (order.items && order.items.length > 0) {
-    const missingImageProductIds = order.items
-      .filter((it: any) => !it.imageUrl && it.productId)
+    const productIdsToFetch = order.items
+      .filter((it: any) => (!it.imageUrl || typeof it.freeShipping !== 'boolean') && it.productId)
       .map((it: any) => it.productId)
 
-    if (missingImageProductIds.length > 0) {
-      const products = await Product.find({ _id: { $in: missingImageProductIds } })
-        .select('images')
+    if (productIdsToFetch.length > 0) {
+      const products = await Product.find({ _id: { $in: productIdsToFetch } })
+        .select('images freeShipping')
         .lean()
       const pMap = new Map(products.map((p) => [String(p._id), p]))
       for (const it of order.items as any[]) {
-        if (!it.imageUrl && it.productId) {
-          const prod = pMap.get(String(it.productId))
-          if (prod && prod.images && prod.images.length > 0) {
+        const prod = pMap.get(String(it.productId))
+        if (prod) {
+          if (typeof it.freeShipping !== 'boolean') {
+            it.freeShipping = Boolean(prod.freeShipping)
+          }
+          if (!it.imageUrl && prod.images && prod.images.length > 0) {
             it.imageUrl = prod.images.find((img: any) => img.isPrimary)?.url || prod.images[0]?.url || ''
           }
         }

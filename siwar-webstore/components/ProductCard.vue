@@ -17,6 +17,7 @@ interface ProductProps {
   discountStartsAt?: Date | string | null
   discountExpiresAt?: Date | string | null
   discountedPrice?: Record<string, any> | null
+  freeShipping?: boolean
   statusCode?: string
   canAddToCart?: boolean
   netQuantity?: { value: number; unit: string }
@@ -84,6 +85,7 @@ function handleAddToCart() {
       momsRate: (props.product.momsRate || 12) as 12 | 25,
       grossWeight: props.product.grossWeight || 0,
       availableStock: props.product.availableStock ?? 0,
+      freeShipping: Boolean(props.product.freeShipping),
     },
     1
   )
@@ -135,9 +137,10 @@ function calculateComparisonPrice(
         </div>
       </NuxtLink>
 
-      <!-- Distinctive Discount Tag & Urgent Expiry Badge -->
-      <div v-if="product.discount && product.discount > 0" class="absolute top-2.5 start-2.5 z-10 pointer-events-none flex flex-col items-start gap-1">
+      <!-- Distinctive Discount Tag, Urgent Expiry Badge & Free Shipping Badge -->
+      <div v-if="(product.discount && product.discount > 0) || product.freeShipping" class="absolute top-2.5 start-2.5 z-10 pointer-events-none flex flex-col items-start gap-1">
         <span
+          v-if="product.discount && product.discount > 0"
           class="relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-600 shadow-md shadow-red-500/40 border border-white/20 select-none overflow-hidden tracking-wide"
         >
           <span class="absolute inset-0 bg-white/15 animate-pulse pointer-events-none" />
@@ -152,11 +155,20 @@ function calculateComparisonPrice(
 
         <!-- Urgent Expiry Badge (Impending Deadline <= 48h) -->
         <span
-          v-if="isExpiringSoon"
+          v-if="product.discount && product.discount > 0 && isExpiringSoon"
           class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold text-black bg-amber-400 dark:bg-amber-400 shadow-sm border border-amber-500/30 select-none tracking-tight"
         >
           <Icon name="lucide:clock" class="size-3 shrink-0 text-black" />
           <span>{{ t('deals.endsSoon', 'Slutar snart') }}</span>
+        </span>
+
+        <!-- Free Shipping Promotional Badge -->
+        <span
+          v-if="product.freeShipping"
+          class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] sm:text-xs font-black text-emerald-800 dark:text-emerald-100 bg-emerald-100 dark:bg-emerald-950/90 shadow-sm border border-emerald-300 dark:border-emerald-700 select-none tracking-tight"
+        >
+          <Icon name="lucide:truck" class="size-3 shrink-0 text-emerald-700 dark:text-emerald-300" />
+          <span>{{ t('products.freeShipping', 'Fri frakt') }}</span>
         </span>
       </div>
 

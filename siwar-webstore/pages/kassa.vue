@@ -394,7 +394,7 @@ async function handleProceedToPayment() {
                   />
                 </div>
                 <span class="text-xs text-base-content/60 mt-1">
-                  {{ t('checkout.parcelDeliveryDesc', '1–3 vardagar via PostNord') }}
+                  {{ t('checkout.parcelDeliveryDesc', '1–3 vardagar via DHL') }}
                 </span>
                 <span class="text-xs font-semibold mt-2 font-mono">
                   {{
@@ -650,7 +650,7 @@ async function handleProceedToPayment() {
                   type="checkbox"
                   class="checkbox checkbox-primary mt-1 shrink-0"
                 />
-                <span class="label-text text-xs leading-relaxed text-base-content/80 select-none">
+                <span class="label-text text-xs leading-relaxed text-base-content/80 select-none inline-block whitespace-normal break-words">
                   {{ t('checkout.legalConsentPrefix', 'Jag godkänner Siwars') }}
                   <NuxtLink to="/villkor" target="_blank" class="text-primary underline font-semibold">
                     {{ t('checkout.termsOfService', 'Köpvillkor') }}

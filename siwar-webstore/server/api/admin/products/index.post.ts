@@ -144,6 +144,7 @@ export default defineEventHandler(async (event) => {
     barcode: body.barcode?.trim() || undefined,
     images: Array.isArray(body.images) ? body.images : [],
     isActive: body.isActive !== false,
+    freeShipping: Boolean(body.freeShipping),
   })
 
   await product.save()

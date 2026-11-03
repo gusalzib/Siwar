@@ -1,7 +1,7 @@
 <!-- pages/checkout/payment.vue -->
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { loadStripe, type Stripe, type StripeElements } from '@stripe/stripe-js'
 import { useCartStore } from '~/stores/cart'
 import { usePreferencesStore } from '~/stores/preferences'
@@ -22,6 +22,12 @@ const isProcessing = ref(false)
 const errorMessage = ref<string | null>(null)
 const isCancelling = ref(false)
 
+// Exit & Navigation Guard States (Task 40-48)
+const isPaymentCommitted = ref(false)
+const hasConfirmedLeave = ref(false)
+const isLeaveModalOpen = ref(false)
+const pendingRouteTarget = ref<any | null>(null)
+
 // Swish artifacts
 const swishQrUrl = ref<string | null>(null)
 const swishToken = ref<string | null>(null)
@@ -30,7 +36,28 @@ const swishToken = ref<string | null>(null)
 let stripe: Stripe | null = null
 let elements: StripeElements | null = null
 
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  if (isPaymentCommitted.value || hasConfirmedLeave.value || !activeOrderReference.value) return
+
+  if (navigator.sendBeacon && activeOrderReference.value) {
+    const payload = JSON.stringify({
+      orderReference: activeOrderReference.value,
+      status: 'ABANDONED',
+    })
+    const blob = new Blob([payload], { type: 'application/json' })
+    navigator.sendBeacon('/api/checkout/cancel-session', blob)
+  }
+
+  e.preventDefault()
+  e.returnValue = ''
+  return ''
+}
+
 onMounted(async () => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', handleBeforeUnload)
+  }
+
   cartStore.hydrateCart()
   if (cartStore.items.length === 0) {
     return router.replace(localePath('/catalog'))
@@ -45,6 +72,12 @@ onMounted(async () => {
   provider.value = draft.paymentMethod || 'STRIPE'
 
   await initializeSession(draft)
+})
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('beforeunload', handleBeforeUnload)
+  }
 })
 
 async function initializeSession(draft: any) {
@@ -181,6 +214,10 @@ async function handleConfirmCardPayment() {
     errorMessage.value = error.message || t('checkout.cardFailed', 'Kortbetalningen nekades.')
     isProcessing.value = false
   } else if (paymentIntent && paymentIntent.status === 'requires_capture') {
+    isPaymentCommitted.value = true
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
     cartStore.clearCart()
     sessionStorage.removeItem('siwar_checkout_payload')
     sessionStorage.removeItem('siwar_active_payment_session') // Purge session cache
@@ -189,6 +226,52 @@ async function handleConfirmCardPayment() {
   }
 }
 
+// Navigation leave guard
+onBeforeRouteLeave((to, from, next) => {
+  if (isPaymentCommitted.value || hasConfirmedLeave.value || !activeOrderReference.value) {
+    return next()
+  }
+  pendingRouteTarget.value = to
+  isLeaveModalOpen.value = true
+  next(false)
+})
+
+const isAbandoning = ref(false)
+
+async function confirmLeavePayment() {
+  isAbandoning.value = true
+  try {
+    if (activeOrderReference.value) {
+      await $fetch('/api/checkout/cancel-session', {
+        method: 'POST',
+        body: { orderReference: activeOrderReference.value, status: 'ABANDONED' },
+      })
+    }
+  } catch (err) {
+    console.error('Error marking session as abandoned:', err)
+  } finally {
+    hasConfirmedLeave.value = true
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+    sessionStorage.removeItem('siwar_checkout_payload')
+    sessionStorage.removeItem('siwar_active_payment_session')
+    isAbandoning.value = false
+    isLeaveModalOpen.value = false
+    if (pendingRouteTarget.value) {
+      const target = pendingRouteTarget.value
+      pendingRouteTarget.value = null
+      router.push(target)
+    } else {
+      router.push(localePath('/kassa'))
+    }
+  }
+}
+
+function cancelLeavePayment() {
+  isLeaveModalOpen.value = false
+  pendingRouteTarget.value = null
+}
 
 const isCancelModalOpen = ref(false)
 
@@ -206,12 +289,16 @@ async function confirmCancelOrder() {
     if (activeOrderReference.value) {
       await $fetch('/api/checkout/cancel-session', {
         method: 'POST',
-        body: { orderReference: activeOrderReference.value },
+        body: { orderReference: activeOrderReference.value, status: 'CANCELLED' },
       })
     }
   } catch (err) {
     console.error('Error cancelling order:', err)
   } finally {
+    hasConfirmedLeave.value = true
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
     sessionStorage.removeItem('siwar_checkout_payload')
     sessionStorage.removeItem('siwar_active_payment_session') // Purge session cache
     isCancelling.value = false
@@ -311,6 +398,21 @@ async function confirmCancelOrder() {
       confirm-icon="lucide:x-circle"
       @confirm="confirmCancelOrder"
       @close="closeCancelModal"
+    />
+
+    <!-- Leave Payment Navigation Confirmation Modal -->
+    <ConfirmModal
+      :is-open="isLeaveModalOpen"
+      :title="t('checkout.leavePaymentModalTitle', 'Lämna betalningen?')"
+      :message="t('checkout.leavePaymentWarning', 'Är du säker på att du vill lämna betalningen? Din beställning är inte slutförd ännu.')"
+      icon="lucide:alert-triangle"
+      variant="warning"
+      :confirm-text="t('checkout.confirmLeavePayment', 'Lämna sidan')"
+      :cancel-text="t('checkout.stayOnPayment', 'Stanna kvar')"
+      :is-submitting="isAbandoning"
+      confirm-icon="lucide:log-out"
+      @confirm="confirmLeavePayment"
+      @close="cancelLeavePayment"
     />
   </div>
 </template>

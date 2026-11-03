@@ -241,6 +241,15 @@ const hasActiveSocial = computed(() => {
 
             <li>
               <NuxtLink
+                :to="localePath('/frakt')"
+                class="flex items-center gap-2 text-slate-300 hover:text-primary transition-colors font-medium"
+              >
+                <Icon name="lucide:truck" class="size-3.5 text-slate-500 shrink-0" />
+                <span>{{ t('legal.shippingInformation', 'Frakt') }}</span>
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink
                 :to="localePath('/angerratt')"
                 class="flex items-center gap-2 text-slate-300 hover:text-primary transition-colors font-medium"
               >

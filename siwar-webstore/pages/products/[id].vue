@@ -174,6 +174,7 @@ function addToCart() {
       momsRate: product.value.momsRate,
       grossWeight: product.value.grossWeight || 0,
       availableStock: product.value.availability.availableStock,
+      freeShipping: Boolean(product.value.freeShipping),
     },
     selectedQuantity.value
   )
@@ -235,9 +236,9 @@ const localePath = useLocalePath()
             <span class="text-sm">{{ t(  'admin.products.noImage') }}</span>
           </div>
 
-          <!-- Bold Attention-Grabbing Discount Tag & Urgent Expiry Badge -->
-          <div v-if="hasDiscount" class="absolute top-4 start-4 z-10 flex flex-col items-start gap-1.5">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-black bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white shadow-lg shadow-red-500/30 border border-white/20 tracking-wide uppercase">
+          <!-- Bold Attention-Grabbing Discount Tag, Urgent Expiry Badge & Free Shipping Badge -->
+          <div v-if="hasDiscount || product.freeShipping" class="absolute top-4 start-4 z-10 flex flex-col items-start gap-1.5">
+            <span v-if="hasDiscount" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-black bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white shadow-lg shadow-red-500/30 border border-white/20 tracking-wide uppercase">
               <span class="relative flex size-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-90" />
                 <span class="relative inline-flex rounded-full size-2 bg-amber-400" />
@@ -246,11 +247,20 @@ const localePath = useLocalePath()
             </span>
 
             <span
-              v-if="isExpiringSoon"
+              v-if="hasDiscount && isExpiringSoon"
               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-black bg-amber-400 dark:bg-amber-400 shadow-sm border border-amber-500/30 select-none tracking-tight"
             >
               <Icon name="lucide:clock" class="size-3.5 shrink-0 text-black" />
               <span>{{ t('deals.endsSoon', 'Slutar snart') }}</span>
+            </span>
+
+            <!-- Promotional Free Shipping Badge -->
+            <span
+              v-if="product.freeShipping"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-black bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 border border-white/20 tracking-wide uppercase"
+            >
+              <Icon name="lucide:truck" class="size-4 shrink-0" />
+              <span>{{ t('products.freeShipping', 'Fri frakt') }}</span>
             </span>
           </div>
 
@@ -359,6 +369,15 @@ const localePath = useLocalePath()
               >
                 <Icon name="lucide:calendar-clock" class="size-3.5 shrink-0" />
                 <span>{{ t('deals.validUntil', { date: formattedExpiryDate }) }}</span>
+              </div>
+
+              <!-- Free Shipping Perk Badge -->
+              <div
+                v-if="product.freeShipping"
+                class="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 text-xs font-bold"
+              >
+                <Icon name="lucide:truck" class="size-3.5 text-emerald-700 dark:text-emerald-300" />
+                <span>{{ t('products.freeShippingBadgeDesc', 'Fri frakt på denna vara') }}</span>
               </div>
             </div>
             <span class="text-xs text-base-content/50">

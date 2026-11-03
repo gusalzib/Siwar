@@ -3,6 +3,10 @@
   "storeName": "Siwar Webstore",
   
   "welcomeMessage": "Explore the orient with Siwar",
+  "products": {
+    "freeShipping": "Free shipping",
+    "freeShippingBadgeDesc": "Free shipping on this item"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -206,7 +210,9 @@
         "delete": "Delete",
         "deleteConfirm": "Are you sure you want to permanently delete this product? This action cannot be undone.",
         "quickStock": "Quick Stock Adjust",
-        "quickDiscount": "Quick Discount Adjust"
+        "quickDiscount": "Quick Discount Adjust",
+        "freeShippingActive": "Free shipping active",
+        "addFreeShipping": "Free shipping"
       },
       "empty": {
         "title": "No products found",
@@ -330,6 +336,9 @@
         "barcode": "Barcode (EAN / GTIN)",
         "barcodePlaceholder": "7350000000000",
         "isActive": "Publish product immediately to storefront",
+        "isActiveHelp": "Product is visible and purchasable in the webstore",
+        "freeShipping": "Free shipping on this product",
+        "freeShippingHelp": "Exempts this product from parcel weight calculation.",
         "imageUrl": "Image URL (CDN)",
         "imageUrlPlaceholder": "https://cdn.siwar.se/products/sample.webp",
         "imageAlt": "Accessibility Alt Text",
@@ -382,6 +391,43 @@
         "categories": "Categories",
         "allergens": "Allergens",
         "banners": "Banners"
+      },
+      "shipping": {
+        "loading": "Loading shipping settings...",
+        "campaignRuleTitle": "Campaign Rule: Free Shipping Products",
+        "campaignRuleSubtitle": "Control how promotional free shipping items impact the entire cart.",
+        "campaignActive": "Campaign Mode Active",
+        "standardMode": "Standard Mode",
+        "campaignRuleLabel": "1 free shipping item grants free shipping for the entire order",
+        "campaignRuleActive": "If cart contains at least one free shipping product, shipping is completely free for the entire order regardless of weight or other items.",
+        "campaignRuleInactive": "Free shipping items are exempt from weight calculation, but do not automatically grant free shipping for the whole order if ordinary items are present.",
+        "campaignRuleGuideTitle": "When to use this setting?",
+        "campaignRuleExplanation": "During heavy marketing campaigns, toggle this on as a conversion booster (\"Add any gift box to your cart and your entire order ships free!\"). Under normal operations, keep this off so customers cannot bypass freight on heavy bulk purchases (e.g. 20 kg rice and oil) by adding a single 50g free shipping spice packet.",
+        "thresholdTitle": "Free Shipping Threshold & Delivery Days",
+        "thresholdDesc": "Automatic free shipping when order value reaches this amount.",
+        "thresholdLabel": "Free Shipping Threshold (SEK)",
+        "thresholdHelp": "e.g. 899 SEK (corresponds to 89,900 öre)",
+        "minDaysLabel": "Minimum delivery days",
+        "maxDaysLabel": "Maximum delivery days",
+        "deliveryDaysHelp": "Estimated delivery timeframe displayed in checkout (e.g. 1-3 business days)",
+        "tiersTitle": "Weight-Based Freight Classes",
+        "tiersDesc": "Shipping costs based on gross parcel weight excluding free shipping items.",
+        "addTier": "Add Tier",
+        "maxWeight": "Max Weight",
+        "shippingFee": "Shipping Fee",
+        "action": "Action",
+        "unlimitedWeight": "Unlimited (highest tier)",
+        "minOneTierError": "At least one weight tier must be configured.",
+        "invalidThreshold": "Free shipping threshold cannot be negative.",
+        "invalidDeliveryDays": "Invalid delivery days: Maximum cannot be less than minimum.",
+        "savedSuccess": "Shipping settings saved successfully!",
+        "saveError": "An error occurred while saving.",
+        "saving": "Saving changes...",
+        "saveChanges": "Save shipping settings",
+        "maxWeightLabel": "Max Weight (grams)",
+        "weightFormatted": "Display",
+        "feeLabel": "Shipping Fee (SEK)",
+        "daysUnit": "Days"
       },
       "comingSoon": "Soon",
       "searchPlaceholder": "Search..."
@@ -543,6 +589,9 @@
         "captured": "Captured",
         "partiallyCaptured": "Partially Captured",
         "paid": "Paid",
+        "pending": "Pending",
+        "abandoned": "Abandoned",
+        "failed": "Failed",
         "resetFilters": "Reset filters"
       },
       "table": {
@@ -566,6 +615,18 @@
         "pack": "Pack"
       },
       "pack": {
+        "unpackable": {
+          "cancelledTitle": "Order is cancelled",
+          "cancelledMessage": "This order is cancelled and cannot be packed or dispatched.",
+          "abandonedTitle": "Abandoned payment session",
+          "abandonedMessage": "The customer abandoned checkout without completing payment. The order cannot be packed.",
+          "pendingTitle": "Awaiting payment",
+          "pendingMessage": "Payment has not been authorized or confirmed yet. The order cannot be packed.",
+          "failedTitle": "Payment failed",
+          "failedMessage": "Payment failed. The order cannot be fulfilled.",
+          "dispatchedTitle": "Order is already dispatched",
+          "dispatchedMessage": "This order has already been dispatched and its contents are locked."
+        },
         "errors": {
           "loadFailed": "Could not load the order.",
           "cancelFailed": "Failed to cancel order."
@@ -817,6 +878,7 @@
     "backToCheckout": "Back to checkout",
     "readTerms": "Read Terms of Purchase",
     "readWithdrawal": "Read Withdrawal Policy",
+    "shippingInformation": "Shipping & Delivery",
     "entityCard": {
       "title": "Company & Statutory Legal Entity",
       "company": "Legal Name",
@@ -849,7 +911,8 @@
       "sec5_link_prefix": "For complete legal details and conditions, see our dedicated",
       "sec5_link_text": "Right of Withdrawal & Food Exemption Policy",
       "sec6_title": "6. Defective Items & Complaints (Reklamation)",
-      "sec6_p1": "If an item is damaged or defective upon arrival, notify customer support ({email}) within a reasonable time with photographic documentation and your order number for a replacement or prompt refund."
+      "sec6_p1": "If an item is damaged or defective upon arrival, notify customer support ({email}) within a reasonable time with photographic documentation and your order number for a replacement or prompt refund.",
+      "readShippingPolicy": "Read complete shipping terms and rates here"
     },
     "withdrawal": {
       "title": "Right of Withdrawal & Food Exemption",
@@ -894,12 +957,41 @@
       "sec3_p2": "Certain processing is required to comply with statutory accounting laws (Bokföringslagen 1999:1078), requiring financial invoice records to be retained for seven years.",
       "sec4_title": "4. Third-Party Data Processors",
       "sec4_p1": "We never sell your personal data. We only share data with essential, trusted processors required for our operations:",
-      "sec4_item1": "Logistics and shipping carriers (e.g., PostNord) to deliver your parcel.",
+      "sec4_item1": "Logistics and shipping carriers (e.g., DHL) to deliver your parcel.",
       "sec4_item2": "Payment service providers (e.g., Swish and card processors) for secure checkout authorization.",
       "sec5_title": "5. Your Rights",
       "sec5_p1": "Under GDPR, you have the right to request a register extract of your personal data free of charge, request rectification of inaccurate data, and under certain circumstances request erasure or restriction of processing.",
       "sec5_p2": "To exercise your rights, contact us at {email}. You also have the right to lodge a complaint with the Swedish Data Protection Authority (Integritetsskyddsmyndigheten, IMY)."
     }
+  },
+  "shippingPage": {
+    "metaTitle": "Shipping & Delivery Policy",
+    "metaDesc": "Information regarding delivery times ({min}–{max} business days), tiered freight rates, free shipping, and store pickup.",
+    "title": "Shipping & Delivery Information",
+    "subtitle": "Complete guide to our delivery transit times, weight-based rates, and in-store collection.",
+    "deliveryEstimateBadge": "Estimated Delivery: {min}–{max} business days",
+    "transitTitle": "Prompt Dispatch",
+    "transitDesc": "Orders are packed swiftly and dispatched with DHL. Transit time is typically {min}–{max} business days.",
+    "freeThresholdTitle": "Free Shipping Threshold",
+    "freeThresholdDesc": "Spend {threshold} SEK or more and qualify for free shipping on your entire order.",
+    "pickupOptionTitle": "Store Pickup (Free)",
+    "pickupOptionDesc": "Pick up your package at our Halmstad store at no extra cost once notified.",
+    "tableHeading": "Weight-based Shipping Rates",
+    "tableSubheading": "Shipping rates are calculated based on the cumulative gross weight of your parcel.",
+    "colWeight": "Max Weight",
+    "colPrice": "Fee (SEK)",
+    "colVat": "Incl. 25% VAT",
+    "colCondition": "Condition",
+    "underThresholdCondition": "Orders below {threshold} SEK",
+    "unlimitedWeight": "Over 7 kg",
+    "anyWeight": "Any weight (Free shipping)",
+    "campaignNoticeTitle": "Active Promotional Rule",
+    "campaignNoticeBody": "Adding any item marked with 'Free Shipping' grants free shipping for the entire order, regardless of weight.",
+    "pickupSectionTitle": "In-Store Collection (Halmstad)",
+    "pickupSectionSub": "Collect your order in person free of charge.",
+    "pickupAddressLabel": "Store Address",
+    "pickupHoursLabel": "Collection Hours",
+    "pickupInstructionsLabel": "Pickup Instructions"
   },
   "checkout": {
     "title": "Checkout",
@@ -941,6 +1033,10 @@
     "confirmCancel": "Are you sure you want to cancel the order?",
     "cancelModalTitle": "Cancel Checkout Session?",
     "cancelModalWarning": "Are you sure you want to cancel your checkout session?",
+    "leavePaymentModalTitle": "Leave Payment?",
+    "leavePaymentWarning": "Are you sure you want to leave the payment page? Your order is not completed yet.",
+    "confirmLeavePayment": "Leave page",
+    "stayOnPayment": "Stay on page",
     "keepShopping": "Keep shopping",
     "confirmCancelOrder": "Cancel order",
     "cancelOrder": "Cancel order",

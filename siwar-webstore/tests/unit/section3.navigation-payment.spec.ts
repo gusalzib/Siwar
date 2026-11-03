@@ -93,4 +93,52 @@ describe('Section 3. Navigation & Payment Refinements', () => {
       expect(mockSessionStorage.siwar_active_payment_session).toBeUndefined()
     })
   })
+
+  describe('4. Abandoned Session Fulfillment State Drift & Security Guards', () => {
+    const cancelSessionPath = path.resolve(__dirname, '../../server/api/checkout/cancel-session.ts')
+    const cancelSessionContent = fs.readFileSync(cancelSessionPath, 'utf-8')
+    const packPostPath = path.resolve(__dirname, '../../server/api/admin/orders/[id]/pack.post.ts')
+    const packPostContent = fs.readFileSync(packPostPath, 'utf-8')
+    const composablePath = path.resolve(__dirname, '../../composables/useOrderPacking.ts')
+    const composableContent = fs.readFileSync(composablePath, 'utf-8')
+    const adminOrdersPath = path.resolve(__dirname, '../../pages/admin/orders/index.vue')
+    const adminOrdersContent = fs.readFileSync(adminOrdersPath, 'utf-8')
+
+    it('sets both paymentStatus and fulfillmentStatus to CANCELLED and records cancelledAt in cancel-session', () => {
+      expect(cancelSessionContent).toContain("order.fulfillmentStatus = 'CANCELLED'")
+      expect(cancelSessionContent).toContain('order.cancelledAt = new Date()')
+    })
+
+    it('atomically restores decremented inventory in cancel-session when inventoryDecremented is true', () => {
+      expect(cancelSessionContent).toContain('if (order.inventoryDecremented)')
+      expect(cancelSessionContent).toContain('Product.updateOne')
+      expect(cancelSessionContent).toContain('$inc: { stockQuantity: qtyToRestore }')
+      expect(cancelSessionContent).toContain('order.inventoryDecremented = false')
+    })
+
+    it('strictly rejects packing requests for UNPACKABLE_PAYMENT_STATUSES (ABANDONED, CANCELLED, FAILED, PENDING) in pack.post.ts', () => {
+      expect(packPostContent).toContain("const UNPACKABLE_PAYMENT_STATUSES = ['ABANDONED', 'CANCELLED', 'FAILED', 'PENDING']")
+      expect(packPostContent).toContain('UNPACKABLE_PAYMENT_STATUSES.includes(order.paymentStatus)')
+      expect(packPostContent).toContain("order.fulfillmentStatus === 'CANCELLED'")
+    })
+
+    it('prevents financial capture and DISPATCHED transition if paymentStatus is not AUTHORIZED / PAID', () => {
+      expect(packPostContent).toContain("order.paymentStatus !== 'AUTHORIZED'")
+      expect(packPostContent).toContain("order.paymentStatus !== 'PAID'")
+    })
+
+    it('guards canDispatch and exports isOrderUnpackable in useOrderPacking composable', () => {
+      expect(composableContent).toContain("!['AUTHORIZED', 'PAID'].includes(order.value?.paymentStatus)")
+      expect(composableContent).toContain('isOrderUnpackable')
+      expect(composableContent).toContain("const UNPACKABLE_PAYMENT_STATUSES = ['ABANDONED', 'CANCELLED', 'FAILED', 'PENDING']")
+    })
+
+    it('gates "Packa" CTA button behind canPackOrder in pages/admin/orders/index.vue', () => {
+      expect(adminOrdersContent).toContain('function canPackOrder(order: any): boolean')
+      expect(adminOrdersContent).toContain("order.fulfillmentStatus === 'PENDING_PACKING'")
+      expect(adminOrdersContent).toContain("order.paymentStatus === 'AUTHORIZED' || order.paymentStatus === 'PAID'")
+      expect(adminOrdersContent).toContain("canPackOrder(order) ? t('admin.orders.actions.pack') : t('admin.orders.actions.view')")
+    })
+  })
 })
+

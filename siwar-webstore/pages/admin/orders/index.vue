@@ -91,7 +91,13 @@ const pendingPackingCount = computed(() => {
   if (ordersResponse.value?.metrics?.pendingPackingCount !== undefined) {
     return ordersResponse.value.metrics.pendingPackingCount
   }
-  return orders.value?.filter((o: any) => o.fulfillmentStatus === 'PENDING_PACKING').length || 0
+  return (
+    orders.value?.filter(
+      (o: any) =>
+        o.fulfillmentStatus === 'PENDING_PACKING' &&
+        (o.paymentStatus === 'AUTHORIZED' || o.paymentStatus === 'PAID')
+    ).length || 0
+  )
 })
 const dispatchedCount = computed(() => {
   if (ordersResponse.value?.metrics?.dispatchedCount !== undefined) {
@@ -99,6 +105,17 @@ const dispatchedCount = computed(() => {
   }
   return orders.value?.filter((o: any) => o.fulfillmentStatus === 'DISPATCHED').length || 0
 })
+
+/**
+ * Determines whether an order is eligible for physical warehouse packing.
+ * Abandoned, cancelled, failed, and pending (unpaid) orders must never present an active "Packa" CTA.
+ */
+function canPackOrder(order: any): boolean {
+  return (
+    order.fulfillmentStatus === 'PENDING_PACKING' &&
+    (order.paymentStatus === 'AUTHORIZED' || order.paymentStatus === 'PAID')
+  )
+}
 </script>
 
 <template>
@@ -168,6 +185,10 @@ const dispatchedCount = computed(() => {
                 <option value="CAPTURED">{{ t('admin.orders.filters.captured') }}</option>
                 <option value="PARTIALLY_CAPTURED">{{ t('admin.orders.filters.partiallyCaptured') }}</option>
                 <option value="PAID">{{ t('admin.orders.filters.paid') }}</option>
+                <option value="PENDING">{{ t('admin.orders.filters.pending', 'Väntande (Pending)') }}</option>
+                <option value="ABANDONED">{{ t('admin.orders.filters.abandoned', 'Övergiven (Abandoned)') }}</option>
+                <option value="CANCELLED">{{ t('admin.orders.filters.cancelled', 'Avbruten (Cancelled)') }}</option>
+                <option value="FAILED">{{ t('admin.orders.filters.failed', 'Misslyckad (Failed)') }}</option>
               </select>
             </div>
 
@@ -285,11 +306,14 @@ const dispatchedCount = computed(() => {
                 </div>
                 <div class="truncate">
                   <span
-                    class="badge badge-outline badge-xs font-bold border-slate-400 dark:border-zinc-500"
+                    class="badge badge-sm font-semibold shrink-0"
                     :class="{
                       'badge-warning': order.paymentStatus === 'AUTHORIZED',
-                      'badge-success': order.paymentStatus === 'CAPTURED' || order.paymentStatus === 'PAID',
-                      'badge-info': order.paymentStatus === 'PARTIALLY_CAPTURED',
+                      'badge-success text-white': order.paymentStatus === 'CAPTURED' || order.paymentStatus === 'PAID',
+                      'badge-info text-white': order.paymentStatus === 'PARTIALLY_CAPTURED',
+                      'badge-error text-white': order.paymentStatus === 'CANCELLED' || order.paymentStatus === 'FAILED',
+                      'badge-neutral text-white': order.paymentStatus === 'ABANDONED',
+                      'badge-ghost text-base-content border-slate-400 dark:border-zinc-500': order.paymentStatus === 'PENDING',
                     }"
                   >
                     {{ order.paymentStatus }}
@@ -318,14 +342,14 @@ const dispatchedCount = computed(() => {
             <div class="flex justify-end pt-1">
               <NuxtLink
                 :to="localePath(`/admin/orders/${order.id}/pack`)"
-                class="btn btn-sm w-full sm:w-auto px-5 font-bold shadow-xs gap-1.5"
-                :class="order.fulfillmentStatus === 'PENDING_PACKING' ? 'bg-brand-600 hover:bg-brand-700 text-white border-transparent' : 'btn-ghost border-2 border-slate-300 dark:border-zinc-600 text-base-content'"
+                class="btn btn-sm w-full sm:w-auto px-5 font-bold shadow-xs gap-1.5 transition-colors"
+                :class="canPackOrder(order) ? 'bg-brand-600 hover:bg-brand-700 text-white border-transparent' : 'btn-ghost border-2 border-slate-300 dark:border-zinc-600 text-base-content hover:bg-slate-200 dark:hover:bg-zinc-800'"
               >
                 <Icon
-                  :name="order.fulfillmentStatus === 'DISPATCHED' ? 'lucide:eye' : 'lucide:box'"
+                  :name="canPackOrder(order) ? 'lucide:box' : 'lucide:eye'"
                   class="size-4"
                 />
-                <span>{{ order.fulfillmentStatus === 'DISPATCHED' ? t('admin.orders.actions.view') : t('admin.orders.actions.pack') }}</span>
+                <span>{{ canPackOrder(order) ? t('admin.orders.actions.pack') : t('admin.orders.actions.view') }}</span>
               </NuxtLink>
             </div>
           </div>
@@ -428,11 +452,14 @@ const dispatchedCount = computed(() => {
                 <td class="py-4 px-5">
                   <div class="text-xs font-bold text-base-content">{{ order.paymentProvider }}</div>
                   <span
-                    class="badge badge-outline badge-xs mt-0.5 font-bold border-slate-400 dark:border-zinc-500"
+                    class="badge badge-sm mt-0.5 font-semibold shrink-0"
                     :class="{
                       'badge-warning': order.paymentStatus === 'AUTHORIZED',
-                      'badge-success': order.paymentStatus === 'CAPTURED' || order.paymentStatus === 'PAID',
-                      'badge-info': order.paymentStatus === 'PARTIALLY_CAPTURED',
+                      'badge-success text-white': order.paymentStatus === 'CAPTURED' || order.paymentStatus === 'PAID',
+                      'badge-info text-white': order.paymentStatus === 'PARTIALLY_CAPTURED',
+                      'badge-error text-white': order.paymentStatus === 'CANCELLED' || order.paymentStatus === 'FAILED',
+                      'badge-neutral text-white': order.paymentStatus === 'ABANDONED',
+                      'badge-ghost text-base-content border-slate-400 dark:border-zinc-500': order.paymentStatus === 'PENDING',
                     }"
                   >
                     {{ order.paymentStatus }}
@@ -461,14 +488,14 @@ const dispatchedCount = computed(() => {
                 <td class="text-center py-4 px-5">
                   <NuxtLink
                     :to="localePath(`/admin/orders/${order.id}/pack`)"
-                    class="btn btn-sm px-4 font-bold shadow-xs gap-1.5"
-                    :class="order.fulfillmentStatus === 'PENDING_PACKING' ? 'bg-brand-600 hover:bg-brand-700 text-white border-transparent' : 'btn-ghost border border-slate-300 dark:border-zinc-600 text-base-content'"
+                    class="btn btn-sm px-4 font-bold shadow-xs gap-1.5 transition-colors"
+                    :class="canPackOrder(order) ? 'bg-brand-600 hover:bg-brand-700 text-white border-transparent' : 'btn-ghost border border-slate-300 dark:border-zinc-600 text-base-content hover:bg-slate-200 dark:hover:bg-zinc-800'"
                   >
                     <Icon
-                      :name="order.fulfillmentStatus === 'DISPATCHED' ? 'lucide:eye' : 'lucide:box'"
+                      :name="canPackOrder(order) ? 'lucide:box' : 'lucide:eye'"
                       class="size-4"
                     />
-                    <span>{{ order.fulfillmentStatus === 'DISPATCHED' ? t('admin.orders.actions.view') : t('admin.orders.actions.pack') }}</span>
+                    <span>{{ canPackOrder(order) ? t('admin.orders.actions.pack') : t('admin.orders.actions.view') }}</span>
                   </NuxtLink>
                 </td>
               </tr>

@@ -64,6 +64,7 @@ const form = ref({
   },
   images: [] as Array<{ url: string; altText: string; isPrimary: boolean }>,
   isActive: true,
+  freeShipping: false,
 })
 
 // Fetch Categories & Allergens
@@ -125,6 +126,7 @@ onMounted(async () => {
         },
         images: existing.images || [],
         isActive: existing.isActive !== false,
+        freeShipping: Boolean(existing.freeShipping),
       }
     } catch (err: any) {
       errorMessage.value = err?.data?.statusMessage || err?.message || 'Failed to load product details'
@@ -288,6 +290,7 @@ async function handleSubmit() {
         : undefined,
       images: form.value.images.filter((img) => img.url.trim() !== ''),
       isActive: form.value.isActive,
+      freeShipping: Boolean(form.value.freeShipping),
     }
 
     if (props.mode === 'edit' && props.productId) {
@@ -1182,18 +1185,41 @@ async function handleSubmit() {
             </div>
           </div>
 
-          <!-- 8. Publication Status -->
+          <!-- 8. Publication & Shipping Status -->
           <div class="card bg-base-100 border border-base-200 shadow-sm">
-            <div class="card-body">
-              <label class="label cursor-pointer justify-start gap-4">
+            <div class="card-body divide-y divide-base-200">
+              <label class="label cursor-pointer justify-start gap-4 pb-4">
                 <input
                   v-model="form.isActive"
                   type="checkbox"
                   class="checkbox checkbox-primary border-2 border-base-content/40"
                 />
-                <span class="label-text font-semibold text-sm">
-                  {{ t('admin.productForm.fields.isActive') }}
-                </span>
+                <div class="flex flex-col">
+                  <span class="label-text font-semibold text-sm">
+                    {{ t('admin.productForm.fields.isActive') }}
+                  </span>
+                  <span class="text-xs text-base-content/60">
+                    {{ t('admin.productForm.fields.isActiveHelp', 'Produkten är synlig och kan köpas i webbutiken') }}
+                  </span>
+                </div>
+              </label>
+
+              <!-- Free Shipping Promotional Override Toggle (Task 30) -->
+              <label class="label cursor-pointer justify-start gap-4 pt-4">
+                <input
+                  v-model="form.freeShipping"
+                  type="checkbox"
+                  class="checkbox checkbox-secondary border-2 border-base-content/40"
+                />
+                <div class="flex flex-col">
+                  <span class="label-text font-semibold text-sm flex items-center gap-2">
+                    <Icon name="lucide:truck" class="size-4 text-emerald-600 dark:text-emerald-400" />
+                    {{ t('admin.productForm.fields.freeShipping', 'Fri frakt på denna produkt') }}
+                  </span>
+                  <span class="text-xs text-base-content/60">
+                    {{ t('admin.productForm.fields.freeShippingHelp', 'Undantar denna produkt från paketets fraktviktsberäkning.') }}
+                  </span>
+                </div>
               </label>
             </div>
           </div>

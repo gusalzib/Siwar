@@ -259,6 +259,26 @@ function onDiscountSaved(payload: any) {
   }
 }
 
+// 9. Fast-path Free Shipping Toggle (Task 31)
+async function toggleFreeShipping(product: any) {
+  const pId = String(product.id || product._id)
+  if (!pId || isActionLoading.value) return
+  isActionLoading.value = `${pId}-shipping`
+  try {
+    const res = await $fetch<any>(`/api/admin/products/${pId}/free-shipping`, {
+      method: 'PATCH',
+      body: {
+        freeShipping: !product.freeShipping,
+      },
+    })
+    product.freeShipping = res.freeShipping
+  } catch (err: any) {
+    console.error('Failed to toggle free shipping:', err)
+  } finally {
+    isActionLoading.value = null
+  }
+}
+
 // Helper to resolve localized text safely
 function getLocalizedText(obj?: Record<string, string>): string {
   if (!obj) return ''
@@ -479,7 +499,7 @@ function isDiscountActiveOrScheduled(product: any): boolean {
           :key="product.id"
           class="card bg-base-100 dark:bg-zinc-900 border-2 border-base-300 dark:border-zinc-700 hover:border-brand-500/50 dark:hover:border-brand-500/50 shadow-sm hover:shadow-md transition-all duration-200 rounded-2xl p-4 sm:p-5"
         >
-          <div class="flex flex-col lg:flex-row gap-5 items-start lg:items-center justify-between">
+          <div class="flex flex-col min-[1290px]:flex-row gap-5 items-start min-[1290px]:items-center justify-between">
             <!-- Left: High-Res Thumbnail with Primary Image Indicator -->
             <div class="relative w-full sm:w-36 h-36 shrink-0 rounded-xl overflow-hidden bg-base-200 dark:bg-zinc-800 border-2 border-base-300 dark:border-zinc-700 flex items-center justify-center p-2">
               <img
@@ -502,6 +522,15 @@ function isDiscountActiveOrScheduled(product: any): boolean {
                 <Icon name="lucide:star" class="size-2.5 fill-amber-400" />
                 {{ t('admin.products.cards.primaryImage') }}
               </span> -->
+
+              <!-- Free Shipping Badge on Image -->
+              <span
+                v-if="product.freeShipping"
+                class="badge badge-xs font-bold border absolute top-2 start-2 py-1 px-2 shadow-sm bg-emerald-600 text-white border-emerald-500"
+              >
+                <Icon name="lucide:truck" class="size-2.5 me-1 text-white" />
+                {{ t('products.freeShipping', 'Fri frakt') }}
+              </span>
 
               <!-- Active / Archived Status Badge on Image -->
               <span
@@ -566,7 +595,7 @@ function isDiscountActiveOrScheduled(product: any): boolean {
 
               <!-- Stock Indicators: Physical, Safety Buffer, Online Available -->
               <div class="flex flex-wrap items-center gap-3 pt-0.5">
-                <div class="inline-flex items-center gap-2.5 rounded-xl border-2 border-base-300 dark:border-zinc-700 bg-base-200/60 dark:bg-zinc-800/60 px-3 py-1.5 text-xs font-semibold">
+                <div class="inline-flex items-center gap-2.5 rounded-xl border-2 border-base-300 dark:border-zinc-700 bg-base-200/60 dark:bg-zinc-800/60 px-3 py-1.5 text-xs font-semibold whitespace-nowrap shrink-0">
                   <span>{{ t('admin.products.cards.stockPhysical') }}: <strong class="text-base-content font-bold">{{ product.stockQuantity }}</strong></span>
                   <span class="text-base-content/30">•</span>
                   <span>{{ t('admin.products.cards.stockBuffer') }}: <strong class="text-base-content font-bold">{{ product.safetyBuffer }}</strong></span>
@@ -596,9 +625,9 @@ function isDiscountActiveOrScheduled(product: any): boolean {
             </div>
 
             <!-- Pricing Tier & Actions Group -->
-            <div class="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-4 w-full lg:w-auto shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-base-200 dark:border-zinc-800">
+            <div class="flex flex-col sm:flex-row min-[1290px]:flex-col items-start sm:items-center min-[1290px]:items-end justify-between gap-4 w-full min-[1290px]:w-auto shrink-0 pt-3 min-[1290px]:pt-0 border-t min-[1290px]:border-t-0 border-base-200 dark:border-zinc-800">
               <!-- Pricing Tier (SEK / EUR / USD) & Discount Badge -->
-              <div class="flex flex-col items-start lg:items-end gap-1">
+              <div class="flex flex-col items-start min-[1290px]:items-end gap-1">
                 <!-- Discount Badge -->
                 <div v-if="isDiscountActiveOrScheduled(product)">
                   <span
@@ -626,71 +655,99 @@ function isDiscountActiveOrScheduled(product: any): boolean {
                 </div>
               </div>
 
-              <!-- Action Buttons -->
-              <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <!-- Quick Stock Button -->
-                <button
-                  type="button"
-                  @click="openStockModal(product)"
-                  class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 text-base-content hover:border-emerald-600 hover:bg-emerald-600 hover:text-white dark:hover:text-white transition group"
-                  :title="t('admin.products.actions.quickStock')"
-                >
-                  <Icon name="lucide:boxes" class="size-3.5 text-emerald-600 dark:text-emerald-400 group-hover:text-white" />
-                  <span class="hidden xl:inline">{{ t('admin.products.actions.quickStock') }}</span>
-                </button>
+<!-- Action Buttons Container: 
+     Mobile: 2 equal columns (w-full grid-cols-2)
+     Desktop: 3 columns sized strictly to the largest content (sm:w-fit sm:grid-cols-[repeat(3,max-content)])
+-->
+<div class="grid grid-cols-2 sm:grid-cols-[repeat(3,max-content)] gap-1.5 sm:gap-2 w-full sm:w-fit justify-items-stretch">
+  
+  <!-- 1. Quick Stock Button -->
+  <button
+    type="button"
+    @click="openStockModal(product)"
+    class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 text-base-content hover:border-emerald-600 hover:bg-emerald-600 hover:text-white dark:hover:text-white transition group p-2 sm:px-3 sm:py-1.5 min-h-9 h-9 sm:min-h-8 sm:h-8 w-full justify-center whitespace-nowrap"
+    :title="t('admin.products.actions.quickStock')"
+  >
+    <Icon name="lucide:boxes" class="size-4 sm:size-3.5 text-emerald-600 dark:text-emerald-400 group-hover:text-white shrink-0" />
+    <span class="inline text-xs whitespace-nowrap">{{ t('admin.products.actions.quickStock') }}</span>
+  </button>
 
-                <!-- Quick Discount Button -->
-                <button
-                  type="button"
-                  @click="openDiscountModal(product)"
-                  class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 text-base-content hover:border-rose-600 hover:bg-rose-600 hover:text-white dark:hover:text-white transition group"
-                  :title="t('admin.products.actions.quickDiscount')"
-                >
-                  <Icon name="lucide:percent" class="size-3.5 text-rose-600 dark:text-rose-400 group-hover:text-white" />
-                  <span class="hidden xl:inline">{{ t('admin.products.actions.quickDiscount') }}</span>
-                </button>
+  <!-- 2. Quick Discount Button -->
+  <button
+    type="button"
+    @click="openDiscountModal(product)"
+    class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 text-base-content hover:border-rose-600 hover:bg-rose-600 hover:text-white dark:hover:text-white transition group p-2 sm:px-3 sm:py-1.5 min-h-9 h-9 sm:min-h-8 sm:h-8 w-full justify-center whitespace-nowrap"
+    :title="t('admin.products.actions.quickDiscount')"
+  >
+    <Icon name="lucide:percent" class="size-4 sm:size-3.5 text-rose-600 dark:text-rose-400 group-hover:text-white shrink-0" />
+    <span class="inline text-xs whitespace-nowrap">{{ t('admin.products.actions.quickDiscount') }}</span>
+  </button>
 
-                <!-- Edit Button -->
-                <NuxtLink
-                  :to="localePath(`/admin/products/${product.id}`)"
-                  class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 hover:border-brand-500 hover:bg-brand-500 hover:text-slate-950 transition"
-                  :title="t('admin.products.actions.edit')"
-                >
-                  <Icon name="lucide:pencil" class="size-3.5" />
-                  <span class="hidden sm:inline">{{ t('admin.products.actions.edit') }}</span>
-                </NuxtLink>
+  <!-- 3. Quick Free Shipping Toggle Button -->
+  <button
+    type="button"
+    :disabled="isActionLoading === `${product.id}-shipping`"
+    @click="toggleFreeShipping(product)"
+    class="btn btn-sm rounded-xl font-bold gap-1.5 border-2 transition group p-2 sm:px-3 sm:py-1.5 min-h-9 h-9 sm:min-h-8 sm:h-8 w-full justify-center whitespace-nowrap"
+    :class="product.freeShipping
+      ? 'border-emerald-500 bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white dark:hover:text-white'
+      : 'btn-outline border-base-300 dark:border-zinc-700 text-base-content hover:border-emerald-600 hover:bg-emerald-600 hover:text-white dark:hover:text-white'"
+    :title="product.freeShipping ? t('admin.products.actions.freeShippingActive', 'Fri frakt aktiv') : t('admin.products.actions.addFreeShipping', 'Fri frakt')"
+  >
+    <span v-if="isActionLoading === `${product.id}-shipping`" class="loading loading-spinner loading-xs"></span>
+    <Icon
+      v-else
+      name="lucide:truck"
+      class="size-4 sm:size-3.5 shrink-0"
+      :class="product.freeShipping ? 'text-emerald-700 dark:text-emerald-400 group-hover:text-white' : 'text-emerald-600 dark:text-emerald-400 group-hover:text-white'"
+    />
+    <span class="inline text-xs whitespace-nowrap">
+      {{ product.freeShipping ? t('admin.products.actions.freeShippingActive', 'Fri frakt') : t('admin.products.actions.addFreeShipping', 'Fri frakt') }}
+    </span>
+  </button>
 
-                <!-- Toggle Archive / Active Status -->
-                <button
-                  type="button"
-                  :disabled="isActionLoading === product.id"
-                  @click="toggleArchive(product.id)"
-                  class="btn btn-ghost btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 hover:bg-warning/20 hover:border-warning text-base-content disabled:opacity-50 transition"
-                  :title="product.isActive ? t('admin.products.actions.archive') : t('admin.products.actions.unarchive')"
-                >
-                  <span v-if="isActionLoading === product.id" class="loading loading-spinner loading-xs"></span>
-                  <Icon
-                    v-else
-                    :name="product.isActive ? 'lucide:archive' : 'lucide:archive-restore'"
-                    class="size-3.5"
-                  />
-                  <span class="hidden sm:inline">
-                    {{ product.isActive ? t('admin.products.actions.archive') : t('admin.products.actions.unarchive') }}
-                  </span>
-                </button>
+  <!-- 4. Edit Button -->
+  <NuxtLink
+    :to="localePath(`/admin/products/${product.id}`)"
+    class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 hover:border-brand-500 hover:bg-brand-500 hover:text-slate-950 transition p-2 sm:px-3 sm:py-1.5 min-h-9 h-9 sm:min-h-8 sm:h-8 w-full justify-center whitespace-nowrap"
+    :title="t('admin.products.actions.edit')"
+  >
+    <Icon name="lucide:pencil" class="size-4 sm:size-3.5 shrink-0" />
+    <span class="inline text-xs whitespace-nowrap">{{ t('admin.products.actions.edit') }}</span>
+  </NuxtLink>
 
-                <!-- Delete Product Modal Trigger -->
-                <button
-                  type="button"
-                  :disabled="isActionLoading === product.id"
-                  @click="openDeleteModal(product)"
-                  class="btn btn-ghost btn-sm rounded-xl font-bold gap-1.5 border-2 border-error/30 text-error hover:bg-error hover:text-white disabled:opacity-50 transition"
-                  :title="t('admin.products.actions.delete')"
-                >
-                  <Icon name="lucide:trash-2" class="size-3.5" />
-                  <span class="hidden sm:inline">{{ t('admin.products.actions.delete') }}</span>
-                </button>
-              </div>
+  <!-- 5. Toggle Archive / Active Status -->
+  <button
+    type="button"
+    :disabled="isActionLoading === product.id"
+    @click="toggleArchive(product.id)"
+    class="btn btn-ghost btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 hover:bg-warning/20 hover:border-warning text-base-content disabled:opacity-50 transition p-2 sm:px-3 sm:py-1.5 min-h-9 h-9 sm:min-h-8 sm:h-8 w-full justify-center whitespace-nowrap"
+    :title="product.isActive ? t('admin.products.actions.archive') : t('admin.products.actions.unarchive')"
+  >
+    <span v-if="isActionLoading === product.id" class="loading loading-spinner loading-xs"></span>
+    <Icon
+      v-else
+      :name="product.isActive ? 'lucide:archive' : 'lucide:archive-restore'"
+      class="size-4 sm:size-3.5 shrink-0"
+    />
+    <span class="inline text-xs whitespace-nowrap">
+      {{ product.isActive ? t('admin.products.actions.archive') : t('admin.products.actions.unarchive') }}
+    </span>
+  </button>
+
+  <!-- 6. Delete Product Modal Trigger -->
+  <button
+    type="button"
+    :disabled="isActionLoading === product.id"
+    @click="openDeleteModal(product)"
+    class="btn btn-ghost btn-sm rounded-xl font-bold gap-1.5 border-2 border-error/30 text-error hover:bg-error hover:text-white disabled:opacity-50 transition p-2 sm:px-3 sm:py-1.5 min-h-9 h-9 sm:min-h-8 sm:h-8 w-full justify-center whitespace-nowrap"
+    :title="t('admin.products.actions.delete')"
+  >
+    <Icon name="lucide:trash-2" class="size-4 sm:size-3.5 shrink-0" />
+    <span class="inline text-xs whitespace-nowrap">{{ t('admin.products.actions.delete') }}</span>
+  </button>
+
+</div>
             </div>
           </div>
         </article>

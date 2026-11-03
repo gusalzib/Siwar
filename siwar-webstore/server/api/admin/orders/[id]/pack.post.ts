@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 import { Order } from '~/server/models/Order'
 import { Product } from '~/server/models/Product'
 import { recalculateOrderShortage, computeOrderPricing, type ShortageActionInput } from '~/server/services/fulfillment.service'
+import { getCachedShippingSettings } from '~/server/services/shipping.service'
 import { getPaymentGateway } from '~/server/services/payments'
 import { mailService, type EmailLocale } from '~/server/services/mail.service'
 
@@ -17,6 +18,7 @@ interface PackItemInput {
   name?: { ar: string; sv: string; en: string }
   unitPriceMinor?: number
   momsRate?: 12 | 25
+  freeShipping?: boolean
   isPacked?: boolean
 }
 
@@ -37,14 +39,56 @@ export default defineEventHandler(async (event) => {
   }
 
   // ──────────────────────────────────────────────────────────────────────
+  // 0. State Guard: Prevent unauthorized packing or dispatch of unpaid/cancelled orders
+  // ──────────────────────────────────────────────────────────────────────
+  const UNPACKABLE_PAYMENT_STATUSES = ['ABANDONED', 'CANCELLED', 'FAILED', 'PENDING']
+
+  if (UNPACKABLE_PAYMENT_STATUSES.includes(order.paymentStatus)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `Order kan inte packas eller skickas eftersom betalningsstatus är '${order.paymentStatus}'. Endast auktoriserade eller betalda ordrar kan hanteras.`,
+    })
+  }
+
+  if (order.fulfillmentStatus === 'CANCELLED') {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Ordern är redan avbruten och kan inte packas.',
+    })
+  }
+
+  // Ensure freeShipping is populated on original items if missing
+
+  const unpopulatedProductIds = order.items
+    .filter((it: any) => typeof it.freeShipping !== 'boolean' && it.productId)
+    .map((it: any) => it.productId)
+  if (unpopulatedProductIds.length > 0) {
+    const prods = await Product.find({ _id: { $in: unpopulatedProductIds } }, { freeShipping: 1 }).lean()
+    const pMap = new Map(prods.map((p) => [String(p._id), Boolean(p.freeShipping)]))
+    for (const it of order.items as any[]) {
+      if (typeof it.freeShipping !== 'boolean' && it.productId) {
+        it.freeShipping = pMap.get(String(it.productId)) ?? false
+      }
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
   // 1. Run recalculate FIRST on the untouched DB items so the service
   //    can match new actions against original product IDs and produce
   //    the correct audit trail entries (shortageAdjustments).
   // ──────────────────────────────────────────────────────────────────────
+  const shippingConfig = await getCachedShippingSettings()
+  const thresholdOverride = (shippingConfig as any)?.freeShippingThresholdMinorSEK
+  const fallbackFeeOverride = (shippingConfig as any)?.tiers?.[0]?.feeMinorSEK
+  const freeShippingItemGrantsEntireOrder = Boolean((shippingConfig as any)?.freeShippingItemGrantsEntireOrder)
+
   const { updatedItems, shortageAdjustments } = recalculateOrderShortage(
     order,
     body.actions || [],
-    'Admin'
+    'Admin',
+    thresholdOverride,
+    fallbackFeeOverride,
+    freeShippingItemGrantsEntireOrder
   )
 
   // ──────────────────────────────────────────────────────────────────────
@@ -78,6 +122,9 @@ export default defineEventHandler(async (event) => {
         }
         if (submittedItem.unitPriceMinor != null) match.unitPriceMinor = submittedItem.unitPriceMinor
         if (submittedItem.momsRate != null) match.momsRate = submittedItem.momsRate
+        if (typeof submittedItem.freeShipping === 'boolean') {
+          match.freeShipping = submittedItem.freeShipping
+        }
         if (submittedItem.name) match.name = submittedItem.name
         if (submittedItem.sku !== undefined) match.sku = submittedItem.sku
         if (submittedItem.imageUrl !== undefined) match.imageUrl = submittedItem.imageUrl
@@ -136,7 +183,10 @@ export default defineEventHandler(async (event) => {
     order.customer?.fulfillmentMethod,
     order.pricing?.shippingFeeMinor || 0,
     order.pricing?.authorizedTotalMinor || 0,
-    order.currency as any
+    order.currency as any,
+    thresholdOverride,
+    fallbackFeeOverride,
+    freeShippingItemGrantsEntireOrder
   )
 
   const capturedTotal = finalPricing.capturedTotalMinor ?? finalPricing.grandTotalMinor
@@ -174,7 +224,13 @@ export default defineEventHandler(async (event) => {
       order.paymentStatus = 'CANCELLED'
     } else {
       const gateway = getPaymentGateway(order.paymentProvider)
-      if (order.paymentProvider === 'STRIPE' && order.paymentStatus === 'AUTHORIZED') {
+      if (order.paymentProvider === 'STRIPE') {
+        if (order.paymentStatus !== 'AUTHORIZED') {
+          throw createError({
+            statusCode: 400,
+            statusMessage: 'Kan inte genomföra debitering: ordern saknar aktiv auktorisation.',
+          })
+        }
         const captureOk = await gateway.captureFunds(order.paymentId!, safeCaptureTotal)
         if (!captureOk) {
           throw createError({
@@ -182,13 +238,28 @@ export default defineEventHandler(async (event) => {
             statusMessage: `Stripe capture failed for ${order.orderReference}`,
           })
         }
-      } else if (order.paymentProvider === 'SWISH' && releasedAmount > 0 && gateway.refundPayment) {
-        await gateway.refundPayment({
-          paymentId: order.paymentId!,
-          orderReference: order.orderReference,
-          amountMinor: releasedAmount,
-          reason: `Prisjustering för varubrist i order ${order.orderReference}`,
-        })
+      } else if (order.paymentProvider === 'SWISH') {
+        if (order.paymentStatus !== 'PAID') {
+          throw createError({
+            statusCode: 400,
+            statusMessage: 'Kan inte genomföra debitering: Swish-ordern är inte betald.',
+          })
+        }
+        if (releasedAmount > 0 && gateway.refundPayment) {
+          await gateway.refundPayment({
+            paymentId: order.paymentId!,
+            orderReference: order.orderReference,
+            amountMinor: releasedAmount,
+            reason: `Prisjustering för varubrist i order ${order.orderReference}`,
+          })
+        }
+      } else {
+        if (!['AUTHORIZED', 'PAID'].includes(order.paymentStatus)) {
+          throw createError({
+            statusCode: 400,
+            statusMessage: `Kan inte genomföra debitering: ordern har ogiltig betalningsstatus '${order.paymentStatus}'.`,
+          })
+        }
       }
 
       order.fulfillmentStatus = 'DISPATCHED'
@@ -196,7 +267,7 @@ export default defineEventHandler(async (event) => {
       order.dispatchedAt = new Date()
       if (body.trackingCode) {
         order.trackingCode = body.trackingCode
-        order.carrier = 'PostNord'
+        order.carrier = 'DHL'
       }
     }
 
@@ -251,7 +322,7 @@ export default defineEventHandler(async (event) => {
           {
             order,
             trackingCode: body.trackingCode, // e.g. PostNord Kolli-ID
-            carrier: 'PostNord',
+            carrier: 'DHL',
           },
           preferredLocale
         )
