@@ -329,9 +329,23 @@ export function useOrderPacking(
     }
   })
 
+  // Unpackable payment statuses: an order cannot be packed or dispatched if payment was abandoned, cancelled, failed or still pending
+  const UNPACKABLE_PAYMENT_STATUSES = ['ABANDONED', 'CANCELLED', 'FAILED', 'PENDING']
+
+  const isOrderUnpackable = computed(() => {
+    if (!order.value) return false
+    return (
+      order.value.fulfillmentStatus === 'CANCELLED' ||
+      order.value.fulfillmentStatus === 'DISPATCHED' ||
+      UNPACKABLE_PAYMENT_STATUSES.includes(order.value.paymentStatus)
+    )
+  })
+
   const canDispatch = computed(() => {
     if (isSubmitting.value) return false
     if (['DISPATCHED', 'CANCELLED'].includes(order.value?.fulfillmentStatus)) return false
+    // Payment must be legitimately authorized (Stripe hold) or paid (Swish capture) before dispatch
+    if (!['AUTHORIZED', 'PAID'].includes(order.value?.paymentStatus)) return false
     if (totalFulfilledUnits.value === 0) return false
     if (order.value?.pricing?.authorizedTotalMinor && livePricing.value.grandTotal > order.value.pricing.authorizedTotalMinor) {
       return false
@@ -341,6 +355,11 @@ export function useOrderPacking(
 
   // 5. Submit with positional indexing
   async function submitPacking(markDispatched: boolean) {
+    if (isOrderUnpackable.value && markDispatched) {
+      errorMessage.value = 'Ordern kan inte skickas eftersom den är avbruten eller saknar giltig betalning.'
+      return
+    }
+
     isSubmitting.value = true
     errorMessage.value = null
 
@@ -389,6 +408,7 @@ export function useOrderPacking(
     errorMessage,
     totalFulfilledUnits,
     isFullyPacked,
+    isOrderUnpackable,
     canDispatch,
     livePricing,
     toggleItemPicked,
