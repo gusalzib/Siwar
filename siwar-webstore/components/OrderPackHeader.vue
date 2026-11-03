@@ -7,6 +7,7 @@ interface Props {
   isSubmitting: boolean
   totalFulfilledUnits: number
   canDispatch: boolean
+  isUnpackable?: boolean
 }
 
 const props = defineProps<Props>()
@@ -50,6 +51,19 @@ function formatDate(dateStr?: string | Date) {
             >
               {{ order.fulfillmentStatus }}
             </span>
+            <span
+              class="badge badge-sm font-semibold shrink-0"
+              :class="{
+                'badge-warning': order.paymentStatus === 'AUTHORIZED',
+                'badge-success text-white': order.paymentStatus === 'CAPTURED' || order.paymentStatus === 'PAID',
+                'badge-info text-white': order.paymentStatus === 'PARTIALLY_CAPTURED',
+                'badge-error text-white': order.paymentStatus === 'CANCELLED' || order.paymentStatus === 'FAILED',
+                'badge-neutral text-white': order.paymentStatus === 'ABANDONED',
+                'badge-ghost text-base-content': order.paymentStatus === 'PENDING',
+              }"
+            >
+              {{ order.paymentStatus }}
+            </span>
             <span class="badge badge-outline badge-sm font-semibold border-slate-400 dark:border-zinc-500 shrink-0">
               {{ order.paymentProvider }}
             </span>
@@ -70,7 +84,7 @@ function formatDate(dateStr?: string | Date) {
     <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 justify-start xl:justify-end pt-1 xl:pt-0">
       <!-- Manual Cancel Action -->
       <button
-        v-if="order.fulfillmentStatus !== 'DISPATCHED' && order.fulfillmentStatus !== 'CANCELLED'"
+        v-if="order.fulfillmentStatus !== 'DISPATCHED' && order.fulfillmentStatus !== 'CANCELLED' && order.paymentStatus !== 'CANCELLED'"
         type="button"
         class="btn btn-sm btn-ghost text-error hover:bg-error/10 gap-1.5 transition-colors max-w-full"
         :disabled="isSubmitting"
@@ -83,8 +97,8 @@ function formatDate(dateStr?: string | Date) {
       <!-- Mark All Packed -->
       <button
         type="button"
-        class="btn btn-sm bg-transparent hover:bg-base-200 text-base-content px-3 border-2 border-brand-500 hover:border-brand-600 shadow-sm transition-colors active:scale-95 max-w-full"
-        :disabled="order.fulfillmentStatus === 'DISPATCHED' || order.fulfillmentStatus === 'CANCELLED' || isSubmitting"
+        class="btn btn-sm bg-transparent hover:bg-base-200 text-base-content px-3 border-2 border-brand-500 hover:border-brand-600 shadow-sm transition-colors active:scale-95 max-w-full disabled:opacity-40"
+        :disabled="order.fulfillmentStatus === 'DISPATCHED' || order.fulfillmentStatus === 'CANCELLED' || props.isUnpackable || isSubmitting"
         @click="emit('packAll')"
       >
         <Icon name="lucide:check-check" class="size-4 shrink-0" />
@@ -93,8 +107,8 @@ function formatDate(dateStr?: string | Date) {
 
       <button
         type="button"
-        class="btn btn-sm bg-transparent hover:bg-base-200 text-base-content px-3 border-2 border-brand-500 hover:border-brand-300 shadow-sm transition-colors max-w-full"
-        :disabled="isSubmitting || order.fulfillmentStatus === 'DISPATCHED' || order.fulfillmentStatus === 'CANCELLED'"
+        class="btn btn-sm bg-transparent hover:bg-base-200 text-base-content px-3 border-2 border-brand-500 hover:border-brand-300 shadow-sm transition-colors max-w-full disabled:opacity-40"
+        :disabled="isSubmitting || order.fulfillmentStatus === 'DISPATCHED' || order.fulfillmentStatus === 'CANCELLED' || props.isUnpackable"
         @click="emit('save')"
       >
         <Icon name="lucide:save" class="size-4 shrink-0" />
@@ -104,8 +118,8 @@ function formatDate(dateStr?: string | Date) {
       <button
         v-if="totalFulfilledUnits === 0"
         type="button"
-        class="btn btn-sm bg-error hover:bg-error/90 text-white border-transparent px-3 shadow-sm transition-transform active:scale-95 disabled:opacity-50 max-w-full"
-        :disabled="isSubmitting || order.fulfillmentStatus === 'CANCELLED'"
+        class="btn btn-sm bg-error hover:bg-error/90 text-white border-transparent px-3 shadow-sm transition-transform active:scale-95 disabled:opacity-40 max-w-full"
+        :disabled="isSubmitting || order.fulfillmentStatus === 'CANCELLED' || props.isUnpackable"
         @click="emit('dispatch')"
       >
         <span v-if="isSubmitting" class="loading loading-spinner loading-xs shrink-0"></span>
@@ -115,7 +129,7 @@ function formatDate(dateStr?: string | Date) {
       <button
         v-else
         type="button"
-        class="btn btn-sm bg-brand-600 hover:bg-brand-700 text-white border-transparent px-3 shadow-sm transition-transform active:scale-95 disabled:opacity-50 max-w-full"
+        class="btn btn-sm bg-brand-600 hover:bg-brand-700 text-white border-transparent px-3 shadow-sm transition-transform active:scale-95 disabled:opacity-40 max-w-full"
         :disabled="!canDispatch"
         @click="emit('dispatch')"
       >

@@ -21,6 +21,7 @@ const {
   isSubmitting,
   errorMessage,
   totalFulfilledUnits,
+  isOrderUnpackable,
   canDispatch,
   livePricing,
   toggleItemPicked,
@@ -29,6 +30,62 @@ const {
   applyShortageAction,
   submitPacking,
 } = useOrderPacking(order, refresh, storeSettings)
+
+const { t } = useI18n()
+
+// Warning banner for orders that cannot or should not be packed (cancelled, abandoned, unpaid, or already dispatched)
+const unpackableBanner = computed(() => {
+  if (!order.value) return null
+  const fStatus = order.value.fulfillmentStatus
+  const pStatus = order.value.paymentStatus
+
+  if (fStatus === 'CANCELLED' || pStatus === 'CANCELLED') {
+    return {
+      type: 'error',
+      icon: 'lucide:ban',
+      title: t('admin.orders.pack.unpackable.cancelledTitle', 'Ordern är avbruten'),
+      message: t('admin.orders.pack.unpackable.cancelledMessage', 'Denna order är avbruten och kan inte packas eller skickas.'),
+    }
+  }
+
+  if (pStatus === 'ABANDONED') {
+    return {
+      type: 'warning',
+      icon: 'lucide:alert-triangle',
+      title: t('admin.orders.pack.unpackable.abandonedTitle', 'Övergiven betalsession'),
+      message: t('admin.orders.pack.unpackable.abandonedMessage', 'Kunden avbröt eller lämnade kassan utan att slutföra betalningen. Ordern kan inte packas.'),
+    }
+  }
+
+  if (pStatus === 'FAILED') {
+    return {
+      type: 'error',
+      icon: 'lucide:alert-circle',
+      title: t('admin.orders.pack.unpackable.failedTitle', 'Misslyckad betalning'),
+      message: t('admin.orders.pack.unpackable.failedMessage', 'Betalningen misslyckades. Ordern kan inte expedieras.'),
+    }
+  }
+
+  if (pStatus === 'PENDING') {
+    return {
+      type: 'info',
+      icon: 'lucide:clock',
+      title: t('admin.orders.pack.unpackable.pendingTitle', 'Väntar på betalning'),
+      message: t('admin.orders.pack.unpackable.pendingMessage', 'Betalningen har inte auktoriserats eller bekräftats ännu. Ordern kan inte packas.'),
+    }
+  }
+
+  if (fStatus === 'DISPATCHED') {
+    return {
+      type: 'neutral',
+      icon: 'lucide:truck',
+      title: t('admin.orders.pack.unpackable.dispatchedTitle', 'Ordern är redan skickad'),
+      message: t('admin.orders.pack.unpackable.dispatchedMessage', 'Ordern har redan expedierats och dess innehåll är låst.'),
+    }
+  }
+
+  return null
+})
 
 // Modal states
 const activeShortageItem = ref<LineItemState | null>(null) // manages which specific item is currently being addressed in a shortage modal.
@@ -84,11 +141,45 @@ async function onConfirmCancel(reason: string) {
           :is-submitting="isSubmitting"
           :total-fulfilled-units="totalFulfilledUnits"
           :can-dispatch="canDispatch"
+          :is-unpackable="isOrderUnpackable"
           @cancel="isCancelModalOpen = true"
           @pack-all="packAllItems"
           @save="submitPacking(false)"
           @dispatch="submitPacking(true)"
         />
+
+        <!-- Warning Banner for Unpackable / Cancelled / Unpaid Orders -->
+        <div
+          v-if="unpackableBanner"
+          role="alert"
+          class="rounded-2xl p-4 sm:p-5 border-2 shadow-sm flex items-start gap-3.5 transition-colors"
+          :class="{
+            'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800/80 text-rose-950 dark:text-rose-100': unpackableBanner.type === 'error',
+            'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800/80 text-amber-950 dark:text-amber-100': unpackableBanner.type === 'warning',
+            'bg-sky-50 dark:bg-sky-950/40 border-sky-300 dark:border-sky-800/80 text-sky-950 dark:text-sky-100': unpackableBanner.type === 'info',
+            'bg-slate-100 dark:bg-zinc-800/90 border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200': unpackableBanner.type === 'neutral',
+          }"
+        >
+          <div
+            class="p-2 rounded-xl shrink-0 mt-0.5"
+            :class="{
+              'bg-rose-200/80 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300': unpackableBanner.type === 'error',
+              'bg-amber-200/80 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300': unpackableBanner.type === 'warning',
+              'bg-sky-200/80 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300': unpackableBanner.type === 'info',
+              'bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300': unpackableBanner.type === 'neutral',
+            }"
+          >
+            <Icon :name="unpackableBanner.icon" class="size-5" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <h3 class="text-sm font-bold tracking-tight">
+              {{ unpackableBanner.title }}
+            </h3>
+            <p class="text-xs mt-1 leading-relaxed opacity-90">
+              {{ unpackableBanner.message }}
+            </p>
+          </div>
+        </div>
 
         <!-- Customer & Delivery Cards -->
         <OrderPackCustomerCard :customer="order.customer" />
@@ -103,7 +194,7 @@ async function onConfirmCancel(reason: string) {
             <OrderPackTable
               :items="localItems"
               :currency="order.currency"
-              :is-read-only="order.fulfillmentStatus === 'DISPATCHED' || order.fulfillmentStatus === 'CANCELLED'"
+              :is-read-only="isOrderUnpackable"
               @toggle-picked="toggleItemPicked"
               @open-shortage="activeShortageItem = $event"
               @reset-item="resetLineItem"
