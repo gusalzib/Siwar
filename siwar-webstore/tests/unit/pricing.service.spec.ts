@@ -6,6 +6,8 @@ import {
   isDiscountActive,
   calculateDiscountedPrice,
   isDiscountExpiringSoon,
+  resolveEffectiveProductDiscount,
+  resolveEffectiveProductPrice,
   type LineItemInput,
 } from '../../server/services/pricing.service'
 
@@ -80,6 +82,7 @@ describe('Pricing Service - calculateMomsSplit', () => {
       totalGrossMinor: 0,
       totalNetMinor: 0,
       totalMomsMinor: 0,
+      moms6: { taxableGrossMinor: 0, taxableNetMinor: 0, momsAmountMinor: 0 },
       moms12: { taxableGrossMinor: 0, taxableNetMinor: 0, momsAmountMinor: 0 },
       moms25: { taxableGrossMinor: 0, taxableNetMinor: 0, momsAmountMinor: 0 },
     })
@@ -93,9 +96,31 @@ describe('Pricing Service - calculateMomsSplit', () => {
     expect(result.totalGrossMinor).toBe(4900)
     expect(result.totalMomsMinor).toBe(980)
     expect(result.totalNetMinor).toBe(3920)
+    expect(result.moms6.taxableGrossMinor).toBe(0)
     expect(result.moms12.taxableGrossMinor).toBe(0)
     expect(result.moms25.taxableGrossMinor).toBe(4900)
     expect(result.moms25.momsAmountMinor).toBe(980)
+  })
+
+  // --- Single-Rate Carts & AC-1 ---
+  it('correctly calculates 6% statutory moms on books and cultural items (AC-1)', () => {
+    // AC-1: Given a book priced at 106 SEK gross with momsRate: 6
+    // Tax: round((10600 * 6) / 106) = 600 öre (6.00 SEK)
+    // Net: 10600 - 600 = 10000 öre (100.00 SEK)
+    const items: LineItemInput[] = [
+      { unitPriceMinor: 10600, quantity: 1, momsRate: 6 },
+    ]
+
+    const result = calculateMomsSplit(items, 0)
+
+    expect(result.moms6.taxableGrossMinor).toBe(10600)
+    expect(result.moms6.taxableNetMinor).toBe(10000)
+    expect(result.moms6.momsAmountMinor).toBe(600)
+    expect(result.moms12.taxableGrossMinor).toBe(0)
+    expect(result.moms25.taxableGrossMinor).toBe(0)
+    expect(result.totalGrossMinor).toBe(10600)
+    expect(result.totalMomsMinor).toBe(600)
+    expect(result.totalNetMinor).toBe(10000)
   })
 
   // --- Single-Rate Carts ---
@@ -359,5 +384,182 @@ describe('Pricing Service - isDiscountExpiringSoon (Urgent 48-Hour Badge)', () =
     const in10Hours = new Date('2026-10-27T22:00:00.000Z')
     expect(isDiscountExpiringSoon(in10Hours, referenceTime, 6)).toBe(false)
     expect(isDiscountExpiringSoon(in10Hours, referenceTime, 12)).toBe(true)
+  })
+})
+
+describe('Pricing Service - Deterministic Discount Hierarchy Strategy (AC-2, AC-3)', () => {
+  const refTime = new Date('2026-11-03T12:00:00.000Z')
+
+  // AC-2: Kortdatum (Priority 1) Overrides Category & Ordinary Sales
+  it('AC-2: Kortdatum (Priority 1) overrides active category sale and ordinary product discount', () => {
+    const result = resolveEffectiveProductDiscount({
+      discount: 10, // ordinary discount
+      kortdatum: {
+        isKortdatum: true,
+        bestBeforeDate: new Date('2026-11-13T00:00:00.000Z'),
+        clearanceDiscount: 35,
+      },
+      categoryPromotion: {
+        isActiveDiscount: true,
+        discountPercent: 20, // 20% sale on Skafferi
+        discountStartsAt: new Date('2026-11-01T00:00:00.000Z'),
+        discountExpiresAt: new Date('2026-11-10T00:00:00.000Z'),
+      },
+      referenceDate: refTime,
+    })
+
+    expect(result.discountPercent).toBe(35)
+    expect(result.isKortdatum).toBe(true)
+    expect(result.isCategoryDiscount).toBe(false)
+    expect(result.source).toBe('kortdatum')
+    expect(result.activeDiscountType).toBe('KORTDATUM')
+    expect(result.badgeText?.sv).toBe('Kort datum')
+  })
+
+  // AC-3: Category Sale (Priority 2) Overrides Ordinary Product Discount
+  it('AC-3: Category-wide sale overrides ordinary individual product discount', () => {
+    const result = resolveEffectiveProductDiscount({
+      discount: 10, // 10% ordinary item discount
+      categoryPromotion: {
+        isActiveDiscount: true,
+        discountPercent: 25, // 25% category campaign
+        discountStartsAt: new Date('2026-11-01T00:00:00.000Z'),
+        discountExpiresAt: new Date('2026-11-10T00:00:00.000Z'),
+      },
+      referenceDate: refTime,
+    })
+
+    expect(result.discountPercent).toBe(25)
+    expect(result.isKortdatum).toBe(false)
+    expect(result.isCategoryDiscount).toBe(true)
+    expect(result.source).toBe('category')
+    expect(result.activeDiscountType).toBe('CATEGORY')
+    expect(result.badgeText?.sv).toBe('-25%')
+  })
+
+  // Priority 3: Ordinary Product Discount applies when no Kortdatum and no Category sale
+  it('Priority 3: Ordinary product discount applies when no active Kortdatum and no category sale', () => {
+    const result = resolveEffectiveProductDiscount({
+      discount: 15,
+      discountStartsAt: new Date('2026-11-01T00:00:00.000Z'),
+      discountExpiresAt: new Date('2026-11-10T00:00:00.000Z'),
+      kortdatum: {
+        isKortdatum: false,
+      },
+      categoryPromotion: {
+        isActiveDiscount: false,
+        discountPercent: 20,
+      },
+      referenceDate: refTime,
+    })
+
+    expect(result.discountPercent).toBe(15)
+    expect(result.isKortdatum).toBe(false)
+    expect(result.isCategoryDiscount).toBe(false)
+    expect(result.source).toBe('product')
+    expect(result.activeDiscountType).toBe('ORDINARY')
+    expect(result.badgeText?.sv).toBe('-15%')
+  })
+
+  // Priority 4: Regular Retail Price when no promotions are active
+  it('Priority 4: Regular retail price when all discounts are inactive or expired', () => {
+    const result = resolveEffectiveProductDiscount({
+      discount: 10,
+      discountStartsAt: new Date('2026-10-01T00:00:00.000Z'),
+      discountExpiresAt: new Date('2026-10-15T00:00:00.000Z'), // expired in past
+      categoryPromotion: {
+        isActiveDiscount: true,
+        discountPercent: 20,
+        discountStartsAt: new Date('2026-10-01T00:00:00.000Z'),
+        discountExpiresAt: new Date('2026-10-15T00:00:00.000Z'), // expired in past
+      },
+      referenceDate: refTime,
+    })
+
+    expect(result.discountPercent).toBe(0)
+    expect(result.source).toBe('none')
+    expect(result.activeDiscountType).toBe('NONE')
+    expect(result.deadlineDate).toBeNull()
+  })
+
+  it('ignores expired Kortdatum (bestBeforeDate < today) and falls back to category or base', () => {
+    const result = resolveEffectiveProductDiscount({
+      discount: 10,
+      kortdatum: {
+        isKortdatum: true,
+        bestBeforeDate: new Date('2026-11-01T00:00:00.000Z'), // in past compared to refTime 2026-11-03
+        clearanceDiscount: 40,
+      },
+      categoryPromotion: {
+        isActiveDiscount: true,
+        discountPercent: 20,
+        discountStartsAt: new Date('2026-11-01T00:00:00.000Z'),
+        discountExpiresAt: new Date('2026-11-10T00:00:00.000Z'),
+      },
+      referenceDate: refTime,
+    })
+
+    // Kortdatum is expired, so category sale wins
+    expect(result.discountPercent).toBe(20)
+    expect(result.source).toBe('category')
+    expect(result.activeDiscountType).toBe('CATEGORY')
+  })
+})
+
+describe('Pricing Service - resolveEffectiveProductPrice', () => {
+  const refTime = new Date('2026-11-03T12:00:00.000Z')
+
+  it('computes effective minor unit prices using deterministic integer arithmetic round(retail * (100 - pct) / 100)', () => {
+    const product = {
+      price: {
+        SEK: 10000, // 100.00 SEK
+        EUR: 1000,  // 10.00 EUR
+        USD: 1200,  // 12.00 USD
+      },
+      discount: 10,
+      categoryPromotion: {
+        isActiveDiscount: true,
+        discountPercent: 25, // Category sale overrides ordinary discount
+        discountStartsAt: new Date('2026-11-01T00:00:00.000Z'),
+        discountExpiresAt: new Date('2026-11-10T00:00:00.000Z'),
+      },
+      referenceDate: refTime,
+    }
+
+    const resolved = resolveEffectiveProductPrice(product)
+
+    expect(resolved.appliedDiscountPercent).toBe(25)
+    expect(resolved.activeDiscountType).toBe('CATEGORY')
+    expect(resolved.originalPriceMinor).toEqual({ SEK: 10000, EUR: 1000, USD: 1200 })
+    expect(resolved.effectivePriceMinor).toEqual({
+      SEK: 7500, // 10000 * 75 / 100
+      EUR: 750,  // 1000 * 75 / 100
+      USD: 900,  // 1200 * 75 / 100
+    })
+    expect(resolved.deadlineDate).toEqual(new Date('2026-11-10T00:00:00.000Z'))
+  })
+
+  it('returns Kortdatum price and best-before deadline when Kortdatum is active', () => {
+    const product = {
+      price: { SEK: 4900, EUR: 490, USD: 550 },
+      kortdatum: {
+        isKortdatum: true,
+        bestBeforeDate: new Date('2026-11-05T00:00:00.000Z'),
+        clearanceDiscount: 40,
+      },
+      categoryPromotion: {
+        isActiveDiscount: true,
+        discountPercent: 20,
+      },
+      referenceDate: refTime,
+    }
+
+    const resolved = resolveEffectiveProductPrice(product)
+
+    expect(resolved.appliedDiscountPercent).toBe(40)
+    expect(resolved.activeDiscountType).toBe('KORTDATUM')
+    expect(resolved.effectivePriceMinor.SEK).toBe(Math.round(4900 * 0.6)) // 2940
+    expect(resolved.deadlineDate).toEqual(new Date('2026-11-05T00:00:00.000Z'))
+    expect(resolved.badgeText?.sv).toBe('Kort datum')
   })
 })
