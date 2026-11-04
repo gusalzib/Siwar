@@ -66,6 +66,27 @@ function isProductExpiringSoon(expiresAt?: string | Date | null): boolean {
   return diffMs > 0 && diffMs <= 48 * 60 * 60 * 1000
 }
 
+function isKortdatumActive(product: any): boolean {
+  const k = product?.kortdatum
+  if (!k?.isKortdatum) return false
+  if (product.activeDiscountType) {
+    return product.activeDiscountType === 'KORTDATUM'
+  }
+  if (!k.bestBeforeDate) return true
+  const d = new Date(k.bestBeforeDate)
+  if (Number.isNaN(d.getTime())) return true
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  return d.getTime() >= startOfToday.getTime()
+}
+
+function formatBestBefore(dateStr?: string | Date | null): string {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toISOString().slice(0, 10)
+}
+
 // Price formatter for minor units (öre/cents)
 function formatPrice(priceObj?: Record<CurrencyCode, number>): string {
   if (!priceObj) return ''
@@ -174,13 +195,29 @@ function handleAddToCart(product: any) {
 
           <!-- Bold Attention-Grabbing Discount Tag & Urgent Expiry Badge (Requirements 3 & 4) -->
           <div class="absolute top-2.5 start-2.5 z-10 flex flex-col items-start gap-1">
+            <!-- Kortdatum Clearance Badge (Rank 1) -->
             <span
+              v-if="isKortdatumActive(product)"
+              class="inline-flex flex-col items-start px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-white bg-black dark:bg-zinc-950 shadow-md border border-zinc-800 select-none tracking-tight"
+            >
+              <span class="flex items-center gap-1 font-black uppercase text-amber-300">
+                <Icon name="lucide:calendar-clock" class="size-3.5 shrink-0 text-amber-300" />
+                <span>{{ t('cart.kortdatum', 'Kort datum') }}</span>
+              </span>
+              <span v-if="product.kortdatum?.bestBeforeDate" class="text-[10px] text-zinc-300 font-medium">
+                {{ t('cart.bestBefore', 'Bäst före:') }} {{ formatBestBefore(product.kortdatum.bestBeforeDate) }}
+              </span>
+            </span>
+
+            <!-- Ordinary / Category Campaign Discount Tag (Rank 2 & 3) -->
+            <span
+              v-else-if="product.discount && product.discount > 0"
               class="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-600 shadow-md shadow-red-500/40 border border-white/20 select-none overflow-hidden tracking-wide"
             >
               <!-- Ambient pulse glow behind -->
               <span class="absolute inset-0 bg-white/15 animate-pulse pointer-events-none" />
 
-              <!-- Animated live radar dot for eye-catching effect (replaces the star emoji) -->
+              <!-- Animated live radar dot for eye-catching effect -->
               <span class="relative flex size-2 shrink-0">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-90" />
                 <span class="relative inline-flex rounded-full size-2 bg-amber-400" />
@@ -193,7 +230,7 @@ function handleAddToCart(product: any) {
 
             <!-- Urgent Expiry Badge (Impending Deadline <= 48h) -->
             <span
-              v-if="isProductExpiringSoon(product.discountExpiresAt)"
+              v-if="!isKortdatumActive(product) && isProductExpiringSoon(product.discountExpiresAt)"
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold text-black bg-amber-400 dark:bg-amber-400 shadow-sm border border-amber-500/30 select-none tracking-tight"
             >
               <Icon name="lucide:clock" class="size-3 shrink-0 text-black" />
