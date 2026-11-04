@@ -149,6 +149,8 @@ export interface IGeneralSettings {
   }
   socialLinks?: ISocialLink[]
   carouselIntervalMs?: number
+  // Threshold in days before an unpacked order (PENDING_PACKING) is flagged as overdue (1-30 days)
+  staleOrderPackingThresholdDays?: number
 }
 
 export interface IStoreSettings {
@@ -169,6 +171,8 @@ export interface IStoreSettings {
   banners: IBanner[]
   socialLinks?: ISocialLink[]
   carouselIntervalMs?: number
+  // Configurable packing threshold for aging orders in PENDING_PACKING (default: 4 days)
+  staleOrderPackingThresholdDays?: number
   updatedAt: Date
 }
 
@@ -337,6 +341,7 @@ export const DEFAULT_GENERAL_CONFIG: IGeneralSettings = {
   },
   socialLinks: [],
   carouselIntervalMs: 5000,
+  staleOrderPackingThresholdDays: 4,
 }
 
 export const DEFAULT_PICKUP_CONFIG: IPickupSettings = {
@@ -441,6 +446,12 @@ const GeneralSettingsSchema = new Schema<IGeneralSettings>(
       default: 5000,
       min: 2000,
       max: 30000,
+    },
+    staleOrderPackingThresholdDays: {
+      type: Number,
+      default: 4,
+      min: 1,
+      max: 30,
     },
   },
   { _id: false }
@@ -553,6 +564,12 @@ const StoreSettingsSchema = new Schema<IStoreSettings>(
       min: 2000,
       max: 30000,
     },
+    staleOrderPackingThresholdDays: {
+      type: Number,
+      default: 4,
+      min: 1,
+      max: 30,
+    },
   },
   { timestamps: true }
 )
@@ -570,7 +587,7 @@ export async function getStoreGeneralSettings(): Promise<IGeneralSettings> {
   }
 
   try {
-    const settings = await StoreSettings.findOne().select('general socialLinks carouselIntervalMs').lean()
+    const settings = await StoreSettings.findOne().select('general socialLinks carouselIntervalMs staleOrderPackingThresholdDays').lean()
     if (!settings || !settings.general) {
       cachedGeneral = { ...DEFAULT_GENERAL_CONFIG }
     } else {
@@ -618,6 +635,7 @@ export async function getStoreGeneralSettings(): Promise<IGeneralSettings> {
         },
         socialLinks,
         carouselIntervalMs: (settings as any)?.carouselIntervalMs ?? settings?.general?.carouselIntervalMs ?? 5000,
+        staleOrderPackingThresholdDays: (settings as any)?.staleOrderPackingThresholdDays ?? settings?.general?.staleOrderPackingThresholdDays ?? 4,
       }
     }
   } catch (err) {
@@ -681,3 +699,11 @@ export function clearPickupSettingsCache() {
   cachedPickup = null
   cacheExpiry = 0
 }
+
+/**
+ * Returns the configured stale packing warning threshold in days (defaults to 4).
+ */
+export async function getStorePackingThresholdDays(): Promise<number> {
+  const general = await getStoreGeneralSettings()
+  return general.staleOrderPackingThresholdDays ?? 4
+}
