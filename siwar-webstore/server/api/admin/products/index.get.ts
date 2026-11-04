@@ -1,6 +1,8 @@
 // server/api/admin/products/index.get.ts
 import type { QueryFilter } from 'mongoose'
 import { Product, type IProduct } from '~/server/models/Product'
+import '~/server/models/Category'
+import { isDiscountActive, resolveEffectiveProductPrice } from '~/server/services/pricing.service'
 
 // This naming convention comes from Nuxt and Nitro's file-based routing system, not TypeScript itself. Nitro turns folder 
 // structures and filenames inside server/api/ into live API endpoints automatically.
@@ -31,6 +33,7 @@ export default defineEventHandler(async (event) => {
   const search = query.search ? String(query.search).trim() : ''
   const isArchived = query.isArchived !== undefined ? String(query.isArchived).toLowerCase() : 'all'
   const hasDiscount = query.hasDiscount ? String(query.hasDiscount).toLowerCase() : ''
+  const isKortdatum = query.isKortdatum === 'true'
   const page = Math.max(1, Number(query.page) || 1)
   const limitParam = query.limit !== undefined ? Number(query.limit) : 10
   const isAll = query.limit === 'all' || limitParam <= 0
@@ -104,11 +107,17 @@ export default defineEventHandler(async (event) => {
     filter.discount = { $gt: 0 }
   }
 
+  // --- Filter 7: By Kortdatum Clearance Status (Issue #41) ---
+  if (isKortdatum) {
+    (filter as any)['kortdatum.isKortdatum'] = true
+  }
+
   // 3. Count documents for pagination & hybrid metrics
   let totalCount = 0
   let totalActive = 0
   let totalArchived = 0
   let totalDiscounted = 0
+  let totalKortdatum = 0
 
   if (typeof (Product as any).countDocuments === 'function') {
     try {
@@ -116,6 +125,7 @@ export default defineEventHandler(async (event) => {
       totalActive = await Product.countDocuments({ isActive: true })
       totalArchived = await Product.countDocuments({ isActive: false })
       totalDiscounted = await Product.countDocuments({ discount: { $gt: 0 } })
+      totalKortdatum = await Product.countDocuments({ 'kortdatum.isKortdatum': true })
     } catch {
       // Mock / fallback
     }
@@ -123,7 +133,7 @@ export default defineEventHandler(async (event) => {
 
   // 4. Execute MongoDB Query with skip/limit
   let queryBuilder: any = Product.find(filter)
-    .populate('category', 'name')
+    .populate('category', 'name discountPercent discountStartsAt discountExpiresAt isActiveDiscount')
     .sort({ createdAt: -1 })
 
   if (!isAll && limit > 0) {
@@ -186,6 +196,20 @@ export default defineEventHandler(async (event) => {
 
     const showDiscountBadge = discountStatus === 'active' || discountStatus === 'scheduled'
 
+    // Evaluate category discount status
+    const cat = p.category
+    const isCategorySaleActive = Boolean(
+      cat &&
+      cat.isActiveDiscount &&
+      typeof cat.discountPercent === 'number' &&
+      cat.discountPercent > 0 &&
+      isDiscountActive(cat.discountPercent, cat.discountStartsAt, cat.discountExpiresAt, now)
+    )
+    const categoryDiscountPercent = isCategorySaleActive ? cat.discountPercent : 0
+
+    // Evaluate effective pricing across the deterministic 4-tier hierarchy
+    const effectivePricing = resolveEffectiveProductPrice(p, p.category as any, now)
+
     // Return sanitized, flat properties expected by the Vue table component
     return {
       id: String(p._id),
@@ -199,11 +223,22 @@ export default defineEventHandler(async (event) => {
       discountExpiresAt: p.discountExpiresAt || null,
       discountStatus,
       showDiscountBadge,
+      hasActiveCategorySale: isCategorySaleActive,
+      categoryDiscountPercent,
+      activeDiscountType: effectivePricing.activeDiscountType,
+      appliedDiscountPercent: effectivePricing.appliedDiscountPercent,
+      discountedPrice: effectivePricing.appliedDiscountPercent > 0 ? effectivePricing.effectivePriceMinor : null,
       stockQuantity: p.stockQuantity,
       safetyBuffer: p.safetyBuffer,
       availableStock,
       barcode: p.barcode || null,
       isActive: p.isActive,
+      momsRate: p.momsRate,
+      kortdatum: p.kortdatum ? {
+        isKortdatum: Boolean(p.kortdatum.isKortdatum),
+        bestBeforeDate: p.kortdatum.bestBeforeDate || null,
+        clearanceDiscount: p.kortdatum.clearanceDiscount || 0,
+      } : null,
       freeShipping: Boolean(p.freeShipping),
       hasMissingTranslations,
     }
@@ -225,6 +260,7 @@ export default defineEventHandler(async (event) => {
       totalActive,
       totalArchived,
       totalDiscounted,
+      totalKortdatum,
     },
   }
 })

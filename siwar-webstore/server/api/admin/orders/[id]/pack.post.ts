@@ -17,7 +17,7 @@ interface PackItemInput {
   imageUrl?: string
   name?: { ar: string; sv: string; en: string }
   unitPriceMinor?: number
-  momsRate?: 12 | 25
+  momsRate?: 6 | 12 | 25
   freeShipping?: boolean
   isPacked?: boolean
 }

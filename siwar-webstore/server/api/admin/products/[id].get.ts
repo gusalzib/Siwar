@@ -1,6 +1,8 @@
 // server/api/admin/products/[id].get.ts
 import { isValidObjectId } from 'mongoose'
 import { Product } from '~/server/models/Product'
+import '~/server/models/Category'
+import { resolveEffectiveProductPrice } from '~/server/services/pricing.service'
 
 /**
  * Route: GET /api/admin/products/:id
@@ -20,8 +22,12 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // 2. Query product from MongoDB
-  const product = await Product.findById(id).lean()
+  // 2. Query product from MongoDB with populated category promotion fields
+  let queryBuilder: any = Product.findById(id)
+  if (typeof queryBuilder?.populate === 'function') {
+    queryBuilder = queryBuilder.populate('category', 'name discountPercent discountStartsAt discountExpiresAt isActiveDiscount')
+  }
+  const product = await queryBuilder.lean()
 
   if (!product) {
     throw createError({
@@ -30,6 +36,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  const cat = typeof product.category === 'object' && product.category !== null ? (product.category as any) : null
+  const now = new Date()
+  const effectivePricing = resolveEffectiveProductPrice(product, cat, now)
+
   // 3. Return product payload for form pre-population
   return {
     id: String(product._id),
@@ -37,7 +47,15 @@ export default defineEventHandler(async (event) => {
     description: product.description,
     ingredients: product.ingredients || { ar: '', sv: '', en: '' },
     brand: product.brand,
-    category: String(product.category),
+    category: cat ? String(cat._id) : String(product.category || ''),
+    categoryDetails: cat ? {
+      id: String(cat._id),
+      name: cat.name,
+      discountPercent: cat.discountPercent ?? 0,
+      discountStartsAt: cat.discountStartsAt || null,
+      discountExpiresAt: cat.discountExpiresAt || null,
+      isActiveDiscount: Boolean(cat.isActiveDiscount),
+    } : null,
     price: product.price,
     discount: product.discount ?? 0,
     discountStartsAt: product.discountStartsAt || null,
@@ -54,5 +72,13 @@ export default defineEventHandler(async (event) => {
     nutritionTable: product.nutritionTable || undefined,
     isActive: product.isActive,
     freeShipping: Boolean(product.freeShipping),
+    kortdatum: product.kortdatum ? {
+      isKortdatum: Boolean(product.kortdatum.isKortdatum),
+      bestBeforeDate: product.kortdatum.bestBeforeDate || null,
+      clearanceDiscount: product.kortdatum.clearanceDiscount || 0,
+    } : null,
+    activeDiscountType: effectivePricing.activeDiscountType,
+    appliedDiscountPercent: effectivePricing.appliedDiscountPercent,
+    discountedPrice: effectivePricing.appliedDiscountPercent > 0 ? effectivePricing.effectivePriceMinor : null,
   }
 })
