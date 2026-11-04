@@ -300,8 +300,9 @@ function renderTotalsAndTax(order: IOrder, locale: EmailLocale): string {
       discount: 'الخصم والتوفير:',
       shipping: 'الشحن والتوصيل:',
       grandTotal: 'المجموع الكلي:',
-      moms12: 'ضريبة 12% (أغذية):',
-      moms25: 'ضريبة 25% (بضائع/شحن):',
+      moms6: 'ضريبة 6%:',
+      moms12: 'ضريبة 12%:',
+      moms25: 'ضريبة 25%:',
       totalMoms: 'إجمالي ضريبة القيمة المضافة (Moms):',
     },
     sv: {
@@ -309,8 +310,9 @@ function renderTotalsAndTax(order: IOrder, locale: EmailLocale): string {
       discount: 'Kampanjrabatt:',
       shipping: 'Fraktkostnad:',
       grandTotal: 'Totalt belopp:',
-      moms12: 'Moms 12% (livsmedel):',
-      moms25: 'Moms 25% (övrigt/frakt):',
+      moms6: 'Moms 6%:',
+      moms12: 'Moms 12%:',
+      moms25: 'Moms 25%:',
       totalMoms: 'Varav moms totalt:',
     },
     en: {
@@ -318,8 +320,9 @@ function renderTotalsAndTax(order: IOrder, locale: EmailLocale): string {
       discount: 'Promotional Discount:',
       shipping: 'Shipping Fee:',
       grandTotal: 'Grand Total:',
-      moms12: 'VAT 12% (Food):',
-      moms25: 'VAT 25% (Goods/Shipping):',
+      moms6: 'VAT 6%:',
+      moms12: 'VAT 12%:',
+      moms25: 'VAT 25%:',
       totalMoms: 'Total VAT Included:',
     },
   }[locale]
@@ -359,14 +362,24 @@ function renderTotalsAndTax(order: IOrder, locale: EmailLocale): string {
       <!-- Audited Moms Box -->
       <div style="background-color: #f3f4f6; border-radius: 6px; padding: 12px; margin-top: 12px; font-size: 12px; color: #4b5563;">
         <table style="width: 100%;">
+          ${(tax?.moms6?.momsAmountMinor || 0) > 0 ? `
+          <tr>
+            <td style="text-align: ${align};">${labels.moms6}</td>
+            <td style="text-align: ${oppAlign}; font-family: monospace;">${formatMoney(tax?.moms6?.momsAmountMinor || 0, order.currency)}</td>
+          </tr>
+          ` : ''}
+          ${(tax?.moms12?.momsAmountMinor || 0) > 0 ? `
           <tr>
             <td style="text-align: ${align};">${labels.moms12}</td>
             <td style="text-align: ${oppAlign}; font-family: monospace;">${formatMoney(tax?.moms12?.momsAmountMinor || 0, order.currency)}</td>
           </tr>
+          ` : ''}
+          ${(tax?.moms25?.momsAmountMinor || 0) > 0 ? `
           <tr>
             <td style="text-align: ${align};">${labels.moms25}</td>
             <td style="text-align: ${oppAlign}; font-family: monospace;">${formatMoney(tax?.moms25?.momsAmountMinor || 0, order.currency)}</td>
           </tr>
+          ` : ''}
           <tr style="font-weight: bold; color: #111827;">
             <td style="text-align: ${align}; padding-top: 4px; border-top: 1px dashed #d1d5db;">${labels.totalMoms}</td>
             <td style="text-align: ${oppAlign}; padding-top: 4px; border-top: 1px dashed #d1d5db; font-family: monospace;">${formatMoney(tax?.totalMomsMinor || 0, order.currency)}</td>

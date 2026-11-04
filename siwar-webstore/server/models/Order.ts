@@ -43,7 +43,7 @@ export interface IShortageAdjustment {
   originalUnitPriceMinor: number
   originalSku?: string
   originalName?: { ar: string; sv: string; en: string }
-  originalMomsRate?: 12 | 25
+  originalMomsRate?: 6 | 12 | 25
   substitutedProductId?: mongoose.Types.ObjectId
   substitutedSku?: string
   substitutedUnitPriceMinor?: number
@@ -64,7 +64,7 @@ export interface IOrderItem {
   unitPriceMinor: number
   originalUnitPriceMinor?: number
   discount?: number
-  momsRate: 12 | 25
+  momsRate: 6 | 12 | 25
   freeShipping?: boolean
   shortageStatus: LineItemShortageStatus
   isPacked?: boolean
@@ -91,12 +91,16 @@ export interface IOrderPricing {
   releasedOrRefundedMinor?: number // Amount released (Stripe) or refunded (Swish)
   taxSplit: {
     totalMomsMinor: number
+    moms6?: {
+      netAmountMinor?: number
+      momsAmountMinor: number
+    }
     moms12: {
-      netAmountMinor: number
+      netAmountMinor?: number
       momsAmountMinor: number
     }
     moms25: {
-      netAmountMinor: number
+      netAmountMinor?: number
       momsAmountMinor: number
     }
   }
@@ -144,7 +148,7 @@ const OrderItemSchema = new Schema<IOrderItem>(
     unitPriceMinor: { type: Number, required: true, min: 0 },
     originalUnitPriceMinor: { type: Number },
     discount: { type: Number },
-    momsRate: { type: Number, required: true, enum: [12, 25] },
+    momsRate: { type: Number, required: true, enum: [6, 12, 25] },
     freeShipping: { type: Boolean, default: false },
     shortageStatus: {
       type: String,
@@ -175,7 +179,7 @@ const ShortageAdjustmentSchema = new Schema<IShortageAdjustment>(
       sv: { type: String },
       en: { type: String },
     },
-    originalMomsRate: { type: Number, enum: [12, 25] },
+    originalMomsRate: { type: Number, enum: [6, 12, 25] },
     substitutedProductId: { type: Schema.Types.ObjectId, ref: 'Product' },
     substitutedSku: { type: String },
     substitutedUnitPriceMinor: { type: Number },
