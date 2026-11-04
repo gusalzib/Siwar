@@ -12,7 +12,7 @@ export interface LineItemState {
     name: { ar: string; sv: string; en: string }
     quantity: number
     unitPriceMinor: number
-    momsRate: 12 | 25
+    momsRate: 6 | 12 | 25
     freeShipping?: boolean
   }
   sku?: string
@@ -23,7 +23,7 @@ export interface LineItemState {
   unitPriceMinor: number
   originalUnitPriceMinor?: number
   discount?: number
-  momsRate: 12 | 25
+  momsRate: 6 | 12 | 25
   shortageStatus: 'NONE' | 'REDUCED' | 'REMOVED' | 'SUBSTITUTED'
   isPacked: boolean
 }
@@ -38,7 +38,7 @@ export interface ShortageActionDraft {
     imageUrl?: string
     name: { ar: string; sv: string; en: string }
     priceMinor: number
-    momsRate: 12 | 25
+    momsRate: 6 | 12 | 25
     freeShipping?: boolean
   }
   note?: string
@@ -267,16 +267,18 @@ export function useOrderPacking(
   // 4. Dynamic Live Pricing (Handles free shipping threshold & promotional item rules dynamically)
   const livePricing = computed(() => {
     if (!order.value) {
-      return { fulfilledItemsTotal: 0, grandTotal: 0, moms12Amount: 0, moms25Amount: 0, totalMoms: 0, releaseAmount: 0, shippingFee: 0 }
+      return { fulfilledItemsTotal: 0, grandTotal: 0, moms6Amount: 0, moms12Amount: 0, moms25Amount: 0, totalMoms: 0, releaseAmount: 0, shippingFee: 0 }
     }
     let itemsTotal = 0
+    let moms6Gross = 0
     let moms12Gross = 0
     let moms25Gross = 0
 
     for (const line of localItems.value) {
       const lineGross = line.unitPriceMinor * line.fulfilledQuantity
       itemsTotal += lineGross
-      if (line.momsRate === 12) moms12Gross += lineGross
+      if (line.momsRate === 6) moms6Gross += lineGross
+      else if (line.momsRate === 12) moms12Gross += lineGross
       else moms25Gross += lineGross
     }
 
@@ -312,6 +314,7 @@ export function useOrderPacking(
 
     moms25Gross += shippingFee
 
+    const moms6Amount = Math.round((moms6Gross * 6) / 106)
     const moms12Amount = Math.round((moms12Gross * 12) / 112)
     const moms25Amount = Math.round((moms25Gross * 25) / 125)
     const grandTotal = itemsTotal + shippingFee
@@ -322,9 +325,10 @@ export function useOrderPacking(
       fulfilledItemsTotal: itemsTotal,
       shippingFee,
       grandTotal,
+      moms6Amount,
       moms12Amount,
       moms25Amount,
-      totalMoms: moms12Amount + moms25Amount,
+      totalMoms: moms6Amount + moms12Amount + moms25Amount,
       releaseAmount,
     }
   })

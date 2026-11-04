@@ -22,7 +22,7 @@ export interface CartItem {
   name: MultilingualText
   thumbnailUrl: string
   price: MultiCurrencyPrice
-  momsRate: 12 | 25
+  momsRate: 6 | 12 | 25
   grossWeight: number // Packaging weight in grams
   availableStock: number // Clamped by MAX(0, Total_Stock - Buffer)
   quantity: number
@@ -36,6 +36,7 @@ export type CartActionStatus =
   | 'ITEM_REMOVED'
 
 export interface MomsSummary {
+  itemsMoms6Minor: number
   itemsMoms12Minor: number
   itemsMoms25Minor: number
   shippingMoms25Minor: number
@@ -156,7 +157,7 @@ export const useCartStore = defineStore('cart', () => {
     return items.value.map((item) => {
       const unitPriceMinor = item.price[curr] ?? item.price.SEK
       const lineGross = unitPriceMinor * item.quantity
-      const rate = item.momsRate === 12 ? 12 : 25
+      const rate = item.momsRate === 6 ? 6 : item.momsRate === 12 ? 12 : 25
       const lineTax = Math.round((lineGross * rate) / (100 + rate))
       const lineNet = lineGross - lineTax
 
@@ -255,11 +256,14 @@ export const useCartStore = defineStore('cart', () => {
   // Deterministic Moms Breakdown (LC-1 & NFR-5)
   // ---------------------------------------------------------------------------
   const momsBreakdown = computed<MomsSummary>(() => {
+    let itemsMoms6Minor = 0
     let itemsMoms12Minor = 0
     let itemsMoms25Minor = 0
 
     for (const line of lineItemTotals.value) {
-      if (line.momsRate === 12) {
+      if (line.momsRate === 6) {
+        itemsMoms6Minor += line.lineTax
+      } else if (line.momsRate === 12) {
         itemsMoms12Minor += line.lineTax
       } else {
         itemsMoms25Minor += line.lineTax
@@ -267,9 +271,10 @@ export const useCartStore = defineStore('cart', () => {
     }
 
     const shipTax = shippingMoms25Minor.value
-    const totalMomsMinor = itemsMoms12Minor + itemsMoms25Minor + shipTax
+    const totalMomsMinor = itemsMoms6Minor + itemsMoms12Minor + itemsMoms25Minor + shipTax
 
     return {
+      itemsMoms6Minor,
       itemsMoms12Minor,
       itemsMoms25Minor,
       shippingMoms25Minor: shipTax,
