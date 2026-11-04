@@ -603,10 +603,12 @@
       "subtitle": "Packa ordrar, hantera varubrist och granska betalningar",
       "stats": {
         "pendingPacking": "Att packa",
+        "staleOrders": "Försenade ordrar",
         "dispatched": "Skickade"
       },
       "filters": {
         "searchPlaceholder": "Sök ordernr, kund, telefon...",
+        "staleOnly": "Försenade (> {days} dgr)",
         "allFulfillmentStatuses": "Alla packstatusar",
         "pendingPacking": "Att packa (Pending Packing)",
         "packed": "Packad (Packed)",
@@ -636,6 +638,8 @@
       "badges": {
         "hasShortages": "Har registrerade varubrister",
         "shortage": "Brist",
+        "stale": "Försenad (> {days} dgr)",
+        "staleTooltip": "Denna order har väntat på packning i mer än {days} dagar",
         "pieces": "st"
       },
       "actions": {
@@ -654,6 +658,11 @@
           "failedMessage": "Betalningen misslyckades. Ordern kan inte expedieras.",
           "dispatchedTitle": "Ordern är redan skickad",
           "dispatchedMessage": "Ordern har redan expedierats och dess innehåll är låst."
+        },
+        "staleBanner": {
+          "title": "Försenad order – Packningsfrist överskriden",
+          "daysElapsed": "dagar sedan beställning",
+          "description": "Denna order har väntat på packning i {days} dagar, vilket överskrider butikens mål på {threshold} dagar. Vänligen prioritera packning eller kontakta kunden vid fördröjning."
         },
         "errors": {
           "loadFailed": "Kunde inte läsa in ordern.",
@@ -765,7 +774,7 @@
       "saveError": "Ett fel uppstod vid sparande.",
       "collapseAll": "Fäll ihop alla",
       "expandAll": "Fäll ut alla",
-      "sectionsCount": "6 sektioner",
+      "sectionsCount": "7 sektioner",
       "company": {
         "sectionTitle": "Företagsinformation & Bokföringslagen",
         "badge": "Org.nr & Moms",
@@ -821,6 +830,15 @@
         "moveDown": "Flytta ner",
         "selectPlatform": "Välj plattform...",
         "invalidUrlError": "Vänligen korrigera ogiltiga webbadresser för sociala medier innan du sparar."
+      },
+      "fulfillment": {
+        "sectionTitle": "Orderhantering & Packvarning",
+        "badge": "1–30 dagar",
+        "description": "Konfigurera tidsfristen för när en opackad order (PENDING_PACKING) ska flaggas som försenad i orderöversikten.",
+        "thresholdLabel": "Varningströskel för opackade ordrar (dagar)",
+        "thresholdHelp": "Ordrar som väntar på packning längre än detta antal dagar visas med en röd/bärnstensfärgad varningsbricka. Tillåtet intervall: 1–30 dagar (Standard: 4 dagar).",
+        "daysSuffix": "dgr",
+        "validationError": "Varningströskeln måste vara ett heltal mellan 1 och 30 dagar."
       }
     }
   },

@@ -604,10 +604,12 @@
       "subtitle": "Pack orders, manage shortages, and review payments",
       "stats": {
         "pendingPacking": "To Pack",
+        "staleOrders": "Overdue Orders",
         "dispatched": "Dispatched"
       },
       "filters": {
         "searchPlaceholder": "Search order no, customer, phone...",
+        "staleOnly": "Overdue (> {days} days)",
         "allFulfillmentStatuses": "All packing statuses",
         "pendingPacking": "To Pack (Pending Packing)",
         "packed": "Packed",
@@ -637,6 +639,8 @@
       "badges": {
         "hasShortages": "Has registered shortages",
         "shortage": "Shortage",
+        "stale": "Overdue (> {days} days)",
+        "staleTooltip": "This order has been waiting to be packed for more than {days} days",
         "pieces": "pcs"
       },
       "actions": {
@@ -655,6 +659,11 @@
           "failedMessage": "Payment failed. The order cannot be fulfilled.",
           "dispatchedTitle": "Order is already dispatched",
           "dispatchedMessage": "This order has already been dispatched and its contents are locked."
+        },
+        "staleBanner": {
+          "title": "Overdue Order – Packing SLA Exceeded",
+          "daysElapsed": "days since placement",
+          "description": "This order has been pending packing for {days} days, exceeding the store timeframe of {threshold} days. Please prioritize packing or contact the customer."
         },
         "errors": {
           "loadFailed": "Could not load the order.",
@@ -766,7 +775,7 @@
       "saveError": "An error occurred while saving.",
       "collapseAll": "Collapse all",
       "expandAll": "Expand all",
-      "sectionsCount": "6 sections",
+      "sectionsCount": "7 sections",
       "company": {
         "sectionTitle": "Company Information & Swedish Accounting Act",
         "badge": "Org.nr & VAT",
@@ -822,6 +831,15 @@
         "moveDown": "Move down",
         "selectPlatform": "Select platform...",
         "invalidUrlError": "Please correct invalid social media URLs before saving."
+      },
+      "fulfillment": {
+        "sectionTitle": "Order Fulfillment & Packing Alerts",
+        "badge": "1–30 days",
+        "description": "Configure the timeframe before an unpacked order (PENDING_PACKING) is flagged as overdue in the orders dashboard.",
+        "thresholdLabel": "Overdue warning threshold for unpacked orders (days)",
+        "thresholdHelp": "Orders waiting in packing longer than this number of days will display an alert badge. Allowed range: 1–30 days (Default: 4 days).",
+        "daysSuffix": "days",
+        "validationError": "Warning threshold must be an integer between 1 and 30 days."
       }
     }
   },
