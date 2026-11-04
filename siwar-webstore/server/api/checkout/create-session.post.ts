@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto'
 import { Product } from '../../models/Product'
 // Added: Import Order model to pre-register draft orders in MongoDB
 import { Order } from '../../models/Order'
-import { calculateMomsSplit, isDiscountActive } from '../../services/pricing.service'
+import { calculateMomsSplit, isDiscountActive, resolveEffectiveProductDiscount } from '../../services/pricing.service'
 // Added: Import evaluateCheckoutStock to validate cart availability against safety buffers before payment
 import { evaluateCheckoutStock } from '../../services/inventory.service'
 import { getPaymentGateway } from '../../services/payments'
@@ -43,7 +43,9 @@ export default defineEventHandler(async (event) => {
 
   // 1. Fetch live product records from MongoDB Atlas
   const productIds = body.items.map((i) => i.productId).filter(isValidObjectId)
-  const dbProducts = await Product.find({ _id: { $in: productIds } }).lean()
+  const dbProducts = await Product.find({ _id: { $in: productIds } })
+    .populate('category', 'discountPercent discountStartsAt discountExpiresAt isActiveDiscount')
+    .lean()
   const productMap = new Map(dbProducts.map((p) => [String(p._id), p]))
 
   // Added: 2. Pre-checkout stock gate: Re-evaluate cart against physical inventory & safety buffers (Issue #4 / AC-3)
@@ -78,13 +80,8 @@ export default defineEventHandler(async (event) => {
     }
 
     const baseUnitPrice = product.price[body.currency] ?? product.price.SEK
-    const isPromoActive = isDiscountActive(
-      product.discount,
-      product.discountStartsAt,
-      product.discountExpiresAt,
-      now
-    )
-    const discount = isPromoActive ? (product.discount || 0) : 0
+    const effectiveDiscount = resolveEffectiveProductDiscount(product, (product as any).category, now)
+    const discount = effectiveDiscount.discountPercent
     const unitPrice = discount > 0 ? Math.round(baseUnitPrice * (1 - discount / 100)) : baseUnitPrice
     const lineTotal = unitPrice * item.quantity
     grossProductsMinor += lineTotal
@@ -94,7 +91,7 @@ export default defineEventHandler(async (event) => {
       productId: item.productId,
       unitPriceMinor: unitPrice,
       quantity: item.quantity,
-      momsRate: product.momsRate as 12 | 25,
+      momsRate: product.momsRate as 6 | 12 | 25,
     })
 
     const primaryImg = product.images?.find((img: any) => img.isPrimary)?.url || product.images?.[0]?.url || ''
@@ -110,7 +107,7 @@ export default defineEventHandler(async (event) => {
       unitPriceMinor: unitPrice,
       originalUnitPriceMinor: discount > 0 ? baseUnitPrice : undefined,
       discount: discount > 0 ? discount : undefined,
-      momsRate: product.momsRate as 12 | 25,
+      momsRate: product.momsRate as 6 | 12 | 25,
       freeShipping: Boolean(product.freeShipping),
     })
   }

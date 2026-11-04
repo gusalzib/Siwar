@@ -119,6 +119,15 @@ describe('Reusable Modal Architecture (BaseModal & ConfirmModal)', () => {
       expect(categoryManagerContent).not.toMatch(/confirm\(/)
     })
 
+    it('components/admin/settings/CategoryManager.vue uses BaseModal for category promotional campaign modal', () => {
+      const categoryManagerPath = path.resolve(__dirname, '../../components/admin/settings/CategoryManager.vue')
+      const categoryManagerContent = fs.readFileSync(categoryManagerPath, 'utf-8')
+      expect(categoryManagerContent).toContain('<BaseModal')
+      expect(categoryManagerContent).toContain('isPromoModalOpen')
+      expect(categoryManagerContent).toContain('openPromoModal(category)')
+      expect(categoryManagerContent).toContain('closePromoModal')
+    })
+
     it('components/admin/settings/AllergenManager.vue uses ConfirmModal for deletion and eliminates window.confirm', () => {
       const allergenManagerPath = path.resolve(__dirname, '../../components/admin/settings/AllergenManager.vue')
       const allergenManagerContent = fs.readFileSync(allergenManagerPath, 'utf-8')

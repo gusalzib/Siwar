@@ -92,10 +92,20 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  if (![12, 25].includes(Number(body.momsRate))) {
+  if (![6, 12, 25].includes(Number(body.momsRate))) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Moms rate must be 12 (food) or 25 (non-food)',
+      statusMessage: 'Moms rate must be 6, 12, or 25',
+    })
+  }
+
+  // 5.5 Discount & Kortdatum Mutual Exclusion Validation
+  const isKortdatumEnabled = Boolean(body.kortdatum?.isKortdatum)
+  const ordinaryDiscount = Number(body.discount) || 0
+  if (isKortdatumEnabled && ordinaryDiscount > 0) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Kortdatum clearance and ordinary discount are mutually exclusive',
     })
   }
 
@@ -123,13 +133,24 @@ export default defineEventHandler(async (event) => {
       EUR,
       USD,
     },
-    discount: Number(body.discount) || 0,
-    discountStartsAt: body.discountStartsAt && !Number.isNaN(new Date(body.discountStartsAt).getTime())
-      ? new Date(body.discountStartsAt)
-      : new Date(),
-    discountExpiresAt: body.discountExpiresAt && !Number.isNaN(new Date(body.discountExpiresAt).getTime())
-      ? new Date(body.discountExpiresAt)
-      : null,
+    discount: isKortdatumEnabled ? 0 : ordinaryDiscount,
+    discountStartsAt: isKortdatumEnabled
+      ? null
+      : (body.discountStartsAt && !Number.isNaN(new Date(body.discountStartsAt).getTime())
+        ? new Date(body.discountStartsAt)
+        : new Date()),
+    discountExpiresAt: isKortdatumEnabled
+      ? null
+      : (body.discountExpiresAt && !Number.isNaN(new Date(body.discountExpiresAt).getTime())
+        ? new Date(body.discountExpiresAt)
+        : null),
+    kortdatum: body.kortdatum ? {
+      isKortdatum: Boolean(body.kortdatum.isKortdatum),
+      bestBeforeDate: body.kortdatum.bestBeforeDate && !Number.isNaN(new Date(body.kortdatum.bestBeforeDate).getTime())
+        ? new Date(body.kortdatum.bestBeforeDate)
+        : null,
+      clearanceDiscount: Number(body.kortdatum.clearanceDiscount) || 0,
+    } : undefined,
     stockQuantity,
     safetyBuffer,
     netQuantity: {

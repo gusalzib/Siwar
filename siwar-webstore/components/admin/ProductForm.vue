@@ -8,6 +8,19 @@ interface Props {
   productId?: string
 }
 
+interface CategoryOption {
+  id: string
+  _id?: string
+  name: Record<string, string>
+  slug?: Record<string, string>
+  sortOrder?: number
+  isActive?: boolean
+  discountPercent?: number
+  discountStartsAt?: Date | string | null
+  discountExpiresAt?: Date | string | null
+  isActiveDiscount?: boolean
+}
+
 const props = withDefaults(defineProps<Props>(), {
   mode: 'create',
 })
@@ -48,7 +61,12 @@ const form = ref({
     unit: 'g' as 'g' | 'kg' | 'ml' | 'l' | 'st',
   },
   grossWeight: 0,
-  momsRate: 12 as 12 | 25,
+  momsRate: 12 as 6 | 12 | 25,
+  kortdatum: {
+    isKortdatum: false,
+    bestBeforeDate: '',
+    clearanceDiscount: 0,
+  },
   countryOfOrigin: '',
   barcode: '',
   allergens: [] as string[],
@@ -68,7 +86,7 @@ const form = ref({
 })
 
 // Fetch Categories & Allergens
-const { data: categories } = await useFetch<Array<{ id: string; name: Record<string, string> }>>('/api/admin/categories')
+const { data: categories } = await useFetch<CategoryOption[]>('/api/admin/categories')
 const { data: allergens } = await useFetch<Array<{ id: string; code: string; name: Record<string, string> }>>('/api/admin/allergens')
 
 function getLocalizedText(obj?: Record<string, string>): string {
@@ -111,6 +129,11 @@ onMounted(async () => {
         netQuantity: existing.netQuantity || { value: 0, unit: 'g' },
         grossWeight: existing.grossWeight ?? 0,
         momsRate: existing.momsRate ?? 12,
+        kortdatum: {
+          isKortdatum: Boolean(existing.kortdatum?.isKortdatum),
+          bestBeforeDate: existing.kortdatum?.bestBeforeDate ? toDatetimeLocalString(existing.kortdatum.bestBeforeDate).slice(0, 10) : '',
+          clearanceDiscount: existing.kortdatum?.clearanceDiscount ?? 0,
+        },
         countryOfOrigin: existing.countryOfOrigin || '',
         barcode: existing.barcode || '',
         allergens: existing.allergens || [],
@@ -181,6 +204,153 @@ const discountedPricePreview = computed(() => {
     savingsUSD: calculateSavings(form.value.prices.USD),
   }
 })
+
+// ---------------------------------------------------------------------------
+// Kortdatum Clearance Price Preview & Mutual Exclusion Watchers (Hierarchy)
+// ---------------------------------------------------------------------------
+// Check if Kortdatum bestBeforeDate is in the past (expired)
+const isKortdatumDateExpired = computed(() => {
+  if (!form.value.kortdatum.bestBeforeDate) return false
+  const d = new Date(form.value.kortdatum.bestBeforeDate)
+  if (Number.isNaN(d.getTime())) return false
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  return d.getTime() < startOfToday.getTime()
+})
+
+const isKortdatumActive = computed(() => {
+  return form.value.kortdatum.isKortdatum && !isKortdatumDateExpired.value
+})
+
+const kortdatumPricePreview = computed(() => {
+  if (!isKortdatumActive.value) return null
+  const discount = Math.max(1, Math.min(90, Number(form.value.kortdatum.clearanceDiscount) || 0))
+  if (discount <= 0) return null
+
+  const calculateDiscounted = (priceStr: string) => {
+    const price = parseFloat(priceStr)
+    if (isNaN(price) || price <= 0) return '0.00'
+    return (price * (1 - discount / 100)).toFixed(2)
+  }
+
+  const calculateSavings = (priceStr: string) => {
+    const price = parseFloat(priceStr)
+    if (isNaN(price) || price <= 0) return '0.00'
+    return (price * (discount / 100)).toFixed(2)
+  }
+
+  return {
+    discount,
+    SEK: calculateDiscounted(form.value.prices.SEK),
+    EUR: calculateDiscounted(form.value.prices.EUR),
+    USD: calculateDiscounted(form.value.prices.USD),
+    savingsSEK: calculateSavings(form.value.prices.SEK),
+    savingsEUR: calculateSavings(form.value.prices.EUR),
+    savingsUSD: calculateSavings(form.value.prices.USD),
+  }
+})
+
+// Mutual Exclusion: Kortdatum vs Ordinary Discount (AC-1)
+// When Kortdatum is enabled, clear and disable ordinary discount
+watch(
+  () => form.value.kortdatum.isKortdatum,
+  (isKortdatum) => {
+    if (isKortdatum) {
+      form.value.discount = 0
+      form.value.discountStartsAt = ''
+      form.value.discountExpiresAt = ''
+    }
+  }
+)
+
+// When an ordinary discount is entered (> 0), disable and clear Kortdatum
+watch(
+  () => form.value.discount,
+  (newDiscount) => {
+    if (Number(newDiscount) > 0 && form.value.kortdatum.isKortdatum) {
+      form.value.kortdatum.isKortdatum = false
+      form.value.kortdatum.bestBeforeDate = ''
+      form.value.kortdatum.clearanceDiscount = 0
+    }
+  }
+)
+
+// ---------------------------------------------------------------------------
+// Category-Wide Campaign Detection & Price Preview (Rank 2 Priority)
+// ---------------------------------------------------------------------------
+const selectedCategoryDoc = computed<CategoryOption | null>(() => {
+  if (!form.value.category || !categories.value) return null
+  return categories.value.find((c) => String(c.id) === String(form.value.category) || String(c._id) === String(form.value.category)) || null
+})
+
+const activeCategoryPromotion = computed(() => {
+  const cat = selectedCategoryDoc.value
+  if (!cat || !cat.isActiveDiscount) return null
+  const pct = Number(cat.discountPercent) || 0
+  if (pct <= 0) return null
+
+  const now = Date.now()
+  if (cat.discountStartsAt) {
+    const s = new Date(cat.discountStartsAt).getTime()
+    if (!Number.isNaN(s) && s > now) return null
+  }
+  if (cat.discountExpiresAt) {
+    const e = new Date(cat.discountExpiresAt).getTime()
+    if (!Number.isNaN(e) && e <= now) return null
+  }
+
+  return {
+    discountPercent: pct,
+    startsAt: cat.discountStartsAt,
+    expiresAt: cat.discountExpiresAt,
+    categoryName: getLocalizedText(cat.name),
+  }
+})
+
+const categoryPricePreview = computed(() => {
+  if (!activeCategoryPromotion.value) return null
+  const discount = activeCategoryPromotion.value.discountPercent
+  if (discount <= 0) return null
+
+  const calculateDiscounted = (priceStr: string) => {
+    const price = parseFloat(priceStr)
+    if (isNaN(price) || price <= 0) return '0.00'
+    return (price * (1 - discount / 100)).toFixed(2)
+  }
+
+  const calculateSavings = (priceStr: string) => {
+    const price = parseFloat(priceStr)
+    if (isNaN(price) || price <= 0) return '0.00'
+    return (price * (discount / 100)).toFixed(2)
+  }
+
+  return {
+    discount,
+    SEK: calculateDiscounted(form.value.prices.SEK),
+    EUR: calculateDiscounted(form.value.prices.EUR),
+    USD: calculateDiscounted(form.value.prices.USD),
+    savingsSEK: calculateSavings(form.value.prices.SEK),
+    savingsEUR: calculateSavings(form.value.prices.EUR),
+    savingsUSD: calculateSavings(form.value.prices.USD),
+  }
+})
+
+// Both Kortdatum (Priority 1, when unexpired) and Category Promotion (Priority 2) block ordinary discount
+const isOrdinaryDiscountDisabled = computed(() => {
+  return isKortdatumActive.value || Boolean(activeCategoryPromotion.value)
+})
+
+// When category promotion becomes active, clear ordinary discount
+watch(
+  activeCategoryPromotion,
+  (newPromo) => {
+    if (newPromo) {
+      form.value.discount = 0
+      form.value.discountStartsAt = ''
+      form.value.discountExpiresAt = ''
+    }
+  }
+)
 
 // ---------------------------------------------------------------------------
 // Image Management & Upload Pipeline
@@ -262,9 +432,13 @@ async function handleSubmit() {
         EUR: toMinorUnits(form.value.prices.EUR),
         USD: toMinorUnits(form.value.prices.USD),
       },
-      discount: Number(form.value.discount) || 0,
-      discountStartsAt: form.value.discountStartsAt ? new Date(form.value.discountStartsAt).toISOString() : null,
-      discountExpiresAt: form.value.discountExpiresAt ? new Date(form.value.discountExpiresAt).toISOString() : null,
+      discount: isOrdinaryDiscountDisabled.value ? 0 : (Number(form.value.discount) || 0),
+      discountStartsAt: isOrdinaryDiscountDisabled.value
+        ? null
+        : (form.value.discountStartsAt ? new Date(form.value.discountStartsAt).toISOString() : null),
+      discountExpiresAt: isOrdinaryDiscountDisabled.value
+        ? null
+        : (form.value.discountExpiresAt ? new Date(form.value.discountExpiresAt).toISOString() : null),
       stockQuantity: Number(form.value.stockQuantity),
       safetyBuffer: Number(form.value.safetyBuffer),
       netQuantity: {
@@ -273,6 +447,13 @@ async function handleSubmit() {
       },
       grossWeight: Number(form.value.grossWeight),
       momsRate: Number(form.value.momsRate),
+      kortdatum: {
+        isKortdatum: Boolean(form.value.kortdatum.isKortdatum),
+        bestBeforeDate: form.value.kortdatum.isKortdatum && form.value.kortdatum.bestBeforeDate
+          ? new Date(form.value.kortdatum.bestBeforeDate).toISOString()
+          : null,
+        clearanceDiscount: form.value.kortdatum.isKortdatum ? (Number(form.value.kortdatum.clearanceDiscount) || 0) : 0,
+      },
       countryOfOrigin: form.value.countryOfOrigin,
       barcode: form.value.barcode || undefined,
       allergens: form.value.allergens,
@@ -343,8 +524,28 @@ async function handleSubmit() {
                   {{ t('admin.productForm.newTitle') }}
                 </template>
               </h1>
+
+              <!-- Kortdatum Clearance Badge (Priority 1) -->
               <span
-                v-if="form.discount > 0"
+                v-if="isKortdatumActive && form.kortdatum.clearanceDiscount > 0"
+                class="badge bg-black text-amber-300 dark:bg-zinc-950 border border-zinc-800 font-bold gap-1 shadow-xs px-2.5 py-1 text-xs"
+              >
+                <Icon name="lucide:calendar-clock" class="size-3.5 text-amber-300" />
+                -{{ form.kortdatum.clearanceDiscount }}% {{ t('cart.kortdatum', 'Kort datum') }}
+              </span>
+
+              <!-- Category Campaign Badge (Priority 2) -->
+              <span
+                v-else-if="activeCategoryPromotion"
+                class="badge badge-info text-white font-bold gap-1 shadow-xs px-2.5 py-1 text-xs"
+              >
+                <Icon name="lucide:tag" class="size-3.5" />
+                -{{ activeCategoryPromotion.discountPercent }}% {{ t('admin.categories.discount', 'Kategorikampanj') }} ({{ activeCategoryPromotion.categoryName }})
+              </span>
+
+              <!-- Ordinary Product Discount Badge (Priority 3) -->
+              <span
+                v-else-if="form.discount > 0"
                 class="badge badge-error text-white font-bold gap-1 shadow-xs px-2.5 py-1 text-xs"
               >
                 <Icon name="lucide:flame" class="size-3.5" />
@@ -568,16 +769,40 @@ async function handleSubmit() {
                       v-for="preset in [0, 10, 15, 20, 25, 50]"
                       :key="preset"
                       type="button"
+                      :disabled="isOrdinaryDiscountDisabled"
                       @click="form.discount = preset"
                       :class="[
                         'btn btn-xs rounded-lg transition-all h-7 min-h-0 px-2.5 py-1 text-xs font-medium',
-                        form.discount === preset
-                          ? 'btn-error dark:text-white text-black font-bold shadow-xs'
-                          : 'bg-base-200 hover:bg-base-300 border border-base-300 text-base-content hover:text-base-content'
+                        isOrdinaryDiscountDisabled
+                          ? 'opacity-40 cursor-not-allowed bg-base-200 text-base-content/50 border-base-300'
+                          : form.discount === preset
+                            ? 'btn-error dark:text-white text-black font-bold shadow-xs'
+                            : 'bg-base-200 hover:bg-base-300 border border-base-300 text-base-content hover:text-base-content'
                       ]"
                     >
                       {{ preset === 0 ? t('admin.productForm.fields.discountNone') : `-${preset}%` }}
                     </button>
+                  </div>
+                </div>
+
+                <!-- Kortdatum Mutual Exclusion Notice Banner (AC-1) -->
+                <div v-if="isKortdatumActive" class="alert alert-warning text-xs py-2.5 px-3.5 flex items-start sm:items-center gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200">
+                  <Icon name="lucide:info" class="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5 sm:mt-0" />
+                  <span class="font-medium">
+                    {{ t('admin.productForm.fields.kortdatumExclusiveNotice', 'Kortdatum (kort bäst-före-datum) är aktivt för denna produkt. Kortdatum har högsta prioritet (Prioritet 1) och ersätter ordinarie rabatt. För att aktivera ordinarie rabatt, slå av Kortdatum nedan.') }}
+                  </span>
+                </div>
+
+                <!-- Category Campaign Priority Notice Banner (Rank 2) -->
+                <div v-else-if="activeCategoryPromotion" class="alert alert-info text-xs py-2.5 px-3.5 flex items-start sm:items-center gap-2.5 rounded-lg border border-sky-500/30 bg-sky-500/10 text-sky-950 dark:text-sky-200 shadow-xs">
+                  <Icon name="lucide:tag" class="size-4 shrink-0 text-sky-600 dark:text-sky-400 mt-0.5 sm:mt-0" />
+                  <div class="space-y-0.5 flex-1 min-w-0">
+                    <span class="font-bold block">
+                      {{ t('admin.discountModal.categorySaleActiveTitle', 'Kategorikampanj är aktiv (Prioritet 2)') }}: -{{ activeCategoryPromotion.discountPercent }}% ({{ activeCategoryPromotion.categoryName }})
+                    </span>
+                    <span class="font-medium block opacity-90 leading-relaxed">
+                      {{ t('admin.productForm.fields.categorySaleActiveNotice', 'Denna produkt omfattas av en övergripande kampanj för sin kategori. Enligt rabatthierarkin gäller kategorirabatten före eventuella ordinarie produktrabatter i butiken.') }}
+                    </span>
                   </div>
                 </div>
 
@@ -590,8 +815,14 @@ async function handleSubmit() {
                       min="0"
                       max="100"
                       step="1"
+                      :disabled="isOrdinaryDiscountDisabled"
                       placeholder="0"
-                      class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 transition-colors w-full pe-10 font-mono font-semibold"
+                      :class="[
+                        'input input-bordered border-2 transition-colors w-full pe-10 font-mono font-semibold',
+                        isOrdinaryDiscountDisabled
+                          ? 'bg-base-200/60 border-base-content/10 text-base-content/40 cursor-not-allowed'
+                          : 'border-base-content/20 hover:border-brand-500 focus:border-brand-500'
+                      ]"
                     />
                     <span class="absolute inset-y-0 end-0 flex items-center pe-3 text-sm font-bold text-base-content/50 pointer-events-none">
                       %
@@ -609,7 +840,7 @@ async function handleSubmit() {
                         {{ t('admin.productForm.fields.discountStartsAt', 'Kampanj startdatum') }}
                       </span>
                       <button
-                        v-if="form.discountStartsAt"
+                        v-if="form.discountStartsAt && !isOrdinaryDiscountDisabled"
                         type="button"
                         class="text-[11px] text-base-content/50 hover:text-error underline"
                         @click="form.discountStartsAt = ''"
@@ -620,7 +851,13 @@ async function handleSubmit() {
                     <input
                       v-model="form.discountStartsAt"
                       type="datetime-local"
-                      class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 transition-colors w-full text-xs font-mono"
+                      :disabled="isOrdinaryDiscountDisabled"
+                      :class="[
+                        'input input-bordered border-2 transition-colors w-full text-xs font-mono',
+                        isOrdinaryDiscountDisabled
+                          ? 'bg-base-200/60 border-base-content/10 text-base-content/40 cursor-not-allowed'
+                          : 'border-base-content/20 hover:border-brand-500 focus:border-brand-500'
+                      ]"
                     />
                     <p class="text-[11px] text-base-content/50">
                       {{ t('admin.productForm.fields.discountStartsAtHelp', 'Lämna tomt för att starta omedelbart') }}
@@ -635,7 +872,7 @@ async function handleSubmit() {
                         {{ t('admin.productForm.fields.discountExpiresAt', 'Kampanj slutdatum (Deadline)') }}
                       </span>
                       <button
-                        v-if="form.discountExpiresAt"
+                        v-if="form.discountExpiresAt && !isOrdinaryDiscountDisabled"
                         type="button"
                         class="text-[11px] text-base-content/50 hover:text-error underline"
                         @click="form.discountExpiresAt = ''"
@@ -646,7 +883,13 @@ async function handleSubmit() {
                     <input
                       v-model="form.discountExpiresAt"
                       type="datetime-local"
-                      class="input input-bordered border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 transition-colors w-full text-xs font-mono"
+                      :disabled="isOrdinaryDiscountDisabled"
+                      :class="[
+                        'input input-bordered border-2 transition-colors w-full text-xs font-mono',
+                        isOrdinaryDiscountDisabled
+                          ? 'bg-base-200/60 border-base-content/10 text-base-content/40 cursor-not-allowed'
+                          : 'border-base-content/20 hover:border-brand-500 focus:border-brand-500'
+                      ]"
                     />
                     <p class="text-[11px] text-base-content/50">
                       {{ t('admin.productForm.fields.discountExpiresAtHelp', 'Lämna tomt för att gälla tillsvidare') }}
@@ -654,9 +897,9 @@ async function handleSubmit() {
                   </div>
                 </div>
 
-                <!-- Live Discounted Price Preview Card -->
+                <!-- Live Discounted Price Preview Card (Priority 3) -->
                 <div
-                  v-if="discountedPricePreview"
+                  v-if="!isOrdinaryDiscountDisabled && discountedPricePreview"
                   class="rounded-xl border border-error/30 bg-error/5 dark:bg-error/10 p-4 space-y-3"
                 >
                   <div class="flex items-center justify-between flex-wrap gap-2 border-b border-error/20 pb-2.5">
@@ -743,9 +986,218 @@ async function handleSubmit() {
                   </div>
                 </div>
 
+                <!-- Live Category Campaign Discount Price Preview Card (Priority 2) -->
+                <div
+                  v-else-if="!isKortdatumActive && activeCategoryPromotion && categoryPricePreview"
+                  class="rounded-xl border border-sky-500/30 bg-sky-500/5 dark:bg-sky-500/10 p-4 space-y-3"
+                >
+                  <div class="flex items-center justify-between flex-wrap gap-2 border-b border-sky-500/20 pb-2.5">
+                    <div class="flex items-center gap-2">
+                      <span class="badge badge-info text-white font-black text-xs">
+                        -{{ categoryPricePreview.discount }}%
+                      </span>
+                      <span class="text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-300">
+                        {{ t('admin.categories.discount', 'Kategorikampanj') }}: {{ activeCategoryPromotion.categoryName }}
+                      </span>
+                      <span class="badge badge-sm badge-success text-white font-bold">
+                        {{ t('admin.productForm.fields.campaignActive', 'Aktiv') }}
+                      </span>
+                    </div>
+                    <span class="text-[11px] text-base-content/60 font-medium">
+                      {{ t('admin.discountModal.categorySaleActiveNotice', { discount: activeCategoryPromotion.discountPercent, category: activeCategoryPromotion.categoryName }) }}
+                    </span>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- SEK Preview -->
+                    <div class="bg-base-100/90 rounded-lg p-3 border border-base-200">
+                      <div class="text-[11px] font-medium text-base-content/60">SEK (Sverige)</div>
+                      <div class="flex items-baseline gap-2 mt-1">
+                        <span class="text-lg font-black font-mono text-sky-600 dark:text-sky-400">
+                          {{ categoryPricePreview.SEK }}
+                        </span>
+                        <span class="text-xs font-mono text-base-content/40 line-through">
+                          {{ form.prices.SEK || '0.00' }}
+                        </span>
+                      </div>
+                      <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        {{ t('admin.productForm.fields.customerSaves') }}: {{ categoryPricePreview.savingsSEK }} SEK
+                      </div>
+                    </div>
+
+                    <!-- EUR Preview -->
+                    <div class="bg-base-100/90 rounded-lg p-3 border border-base-200">
+                      <div class="text-[11px] font-medium text-base-content/60">EUR (Europa)</div>
+                      <div class="flex items-baseline gap-2 mt-1">
+                        <span class="text-lg font-black font-mono text-sky-600 dark:text-sky-400">
+                          {{ categoryPricePreview.EUR }}
+                        </span>
+                        <span class="text-xs font-mono text-base-content/40 line-through">
+                          {{ form.prices.EUR || '0.00' }}
+                        </span>
+                      </div>
+                      <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        {{ t('admin.productForm.fields.customerSaves') }}: {{ categoryPricePreview.savingsEUR }} EUR
+                      </div>
+                    </div>
+
+                    <!-- USD Preview -->
+                    <div class="bg-base-100/90 rounded-lg p-3 border border-base-200">
+                      <div class="text-[11px] font-medium text-base-content/60">USD (Global)</div>
+                      <div class="flex items-baseline gap-2 mt-1">
+                        <span class="text-lg font-black font-mono text-sky-600 dark:text-sky-400">
+                          {{ categoryPricePreview.USD }}
+                        </span>
+                        <span class="text-xs font-mono text-base-content/40 line-through">
+                          {{ form.prices.USD || '0.00' }}
+                        </span>
+                      </div>
+                      <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        {{ t('admin.productForm.fields.customerSaves') }}: {{ categoryPricePreview.savingsUSD }} USD
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div v-else class="text-xs text-base-content/50 italic flex items-center gap-1.5">
                   <Icon name="lucide:info" class="size-3.5" />
                   {{ t('admin.productForm.fields.noDiscountNotice') }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kortdatum (Short-Dated Clearance) Merchandising -->
+          <div class="card bg-base-100 border border-base-200 shadow-sm">
+            <div class="card-body space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="card-title text-base font-semibold flex items-center gap-2">
+                    <Icon name="lucide:calendar-clock" class="size-5 text-amber-500" />
+                    {{ t('admin.productForm.fields.kortdatum', 'Kortdatum (Kort bäst-före-datum)') }}
+                  </h2>
+                  <p class="text-xs text-base-content/60 mt-0.5">
+                    {{ t('admin.productForm.fields.kortdatumSubtitle', 'Märk varan som kortdatum för att rea ut varor med nära utgångsdatum och undvika matsvinn.') }}
+                  </p>
+                </div>
+                <!-- High-contrast toggle outline & active state -->
+                <input
+                  v-model="form.kortdatum.isKortdatum"
+                  type="checkbox"
+                  class="toggle toggle-warning border-2 border-base-content/40 bg-base-300 checked:bg-amber-500 checked:border-amber-500 shadow-sm"
+                />
+              </div>
+
+              <div v-if="form.kortdatum.isKortdatum" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-base-200">
+                <!-- Expired Kortdatum Warning -->
+                <div v-if="isKortdatumDateExpired" class="alert alert-warning text-xs py-2 px-3 sm:col-span-2 rounded-xl flex items-center gap-2 border border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200">
+                  <Icon name="lucide:alert-triangle" class="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span class="font-medium">{{ t('admin.productForm.fields.bestBeforeDateExpired', 'Bäst före-datumet har passerat. Kortdatum-rabatten är inaktiv i butiken och systemet faller automatiskt tillbaka till kategorikampanj, ordinarie rabatt eller standardpris.') }}</span>
+                </div>
+                <!-- Best Before Date -->
+                <div class="form-control w-full">
+                  <label class="label">
+                    <span class="label-text font-medium">{{ t('admin.productForm.fields.bestBeforeDate', 'Bäst före-datum') }} *</span>
+                  </label>
+                  <input
+                    v-model="form.kortdatum.bestBeforeDate"
+                    type="date"
+                    required
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                  />
+                </div>
+
+                <!-- Clearance Discount Percentage -->
+                <div class="form-control w-full">
+                  <label class="label">
+                    <span class="label-text font-medium">{{ t('admin.productForm.fields.clearanceDiscount', 'Kortdatumrabatt (%)') }} *</span>
+                  </label>
+                  <input
+                    v-model="form.kortdatum.clearanceDiscount"
+                    type="number"
+                    min="1"
+                    max="90"
+                    step="1"
+                    required
+                    placeholder="40"
+                    class="input input-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full"
+                  />
+                  <label class="label">
+                    <span class="label-text-alt text-base-content/60">{{ t('admin.productForm.fields.clearanceDiscountHelp', 'Clearance-rabatt i procent (1–90%) som ersätter ordinarie butikspris.') }}</span>
+                  </label>
+                </div>
+
+                <!-- Live Kortdatum Clearance Price Preview Card -->
+                <div
+                  v-if="kortdatumPricePreview"
+                  class="rounded-xl border border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10 p-4 space-y-3 sm:col-span-2"
+                >
+                  <div class="flex items-center justify-between flex-wrap gap-2 border-b border-amber-500/20 pb-2.5">
+                    <div class="flex items-center gap-2">
+                      <span class="badge badge-warning text-black font-black text-xs">
+                        -{{ kortdatumPricePreview.discount }}%
+                      </span>
+                      <span class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                        {{ t('admin.productForm.fields.clearancePreviewTitle', 'Kortdatumpris (Prioritet 1)') }}
+                      </span>
+                      <span v-if="form.kortdatum.bestBeforeDate" class="badge badge-sm badge-outline text-amber-700 dark:text-amber-300 font-mono text-[11px]">
+                        {{ t('admin.productForm.fields.bestBeforeDateShort', 'Bäst före') }}: {{ form.kortdatum.bestBeforeDate }}
+                      </span>
+                    </div>
+                    <span class="text-[11px] text-base-content/60 font-medium">
+                      {{ t('admin.productForm.fields.clearancePreviewNote', 'Ersätter ordinarie kampanjrabatter på butikssidan') }}
+                    </span>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- SEK Preview -->
+                    <div class="bg-base-100/90 rounded-lg p-3 border border-base-200">
+                      <div class="text-[11px] font-medium text-base-content/60">SEK (Sverige)</div>
+                      <div class="flex items-baseline gap-2 mt-1">
+                        <span class="text-lg font-black font-mono text-amber-600 dark:text-amber-400">
+                          {{ kortdatumPricePreview.SEK }}
+                        </span>
+                        <span class="text-xs font-mono text-base-content/40 line-through">
+                          {{ form.prices.SEK || '0.00' }}
+                        </span>
+                      </div>
+                      <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        {{ t('admin.productForm.fields.customerSaves', 'Kunden sparar') }}: {{ kortdatumPricePreview.savingsSEK }} SEK
+                      </div>
+                    </div>
+
+                    <!-- EUR Preview -->
+                    <div class="bg-base-100/90 rounded-lg p-3 border border-base-200">
+                      <div class="text-[11px] font-medium text-base-content/60">EUR (Europa)</div>
+                      <div class="flex items-baseline gap-2 mt-1">
+                        <span class="text-lg font-black font-mono text-amber-600 dark:text-amber-400">
+                          {{ kortdatumPricePreview.EUR }}
+                        </span>
+                        <span class="text-xs font-mono text-base-content/40 line-through">
+                          {{ form.prices.EUR || '0.00' }}
+                        </span>
+                      </div>
+                      <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        {{ t('admin.productForm.fields.customerSaves', 'Kunden sparar') }}: {{ kortdatumPricePreview.savingsEUR }} EUR
+                      </div>
+                    </div>
+
+                    <!-- USD Preview -->
+                    <div class="bg-base-100/90 rounded-lg p-3 border border-base-200">
+                      <div class="text-[11px] font-medium text-base-content/60">USD (Global)</div>
+                      <div class="flex items-baseline gap-2 mt-1">
+                        <span class="text-lg font-black font-mono text-amber-600 dark:text-amber-400">
+                          {{ kortdatumPricePreview.USD }}
+                        </span>
+                        <span class="text-xs font-mono text-base-content/40 line-through">
+                          {{ form.prices.USD || '0.00' }}
+                        </span>
+                      </div>
+                      <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        {{ t('admin.productForm.fields.customerSaves', 'Kunden sparar') }}: {{ kortdatumPricePreview.savingsUSD }} USD
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -855,8 +1307,9 @@ async function handleSubmit() {
                     <span class="label-text font-medium">{{ t('admin.productForm.fields.momsRate') }} *</span>
                   </label>
                   <select v-model="form.momsRate" required class="select select-bordered px-4 border-2 border-base-content/20 hover:border-brand-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors w-full">
-                    <option :value="12">{{ t('admin.productForm.fields.moms12') }}</option>
-                    <option :value="25">{{ t('admin.productForm.fields.moms25') }}</option>
+                    <option :value="6">{{ t('admin.productForm.fields.moms6', '6%') }}</option>
+                    <option :value="12">{{ t('admin.productForm.fields.moms12', '12%') }}</option>
+                    <option :value="25">{{ t('admin.productForm.fields.moms25', '25%') }}</option>
                   </select>
                 </div>
 

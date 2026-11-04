@@ -56,8 +56,25 @@ const hasDiscount = computed(() => {
   return Boolean(product.value?.discount && product.value.discount > 0 && resolvedDiscountPrice)
 })
 
+// Check if Kortdatum is active and unexpired
+const isKortdatumActive = computed<boolean>(() => {
+  const p = product.value
+  const k = p?.kortdatum
+  if (!k?.isKortdatum) return false
+  if (p?.activeDiscountType) {
+    return p.activeDiscountType === 'KORTDATUM'
+  }
+  if (!k.bestBeforeDate) return true
+  const d = new Date(k.bestBeforeDate)
+  if (Number.isNaN(d.getTime())) return true
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  return d.getTime() >= startOfToday.getTime()
+})
+
 // Campaign Deadline Urgency (<= 48h)
 const isExpiringSoon = computed<boolean>(() => {
+  if (isKortdatumActive.value) return false
   if (!hasDiscount.value || !product.value?.discountExpiresAt) return false
   const expiry = new Date(product.value.discountExpiresAt)
   if (Number.isNaN(expiry.getTime())) return false
@@ -65,8 +82,9 @@ const isExpiringSoon = computed<boolean>(() => {
   return diffMs > 0 && diffMs <= 48 * 60 * 60 * 1000
 })
 
-// Formatted Campaign Deadline in Customer Locale (Single Product Page only)
+// Formatted Campaign Deadline in Customer Locale (Single Product Page only - AC-4)
 const formattedExpiryDate = computed<string | null>(() => {
+  if (isKortdatumActive.value) return null
   if (!hasDiscount.value || !product.value?.discountExpiresAt) return null
   const expiry = new Date(product.value.discountExpiresAt)
   if (Number.isNaN(expiry.getTime())) return null
@@ -79,6 +97,15 @@ const formattedExpiryDate = computed<string | null>(() => {
     hour: '2-digit',
     minute: '2-digit',
   }).format(expiry)
+})
+
+// Formatted Kortdatum Best-Before Date
+const formattedBestBeforeDate = computed<string>(() => {
+  const dateStr = product.value?.kortdatum?.bestBeforeDate
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toISOString().slice(0, 10)
 })
 
 const originalPrice = computed(() => {
@@ -236,9 +263,21 @@ const localePath = useLocalePath()
             <span class="text-sm">{{ t(  'admin.products.noImage') }}</span>
           </div>
 
-          <!-- Bold Attention-Grabbing Discount Tag, Urgent Expiry Badge & Free Shipping Badge -->
-          <div v-if="hasDiscount || product.freeShipping" class="absolute top-4 start-4 z-10 flex flex-col items-start gap-1.5">
-            <span v-if="hasDiscount" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-black bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white shadow-lg shadow-red-500/30 border border-white/20 tracking-wide uppercase">
+          <!-- Bold Attention-Grabbing Discount Tag, Kortdatum Badge, Urgent Expiry Badge & Free Shipping Badge -->
+          <div v-if="hasDiscount || product.freeShipping || isKortdatumActive" class="absolute top-4 start-4 z-10 flex flex-col items-start gap-1.5">
+            <!-- Kortdatum Badge (Black badge with white text & localized best-before date per Issue #41) -->
+            <span
+              v-if="isKortdatumActive"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-black dark:bg-zinc-950 text-white shadow-lg border border-zinc-800 tracking-wide"
+            >
+              <Icon name="lucide:calendar-clock" class="size-4 shrink-0 text-amber-300" />
+              <span class="font-black uppercase text-amber-300">{{ t('cart.kortdatum', 'Kort datum') }}</span>
+              <span v-if="formattedBestBeforeDate" class="text-zinc-300 font-medium ms-1">
+                ({{ t('cart.bestBefore', 'Bäst före:') }} {{ formattedBestBeforeDate }})
+              </span>
+            </span>
+
+            <span v-if="!isKortdatumActive && hasDiscount" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-black bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white shadow-lg shadow-red-500/30 border border-white/20 tracking-wide uppercase">
               <span class="relative flex size-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-90" />
                 <span class="relative inline-flex rounded-full size-2 bg-amber-400" />
@@ -247,7 +286,7 @@ const localePath = useLocalePath()
             </span>
 
             <span
-              v-if="hasDiscount && isExpiringSoon"
+              v-if="!isKortdatumActive && hasDiscount && isExpiringSoon"
               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-black bg-amber-400 dark:bg-amber-400 shadow-sm border border-amber-500/30 select-none tracking-tight"
             >
               <Icon name="lucide:clock" class="size-3.5 shrink-0 text-black" />
@@ -344,12 +383,12 @@ const localePath = useLocalePath()
                 <span class="text-lg font-semibold text-base-content/50 line-through">
                   {{ originalPrice }} {{ activeCurrency }}
                 </span>
-                <span class="badge badge-error text-white font-bold text-xs shadow-xs">
+                <span v-if="!isKortdatumActive" class="badge badge-error text-white font-bold text-xs shadow-xs">
                   -{{ product.discount }}%
                 </span>
                 <!-- Urgent Expiry Badge (Impending Deadline <= 48h) -->
                 <span
-                  v-if="isExpiringSoon"
+                  v-if="!isKortdatumActive && isExpiringSoon"
                   class="badge bg-amber-400 dark:bg-amber-400 border border-amber-500/40 text-black font-bold text-xs shadow-xs gap-1"
                 >
                   <Icon name="lucide:clock" class="size-3 text-black" />
@@ -369,6 +408,18 @@ const localePath = useLocalePath()
               >
                 <Icon name="lucide:calendar-clock" class="size-3.5 shrink-0" />
                 <span>{{ t('deals.validUntil', { date: formattedExpiryDate }) }}</span>
+              </div>
+
+              <!-- Kortdatum Clearance Notice -->
+              <div
+                v-if="isKortdatumActive"
+                class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black dark:bg-zinc-950 text-white border border-zinc-800 text-xs font-bold"
+              >
+                <Icon name="lucide:calendar-clock" class="size-3.5 text-amber-300" />
+                <span class="text-amber-300 font-black uppercase">{{ t('cart.kortdatum', 'Kort datum') }}</span>
+                <span v-if="formattedBestBeforeDate" class="text-zinc-200">
+                  • {{ t('cart.bestBefore', 'Bäst före:') }} {{ formattedBestBeforeDate }}
+                </span>
               </div>
 
               <!-- Free Shipping Perk Badge -->

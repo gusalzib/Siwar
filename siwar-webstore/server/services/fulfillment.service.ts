@@ -14,7 +14,7 @@ export interface ShortageActionInput {
     imageUrl?: string
     name: { ar: string; sv: string; en: string }
     priceMinor: number
-    momsRate: 12 | 25
+    momsRate: 6 | 12 | 25
     freeShipping?: boolean
   }
   note?: string
@@ -86,6 +86,10 @@ export function computeOrderPricing(
 
   const taxSplit = {
     totalMomsMinor: rawMoms.totalMomsMinor,
+    moms6: {
+      netAmountMinor: rawMoms.moms6.taxableNetMinor,
+      momsAmountMinor: rawMoms.moms6.momsAmountMinor,
+    },
     moms12: {
       netAmountMinor: rawMoms.moms12.taxableNetMinor,
       momsAmountMinor: rawMoms.moms12.momsAmountMinor,

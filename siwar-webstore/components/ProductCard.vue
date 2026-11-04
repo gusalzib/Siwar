@@ -24,6 +24,11 @@ interface ProductProps {
   grossWeight?: number
   momsRate?: number
   availableStock?: number
+  kortdatum?: {
+    isKortdatum?: boolean
+    bestBeforeDate?: Date | string | null
+    clearanceDiscount?: number
+  } | null
   [key: string]: any
 }
 
@@ -39,6 +44,30 @@ const preferences = usePreferencesStore()
 
 // Active Store Currency
 const activeCurrency = computed<CurrencyCode>(() => (preferences.currency || 'SEK') as CurrencyCode)
+
+// Formatted Kortdatum Best-Before Date
+const formattedBestBefore = computed(() => {
+  const dateStr = props.product.kortdatum?.bestBeforeDate
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toISOString().slice(0, 10)
+})
+
+// Check if Kortdatum is active and unexpired
+const isKortdatumActive = computed<boolean>(() => {
+  const k = props.product.kortdatum
+  if (!k?.isKortdatum) return false
+  if (props.product.activeDiscountType) {
+    return props.product.activeDiscountType === 'KORTDATUM'
+  }
+  if (!k.bestBeforeDate) return true
+  const d = new Date(k.bestBeforeDate)
+  if (Number.isNaN(d.getTime())) return true
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  return d.getTime() >= startOfToday.getTime()
+})
 
 // Campaign Urgency (Deadline <= 48 hours)
 const isExpiringSoon = computed<boolean>(() => {
@@ -82,7 +111,7 @@ function handleAddToCart() {
       name: props.product.name,
       thumbnailUrl: primaryImg,
       price: effectivePrice as any,
-      momsRate: (props.product.momsRate || 12) as 12 | 25,
+      momsRate: (props.product.momsRate || 12) as 6 | 12 | 25,
       grossWeight: props.product.grossWeight || 0,
       availableStock: props.product.availableStock ?? 0,
       freeShipping: Boolean(props.product.freeShipping),
@@ -137,10 +166,24 @@ function calculateComparisonPrice(
         </div>
       </NuxtLink>
 
-      <!-- Distinctive Discount Tag, Urgent Expiry Badge & Free Shipping Badge -->
-      <div v-if="(product.discount && product.discount > 0) || product.freeShipping" class="absolute top-2.5 start-2.5 z-10 pointer-events-none flex flex-col items-start gap-1">
+      <!-- Distinctive Discount Tag, Kortdatum Badge, Urgent Expiry Badge & Free Shipping Badge -->
+      <div v-if="(product.discount && product.discount > 0) || product.freeShipping || isKortdatumActive" class="absolute top-2.5 start-2.5 z-10 pointer-events-none flex flex-col items-start gap-1">
+        <!-- Kortdatum Badge (Black badge with white text & localized best-before date per Issue #41) -->
         <span
-          v-if="product.discount && product.discount > 0"
+          v-if="isKortdatumActive"
+          class="inline-flex flex-col items-start px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-white bg-black dark:bg-zinc-950 shadow-md border border-zinc-800 select-none tracking-tight"
+        >
+          <span class="flex items-center gap-1 font-black uppercase text-amber-300">
+            <Icon name="lucide:calendar-clock" class="size-3.5 shrink-0 text-amber-300" />
+            <span>{{ t('cart.kortdatum', 'Kort datum') }}</span>
+          </span>
+          <span v-if="formattedBestBefore" class="text-[10px] text-zinc-300 font-medium">
+            {{ t('cart.bestBefore', 'Bäst före:') }} {{ formattedBestBefore }}
+          </span>
+        </span>
+
+        <span
+          v-if="!isKortdatumActive && product.discount && product.discount > 0"
           class="relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-600 shadow-md shadow-red-500/40 border border-white/20 select-none overflow-hidden tracking-wide"
         >
           <span class="absolute inset-0 bg-white/15 animate-pulse pointer-events-none" />
@@ -155,7 +198,7 @@ function calculateComparisonPrice(
 
         <!-- Urgent Expiry Badge (Impending Deadline <= 48h) -->
         <span
-          v-if="product.discount && product.discount > 0 && isExpiringSoon"
+          v-if="!isKortdatumActive && product.discount && product.discount > 0 && isExpiringSoon"
           class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold text-black bg-amber-400 dark:bg-amber-400 shadow-sm border border-amber-500/30 select-none tracking-tight"
         >
           <Icon name="lucide:clock" class="size-3 shrink-0 text-black" />
