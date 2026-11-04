@@ -35,6 +35,8 @@ interface GeneralForm {
   address: { street: string; postalCode: string; city: string; country: string }
   schedule: IDaySchedule[]
   socialLinks: ISocialLink[]
+  // Configurable packing threshold for aging orders in PENDING_PACKING (1-30 days)
+  staleOrderPackingThresholdDays: number
 }
 
 const form = ref<GeneralForm>({
@@ -61,6 +63,7 @@ const form = ref<GeneralForm>({
   },
   schedule: DEFAULT_WEEKLY_SCHEDULE.map((d) => ({ ...d })),
   socialLinks: [],
+  staleOrderPackingThresholdDays: 4,
 })
 
 function populateForm(data: any) {
@@ -100,6 +103,10 @@ function populateForm(data: any) {
           sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : idx,
         }))
       : [],
+    staleOrderPackingThresholdDays:
+      typeof data.staleOrderPackingThresholdDays === 'number'
+        ? data.staleOrderPackingThresholdDays
+        : 4,
   }
 }
 
@@ -173,6 +180,15 @@ async function handleSave() {
     return
   }
 
+  // Validate packing alert threshold days (1 to 30 days integer)
+  const thresholdDays = Number(form.value.staleOrderPackingThresholdDays)
+  if (Number.isNaN(thresholdDays) || thresholdDays < 1 || thresholdDays > 30) {
+    errorMessage.value = t('admin.general.fulfillment.validationError', 'Varningströskeln måste vara ett heltal mellan 1 och 30 dagar.')
+    openSections.value.fulfillment = true
+    return
+  }
+  form.value.staleOrderPackingThresholdDays = Math.round(thresholdDays)
+
   isSaving.value = true
   errorMessage.value = ''
   successMessage.value = ''
@@ -212,6 +228,7 @@ const openSections = ref<Record<string, boolean>>({
   schedule: true,
   identity: true,
   social: true,
+  fulfillment: true,
 })
 
 const allExpanded = computed(() => Object.values(openSections.value).every(Boolean))
@@ -883,6 +900,68 @@ function toggleAll() {
             </div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- 7. Order Fulfillment & Packing SLA Warning -->
+      <div
+        class="collapse collapse-arrow bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 rounded-2xl shadow-xs transition-colors"
+        :class="openSections.fulfillment ? 'collapse-open' : 'collapse-close'"
+      >
+        <div
+          role="button"
+          tabindex="0"
+          :aria-expanded="openSections.fulfillment"
+          class="collapse-title flex items-center gap-3 font-bold text-base text-base-content px-5 py-4 cursor-pointer select-none hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 transition-colors"
+          @click="toggleSection('fulfillment')"
+          @keydown.enter.prevent="toggleSection('fulfillment')"
+          @keydown.space.prevent="toggleSection('fulfillment')"
+        >
+          <div class="size-8 rounded-xl bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
+            <Icon name="lucide:clock-alert" class="size-4.5" />
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 flex-1 min-w-0">
+            <span class="truncate">{{ t('admin.general.fulfillment.sectionTitle', 'Orderhantering & Packvarning') }}</span>
+            <span class="badge badge-sm badge-ghost text-[10px] font-mono font-bold">
+              {{ form.staleOrderPackingThresholdDays || 4 }} {{ t('admin.general.fulfillment.daysSuffix', 'dgr') }}
+            </span>
+          </div>
+        </div>
+        <div
+          v-show="openSections.fulfillment"
+          class="collapse-content px-5 pb-6 space-y-4 border-t border-slate-100 dark:border-zinc-800/80 pt-4"
+        >
+          <p class="text-xs text-base-content/60 leading-relaxed">
+            {{ t('admin.general.fulfillment.description', 'Konfigurera tidsfristen för när en opackad order (PENDING_PACKING) ska flaggas som försenad i orderöversikten.') }}
+          </p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text font-bold text-xs text-base-content">
+                  {{ t('admin.general.fulfillment.thresholdLabel', 'Varningströskel för opackade ordrar (dagar)') }} *
+                </span>
+              </label>
+              <div class="relative">
+                <input
+                  v-model.number="form.staleOrderPackingThresholdDays"
+                  type="number"
+                  min="1"
+                  max="30"
+                  step="1"
+                  required
+                  class="input input-bordered h-10 w-full ps-9 text-xs font-mono font-bold border-2 border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-base-content rounded-xl"
+                  placeholder="4"
+                />
+                <Icon name="lucide:hourglass" class="absolute start-3 top-3 size-4 text-base-content/40" />
+              </div>
+              <label class="label py-1">
+                <span class="label-text-alt text-[11px] text-base-content/60">
+                  {{ t('admin.general.fulfillment.thresholdHelp', 'Ordrar som väntar på packning längre än detta antal dagar visas med en röd/bärnstensfärgad varningsbricka. Tillåtet intervall: 1–30 dagar (Standard: 4 dagar).') }}
+                </span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
