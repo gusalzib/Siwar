@@ -6,7 +6,7 @@ import {
   type CartItemValidationInput,
   type CheckoutStockValidationResult,
 } from '../../../server/services/inventory.service'
-import { isDiscountActive } from '../../../server/services/pricing.service'
+import { isDiscountActive, resolveEffectiveProductDiscount } from '../../../server/services/pricing.service'
 
 export interface CartItemPriceValidationInput extends CartItemValidationInput {
   currentPriceMinor?: number
@@ -53,7 +53,8 @@ export default defineEventHandler(
     const liveProducts = await Product.find({
       _id: { $in: productIds },
     })
-      .select('_id stockQuantity safetyBuffer price discount discountStartsAt discountExpiresAt')
+      .select('_id stockQuantity safetyBuffer price discount discountStartsAt discountExpiresAt category kortdatum')
+      .populate('category', 'discountPercent discountStartsAt discountExpiresAt isActiveDiscount')
       .lean()
 
     // Evaluate stock availability using the pure service function
@@ -69,13 +70,8 @@ export default defineEventHandler(
       if (!product || typeof item.currentPriceMinor !== 'number') continue
 
       const baseUnitPrice = product.price?.[currency] ?? product.price?.SEK ?? 0
-      const isPromoActive = isDiscountActive(
-        product.discount,
-        product.discountStartsAt,
-        product.discountExpiresAt,
-        now
-      )
-      const discount = isPromoActive ? (product.discount || 0) : 0
+      const effectiveDiscount = resolveEffectiveProductDiscount(product, (product as any).category, now)
+      const discount = effectiveDiscount.discountPercent
       const liveUnitPrice = discount > 0 ? Math.round(baseUnitPrice * (1 - discount / 100)) : baseUnitPrice
 
       if (item.currentPriceMinor !== liveUnitPrice) {

@@ -3,7 +3,12 @@ import { isValidObjectId, Types } from 'mongoose'
 import { Product } from '~/server/models/Product'
 import '~/server/models/Category'
 import '~/server/models/Allergens'
-import { calculateDiscountedPrice, isDiscountActive } from '~/server/services/pricing.service'
+import {
+  calculateDiscountedPrice,
+  isDiscountActive,
+  resolveEffectiveProductDiscount,
+  resolveEffectiveProductPrice,
+} from '~/server/services/pricing.service'
 import type { PopulatedCategory, PopulatedAllergen } from '~/types/product'
 
 interface BatchBody {
@@ -30,7 +35,7 @@ export default defineEventHandler(async (event) => {
     _id: { $in: objectIds },
     isActive: true,
   })
-    .populate<{ category: PopulatedCategory }>('category', 'name slug')
+    .populate<{ category: PopulatedCategory }>('category', 'name slug discountPercent discountStartsAt discountExpiresAt isActiveDiscount')
     .populate<{ allergens: PopulatedAllergen[] }>('allergens', 'code name')
     .lean()
 
@@ -51,11 +56,21 @@ export default defineEventHandler(async (event) => {
       statusCode = 'OUT_OF_STOCK_ONLINE'
     }
 
-    const hasActiveDiscount = isDiscountActive(p.discount, p.discountStartsAt, p.discountExpiresAt, now)
-    const discount = hasActiveDiscount ? (p.discount || 0) : 0
-    const discountedPrice = hasActiveDiscount
-      ? calculateDiscountedPrice(p.price, p.discount, p.discountStartsAt, p.discountExpiresAt, now)
-      : null
+    const effectivePricing = resolveEffectiveProductPrice(p, p.category as any, now)
+    const discount = effectivePricing.appliedDiscountPercent
+    const hasActiveDiscount = discount > 0
+    const discountedPrice = hasActiveDiscount ? effectivePricing.effectivePriceMinor : null
+
+    // Suppress competing discount dates
+    let discountStartsAt: Date | string | null = null
+    let discountExpiresAt: Date | string | null = null
+    if (effectivePricing.activeDiscountType === 'ORDINARY') {
+      discountStartsAt = p.discountStartsAt || null
+      discountExpiresAt = p.discountExpiresAt || null
+    } else if (effectivePricing.activeDiscountType === 'CATEGORY') {
+      discountStartsAt = (p.category as any)?.discountStartsAt || null
+      discountExpiresAt = (p.category as any)?.discountExpiresAt || null
+    }
 
     const formattedProduct = {
       id: String(p._id),
@@ -70,9 +85,19 @@ export default defineEventHandler(async (event) => {
       images: p.images,
       price: p.price,
       discount,
-      discountStartsAt: p.discountStartsAt || null,
-      discountExpiresAt: p.discountExpiresAt || null,
+      discountStartsAt,
+      discountExpiresAt,
       discountedPrice,
+      discountSource: effectivePricing.activeDiscountType.toLowerCase(),
+      activeDiscountType: effectivePricing.activeDiscountType,
+      deadlineDate: effectivePricing.deadlineDate,
+      kortdatum: (p.kortdatum?.isKortdatum && effectivePricing.isKortdatum)
+        ? {
+            isKortdatum: true,
+            bestBeforeDate: p.kortdatum.bestBeforeDate || null,
+            clearanceDiscount: p.kortdatum.clearanceDiscount || 0,
+          }
+        : null,
       netQuantity: p.netQuantity,
       grossWeight: p.grossWeight ?? (p.netQuantity?.unit === 'g' ? p.netQuantity.value : 0),
       momsRate: p.momsRate,
