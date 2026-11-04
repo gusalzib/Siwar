@@ -651,6 +651,10 @@ export function clearGeneralSettingsCache() {
   generalCacheExpiry = 0
 }
 
+export function getCachedStoreGeneralSettings(): IGeneralSettings | null {
+  return cachedGeneral
+}
+
 let cachedPickup: IPickupSettings | null = null
 let cacheExpiry = 0
 
