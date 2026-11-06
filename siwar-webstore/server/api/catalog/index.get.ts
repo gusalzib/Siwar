@@ -32,12 +32,17 @@ export default defineEventHandler(async (event) => {
     if (Types.ObjectId.isValid(categoryParam)) {
       filter.category = new Types.ObjectId(categoryParam)
     } else {
-      // Resolve slug match against SV, EN, or AR
+      // Resolve slug match against SV, EN, or AR with case-insensitive matching
+      const escaped = categoryParam.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const caseInsensitive = new RegExp(`^${escaped}$`, 'i')
       const categoryDoc = await Category.findOne({
         $or: [
-          { 'slug.sv': categoryParam },
-          { 'slug.en': categoryParam },
-          { 'slug.ar': categoryParam },
+          { 'slug.sv': caseInsensitive },
+          { 'slug.en': caseInsensitive },
+          { 'slug.ar': caseInsensitive },
+          { 'name.sv': caseInsensitive },
+          { 'name.en': caseInsensitive },
+          { 'name.ar': caseInsensitive },
           { code: categoryParam },
         ],
       }).select('_id').lean()
