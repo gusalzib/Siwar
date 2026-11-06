@@ -35,6 +35,11 @@ export interface ICategory extends Document {
   // Controls whether the category appears in menus and product navigation
   isActive: boolean
 
+  // Flag indicating whether this category is the protected system-managed fallback ("Övrigt" / "Other").
+  // System default categories serve as safe landing destinations for products when other
+  // categories are removed, and cannot be edited, renamed, or deleted by administrators.
+  isSystemDefault: boolean
+
   // Order priority for rendering header menus (lower numbers appear first)
   sortOrder: number
 
@@ -75,6 +80,11 @@ const CategorySchema = new Schema<ICategory>(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    isSystemDefault: {
+      type: Boolean,
+      default: false,
+      index: true,
     },
     sortOrder: {
       type: Number,

@@ -10,7 +10,8 @@
     "postinstall": "nuxt prepare",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed:admin": "tsx server/scripts/seed-admin.ts"
+    "seed:admin": "tsx server/scripts/seed-admin.ts",
+    "seed:category": "tsx server/scripts/seed-default-category.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1141.0",
