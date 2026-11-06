@@ -33,6 +33,25 @@ const {
 
 const { t } = useI18n()
 
+// Packing SLA threshold & aging calculations
+const packingThresholdDays = computed<number>(() => {
+  return storeSettings.value?.staleOrderPackingThresholdDays || 4
+})
+
+const elapsedDaysSincePlacement = computed<number>(() => {
+  if (!order.value?.createdAt) return 0
+  const createdMs = new Date(order.value.createdAt).getTime()
+  const diffMs = Math.max(0, Date.now() - createdMs)
+  return Math.floor(diffMs / (24 * 60 * 60 * 1000))
+})
+
+const isOrderStale = computed<boolean>(() => {
+  if (!order.value || order.value.fulfillmentStatus !== 'PENDING_PACKING') return false
+  const thresholdMs = packingThresholdDays.value * 24 * 60 * 60 * 1000
+  const createdMs = new Date(order.value.createdAt).getTime()
+  return (Date.now() - createdMs) > thresholdMs
+})
+
 // Warning banner for orders that cannot or should not be packed (cancelled, abandoned, unpaid, or already dispatched)
 const unpackableBanner = computed(() => {
   if (!order.value) return null
@@ -177,6 +196,33 @@ async function onConfirmCancel(reason: string) {
             </h3>
             <p class="text-xs mt-1 leading-relaxed opacity-90">
               {{ unpackableBanner.message }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Overdue Aging Notice Banner (Packing SLA Threshold Exceeded) -->
+        <div
+          v-if="isOrderStale"
+          role="alert"
+          class="rounded-2xl p-4 sm:p-5 border-2 shadow-sm flex items-start gap-3.5 bg-rose-50/90 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-950 dark:text-rose-100 transition-colors"
+        >
+          <div class="p-2 rounded-xl shrink-0 mt-0.5 bg-rose-200/80 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300">
+            <Icon name="lucide:clock-alert" class="size-5" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-sm font-bold tracking-tight">
+                {{ t('admin.orders.pack.staleBanner.title', 'Försenad order – Packningsfrist överskriden') }}
+              </h3>
+              <span class="badge badge-error badge-sm text-white font-mono font-bold">
+                {{ elapsedDaysSincePlacement }} {{ t('admin.orders.pack.staleBanner.daysElapsed', 'dagar sedan beställning') }}
+              </span>
+            </div>
+            <p class="text-xs mt-1 leading-relaxed opacity-90">
+              {{ t('admin.orders.pack.staleBanner.description', {
+                days: elapsedDaysSincePlacement,
+                threshold: packingThresholdDays
+              }, `Denna order har väntat på packning i ${elapsedDaysSincePlacement} dagar, vilket överskrider butikens mål på ${packingThresholdDays} dagar. Vänligen prioritera packning eller kontakta kunden vid fördröjning.`) }}
             </p>
           </div>
         </div>

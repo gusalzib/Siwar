@@ -105,6 +105,19 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Process staleOrderPackingThresholdDays if provided (validated to 1-30 days)
+  const incomingThreshold = body.staleOrderPackingThresholdDays !== undefined
+    ? body.staleOrderPackingThresholdDays
+    : genPayload?.staleOrderPackingThresholdDays
+  if (incomingThreshold !== undefined) {
+    const rawVal = Number(incomingThreshold)
+    const clampedDays = Math.max(1, Math.min(30, Math.round(Number.isNaN(rawVal) ? 4 : rawVal)))
+    settings.staleOrderPackingThresholdDays = clampedDays
+    if (settings.general) {
+      settings.general.staleOrderPackingThresholdDays = clampedDays
+    }
+  }
+
   await settings.save()
   clearGeneralSettingsCache()
   clearPickupSettingsCache()
@@ -113,5 +126,6 @@ export default defineEventHandler(async (event) => {
     statusCode: 200,
     socialLinks: settings.socialLinks || [],
     general: settings.general,
+    staleOrderPackingThresholdDays: settings.staleOrderPackingThresholdDays ?? 4,
   }
 })
