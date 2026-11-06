@@ -144,24 +144,39 @@ async function handleSubmit() {
   }
 }
 
-// Delete Confirmation Modal State
+// Delete Confirmation Modal State (Issue #43)
 const isDeleteModalOpen = ref(false)
+const isReassignModalOpen = ref(false)
 const categoryToDelete = ref<any | null>(null)
 const isDeleting = ref(false)
 const deleteErrorMessage = ref<string | null>(null)
 
 function openDeleteModal(category: any) {
+  // Reject deletion of the protected system default category
+  if (category.isSystemDefault) {
+    return
+  }
+
   categoryToDelete.value = category
   deleteErrorMessage.value = null
-  isDeleteModalOpen.value = true
+
+  // If category has products, trigger guided reassignment modal; otherwise direct confirmation
+  const count = Number(category.productCount || 0)
+  if (count > 0) {
+    isReassignModalOpen.value = true
+  } else {
+    isDeleteModalOpen.value = true
+  }
 }
 
 function closeDeleteModal() {
   categoryToDelete.value = null
   deleteErrorMessage.value = null
   isDeleteModalOpen.value = false
+  isReassignModalOpen.value = false
 }
 
+// Case B: Direct deletion for 0-product category
 async function confirmDeleteCategory() {
   if (!categoryToDelete.value) return
 
@@ -169,6 +184,29 @@ async function confirmDeleteCategory() {
   deleteErrorMessage.value = null
   try {
     await $fetch(`/api/admin/categories/${categoryToDelete.value.id}`, { method: 'DELETE' })
+    closeDeleteModal()
+    await refresh()
+  } catch (err: any) {
+    deleteErrorMessage.value =
+      err?.data?.statusMessage ||
+      err?.data?.message ||
+      t('admin.categories.error', 'Kunde inte ta bort kategorin.')
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+// Case A: Guided migration and deletion for populated category
+async function confirmDeleteWithReassignment(replacementCategoryId: string) {
+  if (!categoryToDelete.value) return
+
+  isDeleting.value = true
+  deleteErrorMessage.value = null
+  try {
+    await $fetch(`/api/admin/categories/${categoryToDelete.value.id}`, {
+      method: 'DELETE',
+      body: { replacementCategoryId },
+    })
     closeDeleteModal()
     await refresh()
   } catch (err: any) {
@@ -394,8 +432,23 @@ async function handleSavePromo() {
               >
                 <!-- Name & Multi-language indicators -->
                 <td class="py-3.5 px-4">
-                  <div class="font-bold text-sm text-base-content">
-                    {{ getLocalizedText(category.name) }}
+                  <div class="font-bold text-sm text-base-content flex items-center gap-2">
+                    <span>{{ getLocalizedText(category.name) }}</span>
+                    <!-- Protected System Default Category Badge -->
+                    <span
+                      v-if="category.isSystemDefault"
+                      class="badge badge-neutral badge-xs font-semibold px-2 py-0.5 text-[10px]"
+                    >
+                      {{ t('admin.categories.systemDefaultBadge', 'System') }}
+                    </span>
+                    <!-- Product Count Badge -->
+                    <span
+                      v-if="category.productCount !== undefined"
+                      class="badge badge-ghost badge-xs text-[10px] text-base-content/60"
+                      :title="`${category.productCount} produkter`"
+                    >
+                      {{ category.productCount }} prod.
+                    </span>
                   </div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] text-base-content/60 font-medium">
                     <span
@@ -459,6 +512,7 @@ async function handleSavePromo() {
                 <td class="py-3.5 px-4 text-right rtl:text-left space-x-1 rtl:space-x-reverse">
                   <!-- Category Promotional Discount Trigger -->
                   <button
+                    v-if="!category.isSystemDefault"
                     type="button"
                     class="btn btn-sm btn-ghost rounded-lg"
                     :class="category.isActiveDiscount && category.discountPercent > 0 ? 'text-rose-600 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/40' : 'text-base-content/70 hover:text-base-content'"
@@ -468,6 +522,7 @@ async function handleSavePromo() {
                     <Icon name="lucide:percent" class="size-4" />
                   </button>
                   <button
+                    v-if="!category.isSystemDefault"
                     type="button"
                     class="btn btn-sm btn-ghost text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/40 rounded-lg"
                     :title="t('admin.categories.edit', 'Redigera')"
@@ -476,6 +531,7 @@ async function handleSavePromo() {
                     <Icon name="lucide:pencil" class="size-4" />
                   </button>
                   <button
+                    v-if="!category.isSystemDefault"
                     type="button"
                     class="btn btn-sm btn-ghost text-error hover:bg-error/10 rounded-lg"
                     :title="t('admin.categories.delete', 'Ta bort')"
@@ -483,6 +539,14 @@ async function handleSavePromo() {
                   >
                     <Icon name="lucide:trash-2" class="size-4" />
                   </button>
+                  <!-- Locked indicator for protected system default category -->
+                  <span
+                    v-else
+                    class="inline-flex items-center gap-1 text-xs text-base-content/40 px-2 py-1 font-medium cursor-not-allowed select-none"
+                    :title="t('admin.categories.systemDefaultCannotDelete', 'Systemstandardkategorin är skyddad och kan inte tas bort.')"
+                  >
+                    <Icon name="lucide:lock" class="size-3.5" />
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -498,9 +562,25 @@ async function handleSavePromo() {
           >
             <div class="flex items-start justify-between gap-2">
               <div>
-                <h3 class="font-bold text-base text-base-content">
-                  {{ getLocalizedText(category.name) }}
-                </h3>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-base text-base-content">
+                    {{ getLocalizedText(category.name) }}
+                  </h3>
+                  <!-- Protected System Default Category Badge -->
+                  <span
+                    v-if="category.isSystemDefault"
+                    class="badge badge-neutral badge-xs font-semibold px-1.5 py-0.5 text-[10px]"
+                  >
+                    {{ t('admin.categories.systemDefaultBadge', 'System') }}
+                  </span>
+                  <!-- Product Count Badge -->
+                  <span
+                    v-if="category.productCount !== undefined"
+                    class="badge badge-ghost badge-xs text-[10px] text-base-content/60"
+                  >
+                    {{ category.productCount }} prod.
+                  </span>
+                </div>
                 <span class="font-mono text-xs text-base-content/70">
                   /{{ getLocalizedText(category.slug) || '—' }}
                 </span>
@@ -534,6 +614,7 @@ async function handleSavePromo() {
 
             <div class="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
               <button
+                v-if="!category.isSystemDefault"
                 type="button"
                 class="btn btn-sm btn-ghost font-bold gap-1.5 rounded-xl"
                 :class="category.isActiveDiscount && category.discountPercent > 0 ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40' : 'text-base-content/75 hover:bg-base-200 dark:hover:bg-zinc-800'"
@@ -547,6 +628,7 @@ async function handleSavePromo() {
                 </span>
               </button>
               <button
+                v-if="!category.isSystemDefault"
                 type="button"
                 class="btn btn-sm btn-ghost text-brand-600 dark:text-brand-400 font-bold gap-1.5 rounded-xl hover:bg-brand-50 dark:hover:bg-brand-950/40"
                 :title="t('admin.categories.edit', 'Redigera')"
@@ -556,6 +638,7 @@ async function handleSavePromo() {
                 <span>{{ t('admin.categories.edit', 'Redigera') }}</span>
               </button>
               <button
+                v-if="!category.isSystemDefault"
                 type="button"
                 class="btn btn-sm btn-ghost text-error font-bold gap-1.5 rounded-xl hover:bg-error/10"
                 :title="t('admin.categories.delete', 'Ta bort')"
@@ -564,6 +647,13 @@ async function handleSavePromo() {
                 <Icon name="lucide:trash-2" class="size-3.5" />
                 <span>{{ t('admin.categories.delete', 'Ta bort') }}</span>
               </button>
+              <div
+                v-else
+                class="flex items-center gap-1 text-xs text-base-content/40 px-2 py-1 font-medium select-none"
+              >
+                <Icon name="lucide:lock" class="size-3.5" />
+                <span>{{ t('admin.categories.systemDefaultCannotDelete', 'Skyddad systemkategori') }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -708,7 +798,7 @@ async function handleSavePromo() {
       </form>
     </dialog>
 
-    <!-- Delete Category Confirmation Modal -->
+    <!-- Delete Category Confirmation Modal (Case B: 0 products) -->
     <ConfirmModal
       :is-open="isDeleteModalOpen"
       :title="t('admin.categories.deleteModalTitle', 'Ta bort kategori?')"
@@ -727,6 +817,17 @@ async function handleSavePromo() {
         <span>{{ deleteErrorMessage }}</span>
       </div>
     </ConfirmModal>
+
+    <!-- Guided Category Deletion & Product Reassignment Modal (Case A: > 0 products) (Issue #43) -->
+    <AdminCategoryDeleteModal
+      :is-open="isReassignModalOpen"
+      :category="categoryToDelete"
+      :categories="categories || []"
+      :is-submitting="isDeleting"
+      :error-message="deleteErrorMessage"
+      @confirm="confirmDeleteWithReassignment"
+      @close="closeDeleteModal"
+    />
 
     <!-- Category Promotional Discount Modal (Issue #41) -->
     <BaseModal

@@ -16,6 +16,7 @@ export interface PopulatedCategory {
   discountStartsAt?: Date | string | null
   discountExpiresAt?: Date | string | null
   isActiveDiscount?: boolean
+  isSystemDefault?: boolean
 }
 
 export interface PopulatedAllergen {

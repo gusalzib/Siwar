@@ -147,11 +147,15 @@ function onSearchInput() {
 }
 
 
-// Helper: Checks if category is active by ID or any of its multilingual slugs
+// Helper: Checks if category is active by ID or any of its multilingual slugs (case-insensitive)
 function isCategorySelected(cat: any): boolean {
   if (!selectedCategory.value) return false
-  if (selectedCategory.value === cat.id) return true
-  if (cat.slug && Object.values(cat.slug).includes(selectedCategory.value)) return true
+  const target = selectedCategory.value.toLowerCase().trim()
+  if (String(cat.id).toLowerCase() === target) return true
+  if (cat.slug) {
+    const slugValues = Object.values(cat.slug).map((s: any) => String(s || '').toLowerCase())
+    if (slugValues.includes(target)) return true
+  }
   return false
 }
 
