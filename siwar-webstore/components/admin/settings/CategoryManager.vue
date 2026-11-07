@@ -7,6 +7,7 @@ const emit = defineEmits<{
 }>()
 
 const { t, locale } = useI18n()
+const localePath = useLocalePath()
 
 // Fetch Categories
 const { data: categories, pending: isLoading, refresh } = await useFetch<any[]>('/api/admin/categories')
@@ -433,7 +434,17 @@ async function handleSavePromo() {
                 <!-- Name & Multi-language indicators -->
                 <td class="py-3.5 px-4">
                   <div class="font-bold text-sm text-base-content flex items-center gap-2">
-                    <span>{{ getLocalizedText(category.name) }}</span>
+                    <NuxtLink
+                      :to="localePath({ path: '/admin/products', query: { category: category.id } })"
+                      class="hover:text-brand-600 dark:hover:text-brand-400 hover:underline transition-colors inline-flex items-center gap-1.5 group cursor-pointer"
+                      :title="t('admin.categories.viewProducts', 'Visa produkter i denna kategori')"
+                    >
+                      <span>{{ getLocalizedText(category.name) }}</span>
+                      <Icon
+                        name="lucide:arrow-up-right"
+                        class="size-3.5 text-base-content/40 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors"
+                      />
+                    </NuxtLink>
                     <!-- Protected System Default Category Badge -->
                     <span
                       v-if="category.isSystemDefault"
@@ -442,13 +453,14 @@ async function handleSavePromo() {
                       {{ t('admin.categories.systemDefaultBadge', 'System') }}
                     </span>
                     <!-- Product Count Badge -->
-                    <span
+                    <NuxtLink
                       v-if="category.productCount !== undefined"
-                      class="badge badge-ghost badge-xs text-[10px] text-base-content/60"
-                      :title="`${category.productCount} produkter`"
+                      :to="localePath({ path: '/admin/products', query: { category: category.id } })"
+                      class="badge badge-ghost badge-xs text-[10px] text-base-content/60 hover:bg-base-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                      :title="t('admin.categories.viewProducts', 'Visa produkter i denna kategori')"
                     >
                       {{ category.productCount }} prod.
-                    </span>
+                    </NuxtLink>
                   </div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] text-base-content/60 font-medium">
                     <span
@@ -564,7 +576,17 @@ async function handleSavePromo() {
               <div>
                 <div class="flex items-center gap-2">
                   <h3 class="font-bold text-base text-base-content">
-                    {{ getLocalizedText(category.name) }}
+                    <NuxtLink
+                      :to="localePath({ path: '/admin/products', query: { category: category.id } })"
+                      class="hover:text-brand-600 dark:hover:text-brand-400 hover:underline transition-colors inline-flex items-center gap-1.5 group cursor-pointer"
+                      :title="t('admin.categories.viewProducts', 'Visa produkter i denna kategori')"
+                    >
+                      <span>{{ getLocalizedText(category.name) }}</span>
+                      <Icon
+                        name="lucide:arrow-up-right"
+                        class="size-4 text-base-content/40 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors"
+                      />
+                    </NuxtLink>
                   </h3>
                   <!-- Protected System Default Category Badge -->
                   <span
@@ -574,12 +596,14 @@ async function handleSavePromo() {
                     {{ t('admin.categories.systemDefaultBadge', 'System') }}
                   </span>
                   <!-- Product Count Badge -->
-                  <span
+                  <NuxtLink
                     v-if="category.productCount !== undefined"
-                    class="badge badge-ghost badge-xs text-[10px] text-base-content/60"
+                    :to="localePath({ path: '/admin/products', query: { category: category.id } })"
+                    class="badge badge-ghost badge-xs text-[10px] text-base-content/60 hover:bg-base-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                    :title="t('admin.categories.viewProducts', 'Visa produkter i denna kategori')"
                   >
                     {{ category.productCount }} prod.
-                  </span>
+                  </NuxtLink>
                 </div>
                 <span class="font-mono text-xs text-base-content/70">
                   /{{ getLocalizedText(category.slug) || '—' }}

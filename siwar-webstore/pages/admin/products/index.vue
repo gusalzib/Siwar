@@ -11,16 +11,69 @@ definePageMeta({
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
+const route = useRoute()
+const router = useRouter()
+
+// 1. Fetch available categories for the dropdown filter
+const { data: categories } = await useFetch<Array<{ id: string; name: Record<string, string>; slug?: any }>>(
+  '/api/admin/categories'
+)
 
 // Active filter states
 const searchQuery = ref('')
-const selectedCategory = ref('')
+
+// Initialize category filter from URL query param (supports category ID and slug)
+const initialCategoryQuery = typeof route.query.category === 'string' ? route.query.category : ''
+const selectedCategory = ref(
+  categories.value?.find((cat: any) =>
+    cat.id === initialCategoryQuery ||
+    cat.slug === initialCategoryQuery ||
+    (typeof cat.slug === 'object' && Object.values(cat.slug).includes(initialCategoryQuery))
+  )?.id || initialCategoryQuery
+)
 const selectedStockStatus = ref('all')
 const selectedStatus = ref<'all' | 'active' | 'archived'>('all')
 const onlyDiscounted = ref(false)
 const onlyKortdatum = ref(false)
 const onlyMissingTranslations = ref(false)
 const isActionLoading = ref<string | null>(null)
+
+// Synchronize selectedCategory when route.query.category changes (e.g. forward/back browser navigation or external links)
+watch(
+  () => route.query.category,
+  (newVal) => {
+    const raw = typeof newVal === 'string' ? newVal : ''
+    if (!raw) {
+      if (selectedCategory.value !== '') {
+        selectedCategory.value = ''
+      }
+      return
+    }
+    const matched = categories.value?.find((cat: any) =>
+      cat.id === raw ||
+      cat.slug === raw ||
+      (typeof cat.slug === 'object' && Object.values(cat.slug).includes(raw))
+    )
+    const targetId = matched?.id || raw
+    if (selectedCategory.value !== targetId) {
+      selectedCategory.value = targetId
+    }
+  }
+)
+
+// Keep URL query parameter in sync when admin modifies category filter from the select dropdown
+watch(selectedCategory, (newCat) => {
+  const currentQueryCat = typeof route.query.category === 'string' ? route.query.category : ''
+  if (newCat !== currentQueryCat) {
+    const query = { ...route.query }
+    if (newCat) {
+      query.category = newCat
+    } else {
+      delete query.category
+    }
+    router.replace({ query })
+  }
+})
 
 // Pagination states
 const currentPage = ref(1)
@@ -37,11 +90,6 @@ const productForStock = ref<any | null>(null)
 
 const isDiscountModalOpen = ref(false)
 const productForDiscount = ref<any | null>(null)
-
-// 1. Fetch available categories for the dropdown filter
-const { data: categories } = await useFetch<Array<{ id: string; name: Record<string, string> }>>(
-  '/api/admin/categories'
-)
 
 // 2. Reactive query parameters for product fetching (Server-side pagination & filtering)
 const queryParams = computed(() => {
@@ -130,6 +178,12 @@ function resetFilters() {
   onlyKortdatum.value = false
   onlyMissingTranslations.value = false
   currentPage.value = 1
+
+  if (route.query.category) {
+    const query = { ...route.query }
+    delete query.category
+    router.replace({ query })
+  }
 }
 
 function changePage(newPage: number) {

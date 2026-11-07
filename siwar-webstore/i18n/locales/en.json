@@ -541,6 +541,7 @@
       "slug": "URL Slug",
       "actions": "Actions",
       "empty": "No categories found",
+      "viewProducts": "View products in this category",
       "nameEn": "Name (English)",
       "nameSv": "Name (Swedish)",
       "nameAr": "Name (Arabic)",

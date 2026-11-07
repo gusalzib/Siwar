@@ -540,6 +540,7 @@
       "slug": "URL-slug",
       "actions": "Åtgärder",
       "empty": "Inga kategorier hittades",
+      "viewProducts": "Visa produkter i denna kategori",
       "nameEn": "Namn (engelska)",
       "nameSv": "Namn (svenska)",
       "nameAr": "Namn (arabiska)",
