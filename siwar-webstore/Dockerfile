@@ -4,11 +4,11 @@ FROM node:22-alpine AS builder
 # Create app directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json ./
+# Copy package file
+COPY package.json ./
 
 # Install all dependencies (needed for the build step)
-RUN npm ci
+RUN npm install
 
 # Copy the rest of the application code
 COPY . .
@@ -26,6 +26,8 @@ COPY --from=builder /app/.output ./.output
 
 # Set Node.js memory flag and environment to production
 ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3000
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 
 # Expose the port Nitro runs on (default 3000)
