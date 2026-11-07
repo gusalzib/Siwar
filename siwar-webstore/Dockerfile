@@ -1,8 +1,11 @@
-# Use an official Node.js Alpine image for a small footprint
-FROM node:22-alpine AS builder
+# Use an official Node.js Slim image (Debian-based) for stable native module (sharp, bcrypt) and Vite bundling compatibility
+FROM node:22-slim AS builder
 
 # Create app directory
 WORKDIR /app
+
+# Allocate sufficient memory for Vite/Nuxt client bundling
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # Copy package file
 COPY package.json ./
@@ -17,10 +20,10 @@ COPY . .
 RUN npx nuxi prepare
 
 # Build the Nuxt application (generates .output directory)
-RUN npm run build
+RUN npx nuxi build
 
 # --- Production Image ---
-FROM node:22-alpine AS runner
+FROM node:22-slim AS runner
 
 WORKDIR /app
 
