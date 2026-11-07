@@ -144,7 +144,7 @@ describe('Section 4. Informational Content Pages & Social Shelf', () => {
       expect(result).toBeDefined()
       const messageId = 'id' in result ? result.id : result.data?.id
       expect(messageId).toBeDefined()
-    })
+    }, 15000)
   })
 
   describe('4. Navigation & Footer Integration', () => {

@@ -3,7 +3,12 @@ import { type QueryFilter, Types } from 'mongoose'
 import { Product, type IProduct } from '~/server/models/Product'
 import { Category } from '~/server/models/Category'
 import { Allergen } from '~/server/models/Allergens'
-import { calculateDiscountedPrice, isDiscountActive } from '~/server/services/pricing.service'
+import {
+  calculateDiscountedPrice,
+  isDiscountActive,
+  resolveEffectiveProductDiscount,
+  resolveEffectiveProductPrice,
+} from '~/server/services/pricing.service'
 
 /**
  * Route: GET /api/catalog
@@ -27,12 +32,17 @@ export default defineEventHandler(async (event) => {
     if (Types.ObjectId.isValid(categoryParam)) {
       filter.category = new Types.ObjectId(categoryParam)
     } else {
-      // Resolve slug match against SV, EN, or AR
+      // Resolve slug match against SV, EN, or AR with case-insensitive matching
+      const escaped = categoryParam.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const caseInsensitive = new RegExp(`^${escaped}$`, 'i')
       const categoryDoc = await Category.findOne({
         $or: [
-          { 'slug.sv': categoryParam },
-          { 'slug.en': categoryParam },
-          { 'slug.ar': categoryParam },
+          { 'slug.sv': caseInsensitive },
+          { 'slug.en': caseInsensitive },
+          { 'slug.ar': caseInsensitive },
+          { 'name.sv': caseInsensitive },
+          { 'name.en': caseInsensitive },
+          { 'name.ar': caseInsensitive },
           { code: categoryParam },
         ],
       }).select('_id').lean()
@@ -134,7 +144,12 @@ export default defineEventHandler(async (event) => {
     filter.countryOfOrigin = { $in: origins.map((o) => String(o).trim()) }
   }
 
-  // 6.5. Promotional Deals / Discount Filter (products with discount > 0 and within active promotion window per AC-4)
+  // 6.4. Kortdatum (Short-dated clearance items per Issue #41)
+  if (query.isKortdatum === 'true' || query.kortdatum === 'true') {
+    filter['kortdatum.isKortdatum'] = true
+  }
+
+  // 6.5. Promotional Deals / Discount Filter (products with discount > 0, Kortdatum, or category promo per AC-4 & Issue #41)
   if (
     query.hasDiscount === 'true' ||
     query.discount === 'true' ||
@@ -143,12 +158,36 @@ export default defineEventHandler(async (event) => {
     Number(query.discount) > 0
   ) {
     const now = new Date()
-    filter.discount = { $gt: 0 }
-    const discountWindowConditions = [
-      { $or: [{ discountStartsAt: null }, { discountStartsAt: { $lte: now } }] },
-      { $or: [{ discountExpiresAt: null }, { discountExpiresAt: { $gt: now } }] },
+    // Find any categories with active blanket discounts
+    const activePromoCategories = await Category.find({
+      isActiveDiscount: true,
+      discountPercent: { $gt: 0 },
+      $and: [
+        { $or: [{ discountStartsAt: null }, { discountStartsAt: { $lte: now } }] },
+        { $or: [{ discountExpiresAt: null }, { discountExpiresAt: { $gt: now } }] },
+      ],
+    }).select('_id').lean()
+
+    const activeCatIds = activePromoCategories.map((c) => c._id)
+
+    const discountConditions: Array<Record<string, any>> = [
+      {
+        discount: { $gt: 0 },
+        $and: [
+          { $or: [{ discountStartsAt: null }, { discountStartsAt: { $lte: now } }] },
+          { $or: [{ discountExpiresAt: null }, { discountExpiresAt: { $gt: now } }] },
+        ],
+      },
+      { 'kortdatum.isKortdatum': true },
     ]
-    filter.$and = filter.$and ? [...filter.$and, ...discountWindowConditions] : discountWindowConditions
+
+    if (activeCatIds.length > 0) {
+      discountConditions.push({ category: { $in: activeCatIds } })
+    }
+
+    filter.$and = filter.$and
+      ? [...filter.$and, { $or: discountConditions }]
+      : [{ $or: discountConditions }]
   }
 
   // 7. Sort Mapping
@@ -160,7 +199,7 @@ export default defineEventHandler(async (event) => {
   const [totalCount, rawProducts] = await Promise.all([
     Product.countDocuments(filter),
     Product.find(filter)
-      .populate('category', 'name slug')
+      .populate('category', 'name slug discountPercent discountStartsAt discountExpiresAt isActiveDiscount')
       .populate('allergens', 'name code')
       .sort(sortCriteria)
       .skip(skip)
@@ -171,10 +210,10 @@ export default defineEventHandler(async (event) => {
   const now = new Date()
 
   // 9. Format response payload with comparison prices and safety buffer availability
-  const products = rawProducts.map((p) => {
+  const products = rawProducts.map((p: any) => {
     const buffer = p.safetyBuffer ?? 0
     const availableStock = Math.max(0, p.stockQuantity - buffer)
-    const primaryImage = p.images?.find((img) => img.isPrimary) || p.images?.[0] || null
+    const primaryImage = p.images?.find((img: any) => img.isPrimary) || p.images?.[0] || null
 
     // Determine inventory status code
     let statusCode = 'IN_STOCK'
@@ -184,11 +223,25 @@ export default defineEventHandler(async (event) => {
       statusCode = 'OUT_OF_STOCK_ONLINE'
     }
 
-    const hasActiveDiscount = isDiscountActive(p.discount, p.discountStartsAt, p.discountExpiresAt, now)
-    const discount = hasActiveDiscount ? (p.discount || 0) : 0
-    const discountedPrice = hasActiveDiscount
-      ? calculateDiscountedPrice(p.price, p.discount, p.discountStartsAt, p.discountExpiresAt, now)
-      : null
+    // Resolve promotional hierarchy: Kortdatum > Category Discount > Product Discount
+    const effectivePricing = resolveEffectiveProductPrice(p, p.category as any, now)
+    const discount = effectivePricing.appliedDiscountPercent
+    const hasActiveDiscount = discount > 0
+    const discountedPrice = hasActiveDiscount ? effectivePricing.effectivePriceMinor : null
+
+    // Suppress competing discount dates:
+    // If Kortdatum wins, campaign discount dates are null (only bestBeforeDate is shown).
+    // If Category wins, category dates are passed.
+    // If Ordinary wins, product discount dates are passed.
+    let discountStartsAt: Date | string | null = null
+    let discountExpiresAt: Date | string | null = null
+    if (effectivePricing.activeDiscountType === 'ORDINARY') {
+      discountStartsAt = p.discountStartsAt || null
+      discountExpiresAt = p.discountExpiresAt || null
+    } else if (effectivePricing.activeDiscountType === 'CATEGORY') {
+      discountStartsAt = (p.category as any)?.discountStartsAt || null
+      discountExpiresAt = (p.category as any)?.discountExpiresAt || null
+    }
 
     return {
       id: String(p._id),
@@ -201,9 +254,19 @@ export default defineEventHandler(async (event) => {
       primaryImage,
       price: p.price,
       discount,
-      discountStartsAt: p.discountStartsAt || null,
-      discountExpiresAt: p.discountExpiresAt || null,
+      discountStartsAt,
+      discountExpiresAt,
       discountedPrice,
+      discountSource: effectivePricing.activeDiscountType.toLowerCase(),
+      activeDiscountType: effectivePricing.activeDiscountType,
+      deadlineDate: effectivePricing.deadlineDate,
+      kortdatum: (p.kortdatum?.isKortdatum && effectivePricing.isKortdatum)
+        ? {
+            isKortdatum: true,
+            bestBeforeDate: p.kortdatum.bestBeforeDate || null,
+            clearanceDiscount: p.kortdatum.clearanceDiscount || 0,
+          }
+        : null,
       netQuantity: p.netQuantity,
       grossWeight: p.grossWeight ?? (p.netQuantity?.unit === 'g' ? p.netQuantity.value : 0), // Pass grossWeight with fallback to netQuantity if unit is in grams
       momsRate: p.momsRate,

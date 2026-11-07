@@ -56,6 +56,14 @@ export default defineEventHandler(async (event) => {
     settings.carouselIntervalMs = carouselIntervalMs
   }
 
+  // 3.6 Process staleOrderPackingThresholdDays if provided (validated 1-30 days)
+  let staleThreshold = settings.staleOrderPackingThresholdDays || settings.general?.staleOrderPackingThresholdDays || 4
+  if (body.staleOrderPackingThresholdDays !== undefined) {
+    const rawVal = Number(body.staleOrderPackingThresholdDays)
+    staleThreshold = Math.max(1, Math.min(30, Math.round(Number.isNaN(rawVal) ? 4 : rawVal)))
+    settings.staleOrderPackingThresholdDays = staleThreshold
+  }
+
   // 4. Assemble general settings
   settings.general = {
     storeName: {
@@ -87,6 +95,7 @@ export default defineEventHandler(async (event) => {
     openingHours,
     socialLinks,
     carouselIntervalMs,
+    staleOrderPackingThresholdDays: staleThreshold,
   }
 
   settings.socialLinks = socialLinks
@@ -105,5 +114,6 @@ export default defineEventHandler(async (event) => {
   return {
     statusCode: 200,
     general: settings.general,
+    staleOrderPackingThresholdDays: settings.staleOrderPackingThresholdDays ?? 4,
   }
 })

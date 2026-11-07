@@ -343,6 +343,59 @@ describe('Issue #28: Fast-Path Stock & Discount Adjustment Architecture', () => 
         { returnDocument: 'after' }
       )
     })
+
+    it('rejects applying ordinary discount with HTTP 400 when product has active Kortdatum clearance', async () => {
+      mockProductModel.findById.mockReturnValue({
+        select: vi.fn().mockResolvedValue({
+          _id: validId,
+          discount: 0,
+          kortdatum: {
+            isKortdatum: true,
+            clearanceDiscount: 40,
+            bestBeforeDate: new Date('2026-12-01'),
+          },
+          updatedAt: new Date(),
+        }),
+      })
+
+      mockState.body = { discount: 20 }
+
+      await expect(discountPatchHandler(dummyEvent)).rejects.toMatchObject({
+        statusCode: 400,
+        statusMessage: expect.stringContaining('Kortdatum clearance is active for this product'),
+      })
+    })
+
+    it('allows setting discount to 0% even if product has Kortdatum clearance record', async () => {
+      mockProductModel.findById.mockReturnValue({
+        select: vi.fn().mockResolvedValue({
+          _id: validId,
+          discount: 0,
+          kortdatum: {
+            isKortdatum: true,
+            clearanceDiscount: 40,
+            bestBeforeDate: new Date('2026-12-01'),
+          },
+          updatedAt: new Date(),
+        }),
+      })
+
+      mockProductModel.findByIdAndUpdate.mockReturnValue({
+        select: vi.fn().mockResolvedValue({
+          _id: validId,
+          discount: 0,
+          discountStartsAt: null,
+          discountExpiresAt: null,
+          updatedAt: new Date(),
+        }),
+      })
+
+      mockState.body = { discount: 0 }
+
+      const response = await discountPatchHandler(dummyEvent)
+      expect(response.statusCode).toBe(200)
+      expect(response.discount).toBe(0)
+    })
   })
 
   // -------------------------------------------------------------------------
@@ -373,6 +426,11 @@ describe('Issue #28: Fast-Path Stock & Discount Adjustment Architecture', () => 
       expect(content).toContain('clearDates')
       expect(content).toContain('type="datetime-local"')
       expect(content).toContain('calculateDiscountedPrice')
+      expect(content).toContain('hasActiveKortdatum')
+      expect(content).toContain('hasActiveCategorySale')
+      expect(content).toContain('isDiscountBlocked')
+      expect(content).toContain('kortdatumActiveNotice')
+      expect(content).toContain('categorySaleActiveNotice')
     })
 
     it('pages/admin/products/index.vue includes trigger buttons and mounts both modals', () => {
@@ -411,10 +469,24 @@ describe('Issue #28: Fast-Path Stock & Discount Adjustment Architecture', () => 
       // Discount modal keys
       expect(sv.admin.discountModal.title).toBeTruthy()
       expect(sv.admin.discountModal.clearDates).toBeTruthy()
+      expect(sv.admin.discountModal.kortdatumActiveTitle).toBeTruthy()
+      expect(sv.admin.discountModal.kortdatumActiveNotice).toBeTruthy()
+      expect(sv.admin.discountModal.categorySaleActiveTitle).toBeTruthy()
+      expect(sv.admin.discountModal.categorySaleActiveNotice).toBeTruthy()
+
       expect(en.admin.discountModal.title).toBeTruthy()
       expect(en.admin.discountModal.clearDates).toBeTruthy()
+      expect(en.admin.discountModal.kortdatumActiveTitle).toBeTruthy()
+      expect(en.admin.discountModal.kortdatumActiveNotice).toBeTruthy()
+      expect(en.admin.discountModal.categorySaleActiveTitle).toBeTruthy()
+      expect(en.admin.discountModal.categorySaleActiveNotice).toBeTruthy()
+
       expect(ar.admin.discountModal.title).toBeTruthy()
       expect(ar.admin.discountModal.clearDates).toBeTruthy()
+      expect(ar.admin.discountModal.kortdatumActiveTitle).toBeTruthy()
+      expect(ar.admin.discountModal.kortdatumActiveNotice).toBeTruthy()
+      expect(ar.admin.discountModal.categorySaleActiveTitle).toBeTruthy()
+      expect(ar.admin.discountModal.categorySaleActiveNotice).toBeTruthy()
     })
   })
 })

@@ -11,15 +11,69 @@ definePageMeta({
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
+const route = useRoute()
+const router = useRouter()
+
+// 1. Fetch available categories for the dropdown filter
+const { data: categories } = await useFetch<Array<{ id: string; name: Record<string, string>; slug?: any }>>(
+  '/api/admin/categories'
+)
 
 // Active filter states
 const searchQuery = ref('')
-const selectedCategory = ref('')
+
+// Initialize category filter from URL query param (supports category ID and slug)
+const initialCategoryQuery = typeof route.query.category === 'string' ? route.query.category : ''
+const selectedCategory = ref(
+  categories.value?.find((cat: any) =>
+    cat.id === initialCategoryQuery ||
+    cat.slug === initialCategoryQuery ||
+    (typeof cat.slug === 'object' && Object.values(cat.slug).includes(initialCategoryQuery))
+  )?.id || initialCategoryQuery
+)
 const selectedStockStatus = ref('all')
 const selectedStatus = ref<'all' | 'active' | 'archived'>('all')
 const onlyDiscounted = ref(false)
+const onlyKortdatum = ref(false)
 const onlyMissingTranslations = ref(false)
 const isActionLoading = ref<string | null>(null)
+
+// Synchronize selectedCategory when route.query.category changes (e.g. forward/back browser navigation or external links)
+watch(
+  () => route.query.category,
+  (newVal) => {
+    const raw = typeof newVal === 'string' ? newVal : ''
+    if (!raw) {
+      if (selectedCategory.value !== '') {
+        selectedCategory.value = ''
+      }
+      return
+    }
+    const matched = categories.value?.find((cat: any) =>
+      cat.id === raw ||
+      cat.slug === raw ||
+      (typeof cat.slug === 'object' && Object.values(cat.slug).includes(raw))
+    )
+    const targetId = matched?.id || raw
+    if (selectedCategory.value !== targetId) {
+      selectedCategory.value = targetId
+    }
+  }
+)
+
+// Keep URL query parameter in sync when admin modifies category filter from the select dropdown
+watch(selectedCategory, (newCat) => {
+  const currentQueryCat = typeof route.query.category === 'string' ? route.query.category : ''
+  if (newCat !== currentQueryCat) {
+    const query = { ...route.query }
+    if (newCat) {
+      query.category = newCat
+    } else {
+      delete query.category
+    }
+    router.replace({ query })
+  }
+})
 
 // Pagination states
 const currentPage = ref(1)
@@ -36,11 +90,6 @@ const productForStock = ref<any | null>(null)
 
 const isDiscountModalOpen = ref(false)
 const productForDiscount = ref<any | null>(null)
-
-// 1. Fetch available categories for the dropdown filter
-const { data: categories } = await useFetch<Array<{ id: string; name: Record<string, string> }>>(
-  '/api/admin/categories'
-)
 
 // 2. Reactive query parameters for product fetching (Server-side pagination & filtering)
 const queryParams = computed(() => {
@@ -61,6 +110,10 @@ const queryParams = computed(() => {
 
   if (onlyDiscounted.value) {
     q.hasDiscount = 'true'
+  }
+
+  if (onlyKortdatum.value) {
+    q.isKortdatum = 'true'
   }
 
   return q
@@ -99,6 +152,7 @@ const metrics = computed(() => {
     totalActive: 0,
     totalArchived: 0,
     totalDiscounted: 0,
+    totalKortdatum: 0,
   }
 })
 
@@ -110,6 +164,7 @@ const hasActiveFilters = computed(() => {
     selectedStockStatus.value !== 'all' ||
     selectedStatus.value !== 'all' ||
     onlyDiscounted.value ||
+    onlyKortdatum.value ||
     onlyMissingTranslations.value
   )
 })
@@ -120,8 +175,15 @@ function resetFilters() {
   selectedStockStatus.value = 'all'
   selectedStatus.value = 'all'
   onlyDiscounted.value = false
+  onlyKortdatum.value = false
   onlyMissingTranslations.value = false
   currentPage.value = 1
+
+  if (route.query.category) {
+    const query = { ...route.query }
+    delete query.category
+    router.replace({ query })
+  }
 }
 
 function changePage(newPage: number) {
@@ -303,6 +365,36 @@ function isDiscountActiveOrScheduled(product: any): boolean {
   }
   return true
 }
+
+function isCategoryDiscountActive(cat?: any): boolean {
+  if (!cat || !cat.isActiveDiscount) return false
+  const pct = Number(cat.discountPercent) || 0
+  if (pct <= 0) return false
+  const now = Date.now()
+  if (cat.discountStartsAt) {
+    const s = new Date(cat.discountStartsAt).getTime()
+    if (!Number.isNaN(s) && s > now) return false
+  }
+  if (cat.discountExpiresAt) {
+    const e = new Date(cat.discountExpiresAt).getTime()
+    if (!Number.isNaN(e) && e <= now) return false
+  }
+  return true
+}
+
+function isKortdatumActive(product: any): boolean {
+  const k = product?.kortdatum
+  if (!k?.isKortdatum) return false
+  if (product.activeDiscountType) {
+    return product.activeDiscountType === 'KORTDATUM'
+  }
+  if (!k.bestBeforeDate) return true
+  const d = new Date(k.bestBeforeDate)
+  if (Number.isNaN(d.getTime())) return true
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  return d.getTime() >= startOfToday.getTime()
+}
 </script>
 
 <template>
@@ -431,6 +523,19 @@ function isDiscountActiveOrScheduled(product: any): boolean {
             >
               <Icon name="lucide:percent" class="size-3.5" :class="onlyDiscounted ? 'text-white' : 'text-rose-500'" />
               {{ t('admin.products.filters.deals.discounted') }}
+            </button>
+
+            <!-- Kortdatum Filter Toggle (Issue #41) -->
+            <button
+              type="button"
+              @click="onlyKortdatum = !onlyKortdatum"
+              class="px-3.5 py-1.5 rounded-xl text-xs font-bold border-2 transition-all flex items-center gap-1.5"
+              :class="onlyKortdatum 
+                ? 'bg-black border-black text-white shadow-xs dark:bg-zinc-950 dark:border-zinc-800' 
+                : 'bg-base-100 dark:bg-zinc-800 border-base-300 dark:border-zinc-700 text-base-content/80 hover:bg-base-200 dark:hover:bg-zinc-700'"
+            >
+              <Icon name="lucide:calendar-clock" class="size-3.5" :class="onlyKortdatum ? 'text-amber-300' : 'text-base-content/70'" />
+              {{ t('admin.products.filters.deals.kortdatum', 'Kort datum') }}
             </button>
           </div>
 
@@ -628,8 +733,28 @@ function isDiscountActiveOrScheduled(product: any): boolean {
             <div class="flex flex-col sm:flex-row min-[1290px]:flex-col items-start sm:items-center min-[1290px]:items-end justify-between gap-4 w-full min-[1290px]:w-auto shrink-0 pt-3 min-[1290px]:pt-0 border-t min-[1290px]:border-t-0 border-base-200 dark:border-zinc-800">
               <!-- Pricing Tier (SEK / EUR / USD) & Discount Badge -->
               <div class="flex flex-col items-start min-[1290px]:items-end gap-1">
-                <!-- Discount Badge -->
-                <div v-if="isDiscountActiveOrScheduled(product)">
+                <!-- Kortdatum Clearance Badge (Priority 1) -->
+                <div v-if="isKortdatumActive(product)">
+                  <span class="badge bg-black text-white dark:bg-zinc-950 border border-zinc-800 text-xs font-bold gap-1 shadow-xs">
+                    <Icon name="lucide:calendar-clock" class="size-3 text-amber-300" />
+                    <span class="text-amber-300 font-black uppercase">{{ t('cart.kortdatum', 'Kort datum') }}</span>
+                    <span>-{{ product.kortdatum?.clearanceDiscount }}%</span>
+                  </span>
+                </div>
+
+                <!-- Category Campaign Badge (Priority 2) -->
+                <div v-else-if="product.hasActiveCategorySale || isCategoryDiscountActive(product.category)">
+                  <span
+                    class="badge badge-info text-white font-bold gap-1 shadow-xs"
+                    :title="t('admin.categories.discount', 'Kategorikampanj')"
+                  >
+                    <Icon name="lucide:tag" class="size-3" />
+                    -{{ product.categoryDiscountPercent || product.category?.discountPercent }}% ({{ t('admin.categories.discount', 'Kategorikampanj') }})
+                  </span>
+                </div>
+
+                <!-- Ordinary Discount Badge (Priority 3) -->
+                <div v-else-if="isDiscountActiveOrScheduled(product)">
                   <span
                     v-if="product.discountStatus === 'scheduled'"
                     class="badge badge-warning badge-sm text-black font-bold gap-1 shadow-xs"
@@ -646,12 +771,29 @@ function isDiscountActiveOrScheduled(product: any): boolean {
                   </span>
                 </div>
 
-                <!-- Currency Prices -->
-                <div class="text-lg font-black text-base-content">
-                  {{ toMajorUnits(product.price?.SEK || 0) }} SEK
+                <!-- Currency Prices: Discounted price + strikethrough original if discounted -->
+                <div class="flex items-baseline gap-2 flex-wrap min-[1290px]:justify-end">
+                  <template v-if="product.discountedPrice">
+                    <span class="text-lg font-black text-error">
+                      {{ toMajorUnits(product.discountedPrice.SEK) }} SEK
+                    </span>
+                    <span class="text-xs font-semibold text-base-content/50 line-through">
+                      {{ toMajorUnits(product.price?.SEK || 0) }} SEK
+                    </span>
+                  </template>
+                  <template v-else>
+                    <span class="text-lg font-black text-base-content">
+                      {{ toMajorUnits(product.price?.SEK || 0) }} SEK
+                    </span>
+                  </template>
                 </div>
                 <div class="text-xs font-semibold text-base-content/60">
-                  {{ toMajorUnits(product.price?.EUR || 0) }} EUR • {{ toMajorUnits(product.price?.USD || 0) }} USD
+                  <template v-if="product.discountedPrice">
+                    {{ toMajorUnits(product.discountedPrice.EUR) }} EUR • {{ toMajorUnits(product.discountedPrice.USD) }} USD
+                  </template>
+                  <template v-else>
+                    {{ toMajorUnits(product.price?.EUR || 0) }} EUR • {{ toMajorUnits(product.price?.USD || 0) }} USD
+                  </template>
                 </div>
               </div>
 

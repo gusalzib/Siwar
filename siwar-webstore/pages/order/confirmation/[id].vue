@@ -103,6 +103,16 @@ const totalDiscountSavings = computed(() => {
     return acc + (diff > 0 ? diff * q : 0)
   }, 0)
 })
+
+const hasAnyTaxSplitRows = computed(() => {
+  const ts = order.value?.pricing?.taxSplit
+  if (!ts) return false
+  return (
+    ((ts.moms6?.momsAmountMinor || 0) > 0 || (ts.moms6?.netAmountMinor || 0) > 0) ||
+    ((ts.moms12?.momsAmountMinor || 0) > 0 || (ts.moms12?.netAmountMinor || 0) > 0) ||
+    ((ts.moms25?.momsAmountMinor || 0) > 0 || (ts.moms25?.netAmountMinor || 0) > 0)
+  )
+})
 </script>
 
 <template>
@@ -417,21 +427,35 @@ const totalDiscountSavings = computed(() => {
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-base-200">
-                  <tr>
-                    <td class="py-1">Livsmedel (12%)</td>
+                  <tr v-if="order.pricing.taxSplit?.moms6 && ((order.pricing.taxSplit?.moms6?.momsAmountMinor || 0) > 0 || (order.pricing.taxSplit?.moms6?.netAmountMinor || 0) > 0)">
+                    <td class="py-1">6%</td>
+                    <td class="text-end">{{ formatMoney(order.pricing.taxSplit?.moms6?.netAmountMinor || 0, order.currency) }}</td>
+                    <td class="text-end">{{ formatMoney(order.pricing.taxSplit?.moms6?.momsAmountMinor || 0, order.currency) }}</td>
+                    <td class="text-end">
+                      {{ formatMoney((order.pricing.taxSplit?.moms6?.netAmountMinor || 0) + (order.pricing.taxSplit?.moms6?.momsAmountMinor || 0), order.currency) }}
+                    </td>
+                  </tr>
+                  <tr v-if="order.pricing.taxSplit?.moms12 && ((order.pricing.taxSplit?.moms12?.momsAmountMinor || 0) > 0 || (order.pricing.taxSplit?.moms12?.netAmountMinor || 0) > 0)">
+                    <td class="py-1">12%</td>
                     <td class="text-end">{{ formatMoney(order.pricing.taxSplit?.moms12?.netAmountMinor || 0, order.currency) }}</td>
                     <td class="text-end">{{ formatMoney(order.pricing.taxSplit?.moms12?.momsAmountMinor || 0, order.currency) }}</td>
                     <td class="text-end">
                       {{ formatMoney((order.pricing.taxSplit?.moms12?.netAmountMinor || 0) + (order.pricing.taxSplit?.moms12?.momsAmountMinor || 0), order.currency) }}
                     </td>
                   </tr>
-                  <tr>
-                    <td class="py-1">Standard / Frakt (25%)</td>
+                  <tr v-if="order.pricing.taxSplit?.moms25 && ((order.pricing.taxSplit?.moms25?.momsAmountMinor || 0) > 0 || (order.pricing.taxSplit?.moms25?.netAmountMinor || 0) > 0)">
+                    <td class="py-1">25%</td>
                     <td class="text-end">{{ formatMoney(order.pricing.taxSplit?.moms25?.netAmountMinor || 0, order.currency) }}</td>
                     <td class="text-end">{{ formatMoney(order.pricing.taxSplit?.moms25?.momsAmountMinor || 0, order.currency) }}</td>
                     <td class="text-end">
                       {{ formatMoney((order.pricing.taxSplit?.moms25?.netAmountMinor || 0) + (order.pricing.taxSplit?.moms25?.momsAmountMinor || 0), order.currency) }}
                     </td>
+                  </tr>
+                  <tr v-if="!hasAnyTaxSplitRows">
+                    <td class="py-1">0%</td>
+                    <td class="text-end">{{ formatMoney(0, order.currency) }}</td>
+                    <td class="text-end">{{ formatMoney(0, order.currency) }}</td>
+                    <td class="text-end">{{ formatMoney(0, order.currency) }}</td>
                   </tr>
                   <tr class="font-bold border-t border-base-300">
                     <td class="py-1">Totalt varav moms:</td>

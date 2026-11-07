@@ -43,17 +43,20 @@
     "emptySubtitle": "Upptäck vårt sortiment av kryddor, sötsaker och delikatesser.",
     "exploreCatalog": "Utforska sortimentet",
     "subtotal": "Delsumma",
-    "moms25": "Moms (25% övrigt/frakt)",
     "subtotalNet": "Delsumma (exkl. moms och frakt)",
     "shipping": "Frakt",
     "free": "Gratis",
     "freeShippingReached": "Grattis! Du har kvalificerat dig för fri frakt.",
     "addMoreForFreeShipping": "Handla för {amount} till för att få fri frakt!",
     "momsHeading": "Momsöversikt",
-    "moms12": "Moms på livsmedel (12%)",
-    "moms25Items": "Moms på varor (25%)",
-    "moms25Shipping": "Moms på frakt (25%)",
+    "moms6": "Moms (6%)",
+    "moms12": "Moms (12%)",
+    "moms25": "Moms (25%)",
+    "moms25Items": "Moms (25%)",
+    "moms25Shipping": "Moms frakt (25%)",
     "totalMoms": "Varav moms totalt",
+    "kortdatum": "Kortdatum",
+    "bestBefore": "Bäst före",
     "grandTotal": "Totalt att betala",
     "checkoutBtn": "Till kassan",
     "add": "Köp",
@@ -165,7 +168,8 @@
         },
         "deals": {
           "label": "Kampanjer & Rabatter",
-          "discounted": "Endast rabatterade / Rea"
+          "discounted": "Endast rabatterade / Rea",
+          "kortdatum": "Kortdatum"
         },
         "reset": "Återställ filter"
       },
@@ -268,7 +272,11 @@
       "cancel": "Avbryt",
       "save": "Spara rabatt",
       "saving": "Sparar...",
-      "error": "Kunde inte uppdatera rabatten."
+      "error": "Kunde inte uppdatera rabatten.",
+      "kortdatumActiveTitle": "Kortdatum är aktivt (Prioritet 1)",
+      "kortdatumActiveNotice": "Denna produkt har en aktiv kortdatumrabatt ({discount}%). Enligt rabatthierarkin har kortdatum absolut företräde (Rank 1) och är ömsesidigt uteslutande med ordinarie rabatt. För att ändra eller ta bort kortdatum, redigera produkten.",
+      "categorySaleActiveTitle": "Kategorikampanj är aktiv (Prioritet 2)",
+      "categorySaleActiveNotice": "Denna produkt ingår i en aktiv kategorikampanj ({discount}% på {category}). Enligt rabatthierarkin har kategorirabatten företräde (Rank 2) och åsidosätter individuella rabatter."
     },
 
     "productForm": {
@@ -310,6 +318,8 @@
         "currencyNote": "Ange belopp med decimaler (t.ex. 45.50). Priserna sparas i minor units (öre/cent) utan automatisk växlingskurs.",
         "discount": "Rabatt (%)",
         "discountActive": "Kampanjrabatt aktiv",
+        "categorySaleActiveTitle": "Kategorikampanj är aktiv (Prioritet 2)",
+        "categorySaleActiveNotice": "Denna produkt omfattas av en övergripande kampanj för sin kategori. Enligt rabatthierarkin gäller kategorirabatten före eventuella ordinarie produktrabatter i butiken.",
         "discountHelp": "Ange rabattprocent (0–100). Produkter med aktiv rabatt visas med kampanjpris och rabattbadge på startsidan och i katalogen.",
         "discountPreviewTitle": "Förhandsvisning av kampanjpris",
         "discountPreviewNote": "Detta är det faktiska priset kunden betalar",
@@ -331,8 +341,16 @@
         "netUnit": "Måttenhet",
         "grossWeight": "Bruttovikt för frakt (gram)",
         "momsRate": "Momssats",
-        "moms12": "12% Livsmedel",
-        "moms25": "25% Övrigt & frakt",
+        "moms6": "6%",
+        "moms12": "12%",
+        "moms25": "25%",
+        "kortdatum": "Kortdatum (Kort bäst-före-datum)",
+        "isKortdatum": "Märk som kortdatumvara",
+        "bestBeforeDate": "Bäst före-datum",
+        "bestBeforeDateExpired": "Bäst före-datumet har passerat. Kortdatum-rabatten är inaktiv i butiken och systemet faller automatiskt tillbaka till kategorikampanj, ordinarie rabatt eller standardpris.",
+        "clearanceDiscount": "Kortdatumrabatt (%)",
+        "kortdatumSubtitle": "Märk varan som kortdatum för att rea ut varor med nära utgångsdatum och undvika matsvinn.",
+        "clearanceDiscountHelp": "Clearance-rabatt i procent (1–90%) som ersätter ordinarie butikspris.",
         "countryOfOrigin": "Ursprungsland",
         "countryPlaceholder": "T.ex. Libanon, Turkiet",
         "barcode": "Streckkod (EAN / GTIN)",
@@ -522,6 +540,7 @@
       "slug": "URL-slug",
       "actions": "Åtgärder",
       "empty": "Inga kategorier hittades",
+      "viewProducts": "Visa produkter i denna kategori",
       "nameEn": "Namn (engelska)",
       "nameSv": "Namn (svenska)",
       "nameAr": "Namn (arabiska)",
@@ -529,12 +548,31 @@
       "cancel": "Avbryt",
       "save": "Spara kategori",
       "confirmDelete": "Är du säker på att du vill ta bort denna kategori?",
+      "deleteWithProductsTitle": "Ta bort kategori & omplacera produkter",
+      "containsProductsWarning": "Denna kategori innehåller {count} produkt(er).",
+      "migrationExplanation": "Alla {count} produkter kommer att flyttas till den valda kategorin innan denna kategori tas bort permanent.",
+      "selectDestinationCategory": "Välj ny kategori för produkterna",
+      "confirmMigrateAndDelete": "Flytta produkter och ta bort kategori",
+      "migrating": "Flyttar produkter...",
+      "systemDefaultBadge": "System",
+      "systemDefaultCannotDelete": "Systemstandardkategorin är skyddad och kan inte tas bort.",
       "success": "Kategorin har sparats!",
       "error": "Kunde inte spara kategorin.",
       "searchPlaceholder": "Filtrera kategorier efter namn eller slug...",
       "status": "Status",
       "active": "Aktiv",
       "inactive": "Inaktiv",
+      "discount": "Kategorirabatt",
+      "discountModalTitle": "Hantera kategorirabatt",
+      "discountPercent": "Rabattsats (%)",
+      "discountStartsAt": "Kampanj startdatum",
+      "discountExpiresAt": "Kampanj slutdatum",
+      "isActiveDiscount": "Aktivera rabatt för hela kategorin",
+      "discountHelp": "Tillämpas automatiskt på alla produkter i denna kategori som inte har egna specifika rabatter.",
+      "invalidPercent": "Rabatten måste vara mellan 1% och 90%.",
+      "promoSuccess": "Kategorikampanj har sparats framgångsrikt!",
+      "discountInactiveWarningTitle": "Kampanjen är inaktiv",
+      "discountInactiveWarning": "Obs! Du har angett en rabattsats men reglaget är inaktiverat. Slå på reglaget ovan om du vill att rabatten ska aktiveras i butiken.",
       "validation": {
         "nameRequired": "Vänligen fyll i kategorinamn på alla tre språk (svenska, engelska och arabiska)."
       }
@@ -574,10 +612,12 @@
       "subtitle": "Packa ordrar, hantera varubrist och granska betalningar",
       "stats": {
         "pendingPacking": "Att packa",
+        "staleOrders": "Försenade ordrar",
         "dispatched": "Skickade"
       },
       "filters": {
         "searchPlaceholder": "Sök ordernr, kund, telefon...",
+        "staleOnly": "Försenade (> {days} dgr)",
         "allFulfillmentStatuses": "Alla packstatusar",
         "pendingPacking": "Att packa (Pending Packing)",
         "packed": "Packad (Packed)",
@@ -607,6 +647,8 @@
       "badges": {
         "hasShortages": "Har registrerade varubrister",
         "shortage": "Brist",
+        "stale": "Försenad (> {days} dgr)",
+        "staleTooltip": "Denna order har väntat på packning i mer än {days} dagar",
         "pieces": "st"
       },
       "actions": {
@@ -625,6 +667,11 @@
           "failedMessage": "Betalningen misslyckades. Ordern kan inte expedieras.",
           "dispatchedTitle": "Ordern är redan skickad",
           "dispatchedMessage": "Ordern har redan expedierats och dess innehåll är låst."
+        },
+        "staleBanner": {
+          "title": "Försenad order – Packningsfrist överskriden",
+          "daysElapsed": "dagar sedan beställning",
+          "description": "Denna order har väntat på packning i {days} dagar, vilket överskrider butikens mål på {threshold} dagar. Vänligen prioritera packning eller kontakta kunden vid fördröjning."
         },
         "errors": {
           "loadFailed": "Kunde inte läsa in ordern.",
@@ -686,9 +733,10 @@
           "stripeNote": "Kortreservationen minskas automatiskt; återstående reservation släpps omedelbart utan avgift.",
           "swishNote": "Swish-betalningen justeras via direkt Swish-återbetalning till kundens bankkonto.",
           "momsCalc": "Momsberäkning:",
-          "moms12": "Moms 12% (Livsmedel):",
-          "moms25": "Moms 25% (Frakt & Övrigt):",
-          "totalMoms": "Total Moms:",
+          "moms6": "Moms (6%):",
+          "moms12": "Moms (12%):",
+          "moms25": "Moms (25%):",
+          "totalMoms": "Total moms:",
           "exceedsAuthorizedWarningTitle": "Ersättningsvaran överstiger auktoriserat belopp",
           "exceedsAuthorizedWarningDesc": "Kunden har endast auktoriserat {amount}. Ordern kan inte skickas förrän beloppet justeras."
         },
@@ -735,7 +783,7 @@
       "saveError": "Ett fel uppstod vid sparande.",
       "collapseAll": "Fäll ihop alla",
       "expandAll": "Fäll ut alla",
-      "sectionsCount": "6 sektioner",
+      "sectionsCount": "7 sektioner",
       "company": {
         "sectionTitle": "Företagsinformation & Bokföringslagen",
         "badge": "Org.nr & Moms",
@@ -791,6 +839,15 @@
         "moveDown": "Flytta ner",
         "selectPlatform": "Välj plattform...",
         "invalidUrlError": "Vänligen korrigera ogiltiga webbadresser för sociala medier innan du sparar."
+      },
+      "fulfillment": {
+        "sectionTitle": "Orderhantering & Packvarning",
+        "badge": "1–30 dagar",
+        "description": "Konfigurera tidsfristen för när en opackad order (PENDING_PACKING) ska flaggas som försenad i orderöversikten.",
+        "thresholdLabel": "Varningströskel för opackade ordrar (dagar)",
+        "thresholdHelp": "Ordrar som väntar på packning längre än detta antal dagar visas med en röd/bärnstensfärgad varningsbricka. Tillåtet intervall: 1–30 dagar (Standard: 4 dagar).",
+        "daysSuffix": "dgr",
+        "validationError": "Varningströskeln måste vara ett heltal mellan 1 och 30 dagar."
       }
     }
   },

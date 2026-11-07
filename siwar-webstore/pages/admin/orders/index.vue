@@ -12,8 +12,15 @@ const localePath = useLocalePath()
 const searchQuery = ref('')
 const selectedFulfillmentStatus = ref('all')
 const selectedPaymentStatus = ref('all')
+const filterStaleOnly = ref(false)
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
+
+// Dynamic store settings fetch for packing alert threshold fallback
+const { data: storeSettings } = await useAsyncData(
+  'admin-orders-store-settings',
+  () => $fetch<any>('/api/settings').catch(() => null)
+)
 
 const {
   data: ordersResponse,
@@ -26,14 +33,41 @@ const {
       selectedFulfillmentStatus.value !== 'all' ? selectedFulfillmentStatus.value : undefined,
     paymentStatus:
       selectedPaymentStatus.value !== 'all' ? selectedPaymentStatus.value : undefined,
+    staleOnly: filterStaleOnly.value ? 'true' : undefined,
     page: currentPage.value,
     limit: itemsPerPage.value,
   })),
 })
 
+// Active packing threshold in days (from API metrics or settings, default 4)
+const packingThresholdDays = computed<number>(() => {
+  return (
+    ordersResponse.value?.staleOrderPackingThresholdDays ||
+    storeSettings.value?.staleOrderPackingThresholdDays ||
+    4
+  )
+})
+
+/**
+ * Evaluates whether an order in PENDING_PACKING has exceeded the store packing threshold.
+ */
+function isOrderStale(order: any): boolean {
+  if (!order || order.fulfillmentStatus !== 'PENDING_PACKING') return false
+  const thresholdMs = (packingThresholdDays.value || 4) * 24 * 60 * 60 * 1000
+  return (Date.now() - new Date(order.createdAt).getTime()) > thresholdMs
+}
+
+function toggleStaleFilter() {
+  filterStaleOnly.value = !filterStaleOnly.value
+  currentPage.value = 1
+}
+
 const orders = computed(() => {
-  if (Array.isArray(ordersResponse.value)) return ordersResponse.value
-  return ordersResponse.value?.orders || []
+  const raw = Array.isArray(ordersResponse.value) ? ordersResponse.value : (ordersResponse.value?.orders || [])
+  if (filterStaleOnly.value) {
+    return raw.filter((o: any) => isOrderStale(o))
+  }
+  return raw
 })
 
 const pagination = computed(() => {
@@ -57,6 +91,7 @@ function resetFilters() {
   searchQuery.value = ''
   selectedFulfillmentStatus.value = 'all'
   selectedPaymentStatus.value = 'all'
+  filterStaleOnly.value = false
   currentPage.value = 1
 }
 
@@ -82,7 +117,7 @@ function visiblePages(current: number, total: number): (number | string)[] {
 }
 
 // Reset page when filters change
-watch([searchQuery, selectedFulfillmentStatus, selectedPaymentStatus, itemsPerPage], () => {
+watch([searchQuery, selectedFulfillmentStatus, selectedPaymentStatus, filterStaleOnly, itemsPerPage], () => {
   currentPage.value = 1
 })
 
@@ -104,6 +139,14 @@ const dispatchedCount = computed(() => {
     return ordersResponse.value.metrics.dispatchedCount
   }
   return orders.value?.filter((o: any) => o.fulfillmentStatus === 'DISPATCHED').length || 0
+})
+
+const staleOrdersCount = computed(() => {
+  if (ordersResponse.value?.metrics?.staleCount !== undefined) {
+    return ordersResponse.value.metrics.staleCount
+  }
+  const source = Array.isArray(ordersResponse.value) ? ordersResponse.value : (ordersResponse.value?.orders || [])
+  return source.filter((o: any) => isOrderStale(o)).length
 })
 
 /**
@@ -134,13 +177,20 @@ function canPackOrder(order: any): boolean {
 
         <div class="flex items-center gap-3">
           <div class="stats shadow-sm bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 rounded-2xl">
-            <div class="stat py-2.5 px-5">
+            <div class="stat py-2.5 px-3 sm:px-5">
               <div class="stat-title text-xs font-bold uppercase tracking-wider text-base-content/80">{{ t('admin.orders.stats.pendingPacking') }}</div>
-              <div class="stat-value text-2xl font-black text-amber-600 dark:text-amber-400">{{ pendingPackingCount }}</div>
+              <div class="stat-value text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">{{ pendingPackingCount }}</div>
             </div>
-            <div class="stat py-2.5 px-5 border-l-2 border-slate-200 dark:border-zinc-700/80">
+            <div class="stat py-2.5 px-3 sm:px-5 border-l-2 border-slate-200 dark:border-zinc-700/80">
+              <div class="stat-title text-xs font-bold uppercase tracking-wider text-base-content/80 flex items-center gap-1">
+                <Icon name="lucide:clock-alert" class="size-3.5 text-rose-500" />
+                <span>{{ t('admin.orders.stats.staleOrders', 'Försenade') }}</span>
+              </div>
+              <div class="stat-value text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400">{{ staleOrdersCount }}</div>
+            </div>
+            <div class="stat py-2.5 px-3 sm:px-5 border-l-2 border-slate-200 dark:border-zinc-700/80">
               <div class="stat-title text-xs font-bold uppercase tracking-wider text-base-content/80">{{ t('admin.orders.stats.dispatched') }}</div>
-              <div class="stat-value text-2xl font-black text-success">{{ dispatchedCount }}</div>
+              <div class="stat-value text-xl sm:text-2xl font-black text-success">{{ dispatchedCount }}</div>
             </div>
           </div>
         </div>
@@ -195,13 +245,39 @@ function canPackOrder(order: any): boolean {
             <!-- Reset Filter CTA -->
             <div class="flex items-center justify-end">
               <button
-                v-if="searchQuery || selectedFulfillmentStatus !== 'all' || selectedPaymentStatus !== 'all'"
+                v-if="searchQuery || selectedFulfillmentStatus !== 'all' || selectedPaymentStatus !== 'all' || filterStaleOnly"
                 type="button"
                 class="btn btn-ghost btn-sm text-xs font-bold gap-1.5 text-base-content/80 hover:text-base-content"
                 @click="resetFilters"
               >
                 <Icon name="lucide:rotate-ccw" class="size-3.5" />
                 {{ t('admin.orders.filters.resetFilters') }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Filters Toolbar (Isolate Overdue Orders) -->
+          <div class="flex flex-wrap items-center justify-between gap-2.5 pt-3 mt-1 border-t border-slate-100 dark:border-zinc-800">
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="btn btn-sm h-8 px-3 rounded-lg text-xs font-bold gap-1.5 transition-all shadow-xs border-2"
+                :class="[
+                  filterStaleOnly
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-600'
+                    : 'bg-white dark:bg-zinc-800 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-900/70 hover:bg-rose-50 dark:hover:bg-rose-950/30'
+                ]"
+                @click="toggleStaleFilter"
+              >
+                <Icon name="lucide:clock-alert" class="size-3.5 shrink-0" />
+                <span>{{ t('admin.orders.filters.staleOnly', { days: packingThresholdDays }) }}</span>
+                <span
+                  v-if="staleOrdersCount > 0"
+                  class="badge badge-xs font-mono font-bold px-1.5"
+                  :class="filterStaleOnly ? 'bg-white text-rose-700' : 'bg-rose-100 dark:bg-rose-900 text-rose-800 dark:text-rose-200'"
+                >
+                  {{ staleOrdersCount }}
+                </span>
               </button>
             </div>
           </div>
@@ -227,7 +303,12 @@ function canPackOrder(order: any): boolean {
           <div
             v-for="order in orders"
             :key="order.id"
-            class="p-5 sm:p-6 space-y-4 hover:bg-slate-50/80 dark:hover:bg-zinc-800/60 transition-colors duration-150"
+            class="p-5 sm:p-6 space-y-4 transition-colors duration-150"
+            :class="[
+              isOrderStale(order)
+                ? 'bg-rose-50/60 dark:bg-rose-950/20 border-s-4 border-s-rose-500 hover:bg-rose-100/60 dark:hover:bg-rose-950/30'
+                : 'hover:bg-slate-50/80 dark:hover:bg-zinc-800/60'
+            ]"
           >
             <!-- Top: Order Reference, Customer, Badges & Date -->
             <div class="flex items-start justify-between gap-3">
@@ -235,6 +316,15 @@ function canPackOrder(order: any): boolean {
                 <div class="flex flex-wrap items-center gap-1.5">
                   <span class="font-mono font-bold text-base text-base-content">
                     {{ order.orderReference }}
+                  </span>
+                  <!-- Stale Aging Alert Badge -->
+                  <span
+                    v-if="isOrderStale(order)"
+                    class="badge badge-error badge-xs text-white font-bold gap-1 inline-flex items-center shadow-xs"
+                    :title="t('admin.orders.badges.staleTooltip', { days: packingThresholdDays })"
+                  >
+                    <Icon name="lucide:clock-alert" class="size-3" />
+                    <span>{{ t('admin.orders.badges.stale', { days: packingThresholdDays }) }}</span>
                   </span>
                   <span
                     v-if="order.shortagesCount > 0"
@@ -390,18 +480,34 @@ function canPackOrder(order: any): boolean {
               <tr
                 v-for="order in orders"
                 :key="order.id"
-                class="hover:bg-brand-50/70 dark:hover:bg-zinc-800/80 transition-colors duration-150"
+                class="transition-colors duration-150"
+                :class="[
+                  isOrderStale(order)
+                    ? 'bg-rose-50/60 dark:bg-rose-950/20 border-s-4 border-s-rose-500 hover:bg-rose-100/60 dark:hover:bg-rose-950/30'
+                    : 'hover:bg-brand-50/70 dark:hover:bg-zinc-800/80'
+                ]"
               >
                 <!-- Order Reference -->
                 <td class="py-4 px-5 font-mono font-bold text-sm text-base-content">
-                  {{ order.orderReference }}
-                  <span
-                    v-if="order.shortagesCount > 0"
-                    class="badge badge-warning badge-xs ml-1 font-bold"
-                    :title="t('admin.orders.badges.hasShortages')"
-                  >
-                    {{ t('admin.orders.badges.shortage') }} ({{ order.shortagesCount }})
-                  </span>
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <span>{{ order.orderReference }}</span>
+                    <!-- Stale Aging Alert Badge -->
+                    <span
+                      v-if="isOrderStale(order)"
+                      class="badge badge-error badge-xs text-white font-bold gap-1 inline-flex items-center shadow-xs"
+                      :title="t('admin.orders.badges.staleTooltip', { days: packingThresholdDays })"
+                    >
+                      <Icon name="lucide:clock-alert" class="size-3" />
+                      <span>{{ t('admin.orders.badges.stale', { days: packingThresholdDays }) }}</span>
+                    </span>
+                    <span
+                      v-if="order.shortagesCount > 0"
+                      class="badge badge-warning badge-xs font-bold"
+                      :title="t('admin.orders.badges.hasShortages')"
+                    >
+                      {{ t('admin.orders.badges.shortage') }} ({{ order.shortagesCount }})
+                    </span>
+                  </div>
                 </td>
 
                 <!-- Customer Details -->

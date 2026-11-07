@@ -73,8 +73,53 @@ const dateValidationError = computed(() => {
   return null
 })
 
+// Check if Kortdatum clearance is active and unexpired on the product (Priority 1)
+const hasActiveKortdatum = computed<boolean>(() => {
+  if (!props.product?.kortdatum?.isKortdatum) return false
+  if (props.product.activeDiscountType) {
+    return props.product.activeDiscountType === 'KORTDATUM'
+  }
+  if (!props.product.kortdatum.bestBeforeDate) return true
+  const d = new Date(props.product.kortdatum.bestBeforeDate)
+  if (Number.isNaN(d.getTime())) return true
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  return d.getTime() >= startOfToday.getTime()
+})
+
+// Check if an active Category-wide promotion is currently applied (Priority 2)
+const hasActiveCategorySale = computed<boolean>(() => {
+  const cat = props.product?.category
+  if (!cat || !cat.isActiveDiscount) return false
+  const pct = Number(cat.discountPercent) || 0
+  if (pct <= 0) return false
+
+  const now = Date.now()
+  if (cat.discountStartsAt) {
+    const s = new Date(cat.discountStartsAt).getTime()
+    if (!Number.isNaN(s) && s > now) return false
+  }
+  if (cat.discountExpiresAt) {
+    const e = new Date(cat.discountExpiresAt).getTime()
+    if (!Number.isNaN(e) && e <= now) return false
+  }
+  return true
+})
+
+const activeCategoryDiscountPercent = computed<number>(() => {
+  return Number(props.product?.category?.discountPercent) || 0
+})
+
+// Both Kortdatum (Priority 1) and Category Sale (Priority 2) block ordinary discount adjustments
+const isDiscountBlocked = computed<boolean>(() => {
+  return hasActiveKortdatum.value || hasActiveCategorySale.value
+})
+
 // Can submit validation (0 <= discount <= 90)
 const isValid = computed(() => {
+  if (isDiscountBlocked.value) {
+    return false
+  }
   if (localDiscount.value < 0 || localDiscount.value > 90 || !Number.isInteger(localDiscount.value)) {
     return false
   }
@@ -124,6 +169,13 @@ function selectPreset(percent: number) {
 function clearDates() {
   localStartsAt.value = ''
   localExpiresAt.value = ''
+}
+
+function formatBestBefore(dateStr?: string | Date | null): string {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toISOString().slice(0, 10)
 }
 
 function handleClose() {
@@ -204,6 +256,51 @@ async function handleSave() {
     <div v-if="errorMessage || dateValidationError" class="alert alert-error text-xs py-2 px-3 rounded-xl">
       <Icon name="lucide:alert-circle" class="size-4 shrink-0" />
       <span>{{ errorMessage || dateValidationError }}</span>
+    </div>
+
+    <!-- Active Kortdatum Notice (Rank 1 Priority) -->
+    <div
+      v-if="hasActiveKortdatum"
+      class="p-4 rounded-2xl border-2 border-amber-500/50 bg-amber-50 dark:bg-amber-950/40 text-amber-950 dark:text-amber-100 flex items-start gap-3 shadow-xs"
+    >
+      <Icon name="lucide:calendar-clock" class="size-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+      <div class="space-y-1 flex-1 min-w-0">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="font-extrabold text-xs uppercase tracking-wider text-amber-800 dark:text-amber-300">
+            {{ t('admin.discountModal.kortdatumActiveTitle', 'Kortdatum är aktivt (Prioritet 1)') }}
+          </span>
+          <span class="badge bg-black text-amber-300 dark:bg-zinc-950 border border-zinc-800 font-black text-xs">
+            -{{ product?.kortdatum?.clearanceDiscount || 0 }}%
+          </span>
+        </div>
+        <p class="text-xs leading-relaxed opacity-90">
+          {{ t('admin.discountModal.kortdatumActiveNotice', { discount: product?.kortdatum?.clearanceDiscount || 0 }) }}
+        </p>
+        <div v-if="product?.kortdatum?.bestBeforeDate" class="text-[11px] font-mono font-bold text-amber-800 dark:text-amber-300 pt-0.5">
+          {{ t('cart.bestBefore', 'Bäst före:') }} {{ formatBestBefore(product.kortdatum.bestBeforeDate) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Category Campaign Notice (Rank 2 Priority) -->
+    <div
+      v-else-if="hasActiveCategorySale"
+      class="p-4 rounded-2xl border-2 border-sky-500/50 bg-sky-50 dark:bg-sky-950/40 text-sky-950 dark:text-sky-100 flex items-start gap-3 shadow-xs"
+    >
+      <Icon name="lucide:tag" class="size-5 shrink-0 text-sky-600 dark:text-sky-400 mt-0.5" />
+      <div class="space-y-1 flex-1 min-w-0">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="font-extrabold text-xs uppercase tracking-wider text-sky-800 dark:text-sky-300">
+            {{ t('admin.discountModal.categorySaleActiveTitle', 'Kategorikampanj är aktiv (Prioritet 2)') }}
+          </span>
+          <span class="badge badge-info text-white font-black text-xs">
+            -{{ activeCategoryDiscountPercent }}%
+          </span>
+        </div>
+        <p class="text-xs leading-relaxed opacity-90">
+          {{ t('admin.discountModal.categorySaleActiveNotice', { discount: activeCategoryDiscountPercent, category: getLocalizedText(product?.category?.name) }) }}
+        </p>
+      </div>
     </div>
 
     <!-- Live Status & Price Previews Header -->
@@ -290,12 +387,15 @@ async function handleSave() {
           v-for="preset in DISCOUNT_PRESETS"
           :key="preset"
           type="button"
+          :disabled="isDiscountBlocked || isSubmitting"
           class="btn btn-sm h-9 px-3 rounded-xl font-bold transition-transform active:scale-95 text-xs shadow-xs"
-          :class="localDiscount === preset
-            ? 'bg-brand-600 hover:bg-brand-700 text-white shadow-xs'
-            : preset === 0
-              ? 'bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-300 border-2 border-rose-200 dark:border-rose-900'
-              : 'bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-slate-200 border-2 border-slate-300 dark:border-zinc-600'"
+          :class="isDiscountBlocked
+            ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-zinc-800 text-base-content/40 border-2 border-slate-200 dark:border-zinc-700'
+            : localDiscount === preset
+              ? 'bg-brand-600 hover:bg-brand-700 text-white shadow-xs'
+              : preset === 0
+                ? 'bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-300 border-2 border-rose-200 dark:border-rose-900'
+                : 'bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-slate-200 border-2 border-slate-300 dark:border-zinc-600'"
           @click="selectPreset(preset)"
         >
           {{ preset === 0 ? t('admin.discountModal.presetZero', '0% (Ingen)') : `-${preset}%` }}
@@ -315,7 +415,8 @@ async function handleSave() {
           min="0"
           max="90"
           step="1"
-          class="input w-full font-mono text-base font-bold pl-4 pr-10 py-2.5 h-11 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 transition-all shadow-xs"
+          :disabled="isDiscountBlocked || isSubmitting"
+          class="input w-full font-mono text-base font-bold pl-4 pr-10 py-2.5 h-11 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 transition-all shadow-xs disabled:bg-base-200/60 disabled:text-base-content/40 disabled:cursor-not-allowed disabled:border-base-200"
           @keydown.enter.prevent="handleSave"
         />
         <span class="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold text-sm text-base-content/50 pointer-events-none">
@@ -336,7 +437,8 @@ async function handleSave() {
         <button
           v-if="localStartsAt || localExpiresAt"
           type="button"
-          class="btn btn-xs btn-ghost text-error hover:bg-error/10 font-bold gap-1 rounded-lg"
+          :disabled="isDiscountBlocked || isSubmitting"
+          class="btn btn-xs btn-ghost text-error hover:bg-error/10 font-bold gap-1 rounded-lg disabled:opacity-40"
           @click="clearDates"
         >
           <Icon name="lucide:trash-2" class="size-3" />
@@ -353,7 +455,8 @@ async function handleSave() {
           <input
             v-model="localStartsAt"
             type="datetime-local"
-            class="input w-full text-xs font-mono font-medium px-3 py-2 h-10 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 transition-all shadow-xs"
+            :disabled="isDiscountBlocked || isSubmitting"
+            class="input w-full text-xs font-mono font-medium px-3 py-2 h-10 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 transition-all shadow-xs disabled:bg-base-200/60 disabled:text-base-content/40 disabled:cursor-not-allowed disabled:border-base-200"
           />
         </div>
 
@@ -365,7 +468,8 @@ async function handleSave() {
           <input
             v-model="localExpiresAt"
             type="datetime-local"
-            class="input w-full text-xs font-mono font-medium px-3 py-2 h-10 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 transition-all shadow-xs"
+            :disabled="isDiscountBlocked || isSubmitting"
+            class="input w-full text-xs font-mono font-medium px-3 py-2 h-10 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 transition-all shadow-xs disabled:bg-base-200/60 disabled:text-base-content/40 disabled:cursor-not-allowed disabled:border-base-200"
           />
         </div>
       </div>
@@ -388,8 +492,8 @@ async function handleSave() {
 
         <button
           type="button"
-          :disabled="!isValid || isSubmitting"
-          class="btn h-10 px-6 rounded-xl font-bold bg-brand-600 hover:bg-brand-700 !text-white !border-none shadow-sm transition-transform active:scale-95 disabled:opacity-50 flex items-center gap-2"
+          :disabled="!isValid || isSubmitting || isDiscountBlocked"
+          class="btn h-10 px-6 rounded-xl font-bold bg-brand-600 hover:bg-brand-700 !text-white !border-none shadow-sm transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           @click="handleSave"
         >
           <span v-if="isSubmitting" class="loading loading-spinner loading-xs" />

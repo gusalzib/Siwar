@@ -7,6 +7,7 @@ const emit = defineEmits<{
 }>()
 
 const { t, locale } = useI18n()
+const localePath = useLocalePath()
 
 // Fetch Categories
 const { data: categories, pending: isLoading, refresh } = await useFetch<any[]>('/api/admin/categories')
@@ -144,24 +145,39 @@ async function handleSubmit() {
   }
 }
 
-// Delete Confirmation Modal State
+// Delete Confirmation Modal State (Issue #43)
 const isDeleteModalOpen = ref(false)
+const isReassignModalOpen = ref(false)
 const categoryToDelete = ref<any | null>(null)
 const isDeleting = ref(false)
 const deleteErrorMessage = ref<string | null>(null)
 
 function openDeleteModal(category: any) {
+  // Reject deletion of the protected system default category
+  if (category.isSystemDefault) {
+    return
+  }
+
   categoryToDelete.value = category
   deleteErrorMessage.value = null
-  isDeleteModalOpen.value = true
+
+  // If category has products, trigger guided reassignment modal; otherwise direct confirmation
+  const count = Number(category.productCount || 0)
+  if (count > 0) {
+    isReassignModalOpen.value = true
+  } else {
+    isDeleteModalOpen.value = true
+  }
 }
 
 function closeDeleteModal() {
   categoryToDelete.value = null
   deleteErrorMessage.value = null
   isDeleteModalOpen.value = false
+  isReassignModalOpen.value = false
 }
 
+// Case B: Direct deletion for 0-product category
 async function confirmDeleteCategory() {
   if (!categoryToDelete.value) return
 
@@ -178,6 +194,128 @@ async function confirmDeleteCategory() {
       t('admin.categories.error', 'Kunde inte ta bort kategorin.')
   } finally {
     isDeleting.value = false
+  }
+}
+
+// Case A: Guided migration and deletion for populated category
+async function confirmDeleteWithReassignment(replacementCategoryId: string) {
+  if (!categoryToDelete.value) return
+
+  isDeleting.value = true
+  deleteErrorMessage.value = null
+  try {
+    await $fetch(`/api/admin/categories/${categoryToDelete.value.id}`, {
+      method: 'DELETE',
+      body: { replacementCategoryId },
+    })
+    closeDeleteModal()
+    await refresh()
+  } catch (err: any) {
+    deleteErrorMessage.value =
+      err?.data?.statusMessage ||
+      err?.data?.message ||
+      t('admin.categories.error', 'Kunde inte ta bort kategorin.')
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+// Category Promotional Discount Modal State (Issue #41)
+const isPromoModalOpen = ref(false)
+const categoryForPromo = ref<any | null>(null)
+const promoForm = ref({
+  discountPercent: 0,
+  isActiveDiscount: false,
+  discountStartsAt: '',
+  discountExpiresAt: '',
+})
+const promoErrorMessage = ref('')
+const isPromoSubmitting = ref(false)
+
+function toDatetimeLocalString(val?: string | Date | null): string {
+  if (!val) return ''
+  const d = new Date(val)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const yyyy = d.getFullYear()
+  const MM = pad(d.getMonth() + 1)
+  const dd = pad(d.getDate())
+  const hh = pad(d.getHours())
+  const mm = pad(d.getMinutes())
+  return `${yyyy}-${MM}-${dd}T${hh}:${mm}`
+}
+
+function openPromoModal(category: any) {
+  categoryForPromo.value = category
+  promoErrorMessage.value = ''
+  const hasExistingDiscount = typeof category.discountPercent === 'number' && category.discountPercent > 0
+  promoForm.value = {
+    discountPercent: typeof category.discountPercent === 'number' ? category.discountPercent : 0,
+    isActiveDiscount: hasExistingDiscount ? Boolean(category.isActiveDiscount) : true,
+    discountStartsAt: toDatetimeLocalString(category.discountStartsAt),
+    discountExpiresAt: toDatetimeLocalString(category.discountExpiresAt),
+  }
+  isPromoModalOpen.value = true
+}
+
+function onDiscountPercentInput() {
+  if (promoForm.value.discountPercent > 0 && !categoryForPromo.value?.discountPercent && !promoForm.value.isActiveDiscount) {
+    promoForm.value.isActiveDiscount = true
+  }
+}
+
+function closePromoModal() {
+  categoryForPromo.value = null
+  promoErrorMessage.value = ''
+  isPromoModalOpen.value = false
+}
+
+async function handleSavePromo() {
+  if (!categoryForPromo.value) return
+  const percent = Number(promoForm.value.discountPercent) || 0
+  if (promoForm.value.isActiveDiscount && (percent < 1 || percent > 90)) {
+    promoErrorMessage.value = t(
+      'admin.categories.invalidPercent',
+      'Rabatten måste vara mellan 1% och 90%.'
+    )
+    return
+  }
+
+  if (promoForm.value.discountStartsAt && promoForm.value.discountExpiresAt) {
+    const s = new Date(promoForm.value.discountStartsAt).getTime()
+    const e = new Date(promoForm.value.discountExpiresAt).getTime()
+    if (e <= s) {
+      promoErrorMessage.value = t(
+        'admin.discountModal.dateOrderError',
+        'Slutdatum måste vara efter startdatum.'
+      )
+      return
+    }
+  }
+
+  isPromoSubmitting.value = true
+  promoErrorMessage.value = ''
+  try {
+    const catId = categoryForPromo.value.id || categoryForPromo.value._id
+    await $fetch(`/api/admin/categories/${catId}`, {
+      method: 'PUT',
+      body: {
+        discountPercent: percent,
+        isActiveDiscount: Boolean(promoForm.value.isActiveDiscount),
+        discountStartsAt: promoForm.value.discountStartsAt ? new Date(promoForm.value.discountStartsAt) : null,
+        discountExpiresAt: promoForm.value.discountExpiresAt ? new Date(promoForm.value.discountExpiresAt) : null,
+      },
+    })
+    successMessage.value = t('admin.categories.promoSuccess', 'Kategorikampanj har sparats framgångsrikt!')
+    closePromoModal()
+    await refresh()
+  } catch (err: any) {
+    promoErrorMessage.value =
+      err?.data?.statusMessage ||
+      err?.data?.message ||
+      t('admin.categories.error', 'Kunde inte spara kampanjen.')
+  } finally {
+    isPromoSubmitting.value = false
   }
 }
 </script>
@@ -295,8 +433,34 @@ async function confirmDeleteCategory() {
               >
                 <!-- Name & Multi-language indicators -->
                 <td class="py-3.5 px-4">
-                  <div class="font-bold text-sm text-base-content">
-                    {{ getLocalizedText(category.name) }}
+                  <div class="font-bold text-sm text-base-content flex items-center gap-2">
+                    <NuxtLink
+                      :to="localePath({ path: '/admin/products', query: { category: category.id } })"
+                      class="hover:text-brand-600 dark:hover:text-brand-400 hover:underline transition-colors inline-flex items-center gap-1.5 group cursor-pointer"
+                      :title="t('admin.categories.viewProducts', 'Visa produkter i denna kategori')"
+                    >
+                      <span>{{ getLocalizedText(category.name) }}</span>
+                      <Icon
+                        name="lucide:arrow-up-right"
+                        class="size-3.5 text-base-content/40 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors"
+                      />
+                    </NuxtLink>
+                    <!-- Protected System Default Category Badge -->
+                    <span
+                      v-if="category.isSystemDefault"
+                      class="badge badge-neutral badge-xs font-semibold px-2 py-0.5 text-[10px]"
+                    >
+                      {{ t('admin.categories.systemDefaultBadge', 'System') }}
+                    </span>
+                    <!-- Product Count Badge -->
+                    <NuxtLink
+                      v-if="category.productCount !== undefined"
+                      :to="localePath({ path: '/admin/products', query: { category: category.id } })"
+                      class="badge badge-ghost badge-xs text-[10px] text-base-content/60 hover:bg-base-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                      :title="t('admin.categories.viewProducts', 'Visa produkter i denna kategori')"
+                    >
+                      {{ category.productCount }} prod.
+                    </NuxtLink>
                   </div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] text-base-content/60 font-medium">
                     <span
@@ -327,26 +491,50 @@ async function confirmDeleteCategory() {
                   </div>
                 </td>
 
-                <!-- Status -->
+                <!-- Status & Active Discount -->
                 <td class="py-3.5 px-4">
-                  <span
-                    v-if="category.isActive !== false"
-                    class="badge badge-sm badge-success gap-1 font-bold text-[11px]"
-                  >
-                    <span class="size-1.5 rounded-full bg-white"></span>
-                    {{ t('admin.categories.active', 'Aktiv') }}
-                  </span>
-                  <span
-                    v-else
-                    class="badge badge-sm badge-ghost gap-1 font-medium text-[11px] opacity-75"
-                  >
-                    {{ t('admin.categories.inactive', 'Inaktiv') }}
-                  </span>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      v-if="category.isActive !== false"
+                      class="badge badge-sm badge-success gap-1 font-bold text-[11px]"
+                    >
+                      <span class="size-1.5 rounded-full bg-white"></span>
+                      {{ t('admin.categories.active', 'Aktiv') }}
+                    </span>
+                    <span
+                      v-else
+                      class="badge badge-sm badge-ghost gap-1 font-medium text-[11px] opacity-75"
+                    >
+                      {{ t('admin.categories.inactive', 'Inaktiv') }}
+                    </span>
+
+                    <!-- Active Blanket Category Promo Badge -->
+                    <span
+                      v-if="category.isActiveDiscount && category.discountPercent > 0"
+                      class="badge badge-sm badge-error text-white font-bold text-[11px] gap-1 shadow-xs"
+                      :title="t('admin.discountModal.title', 'Kategorikampanj')"
+                    >
+                      <Icon name="lucide:percent" class="size-3" />
+                      -{{ category.discountPercent }}%
+                    </span>
+                  </div>
                 </td>
 
                 <!-- Actions -->
                 <td class="py-3.5 px-4 text-right rtl:text-left space-x-1 rtl:space-x-reverse">
+                  <!-- Category Promotional Discount Trigger -->
                   <button
+                    v-if="!category.isSystemDefault"
+                    type="button"
+                    class="btn btn-sm btn-ghost rounded-lg"
+                    :class="category.isActiveDiscount && category.discountPercent > 0 ? 'text-rose-600 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/40' : 'text-base-content/70 hover:text-base-content'"
+                    :title="t('admin.categories.discountModalTitle', 'Hantera kategorirabatt')"
+                    @click="openPromoModal(category)"
+                  >
+                    <Icon name="lucide:percent" class="size-4" />
+                  </button>
+                  <button
+                    v-if="!category.isSystemDefault"
                     type="button"
                     class="btn btn-sm btn-ghost text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/40 rounded-lg"
                     :title="t('admin.categories.edit', 'Redigera')"
@@ -355,6 +543,7 @@ async function confirmDeleteCategory() {
                     <Icon name="lucide:pencil" class="size-4" />
                   </button>
                   <button
+                    v-if="!category.isSystemDefault"
                     type="button"
                     class="btn btn-sm btn-ghost text-error hover:bg-error/10 rounded-lg"
                     :title="t('admin.categories.delete', 'Ta bort')"
@@ -362,6 +551,14 @@ async function confirmDeleteCategory() {
                   >
                     <Icon name="lucide:trash-2" class="size-4" />
                   </button>
+                  <!-- Locked indicator for protected system default category -->
+                  <span
+                    v-else
+                    class="inline-flex items-center gap-1 text-xs text-base-content/40 px-2 py-1 font-medium cursor-not-allowed select-none"
+                    :title="t('admin.categories.systemDefaultCannotDelete', 'Systemstandardkategorin är skyddad och kan inte tas bort.')"
+                  >
+                    <Icon name="lucide:lock" class="size-3.5" />
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -377,9 +574,37 @@ async function confirmDeleteCategory() {
           >
             <div class="flex items-start justify-between gap-2">
               <div>
-                <h3 class="font-bold text-base text-base-content">
-                  {{ getLocalizedText(category.name) }}
-                </h3>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-base text-base-content">
+                    <NuxtLink
+                      :to="localePath({ path: '/admin/products', query: { category: category.id } })"
+                      class="hover:text-brand-600 dark:hover:text-brand-400 hover:underline transition-colors inline-flex items-center gap-1.5 group cursor-pointer"
+                      :title="t('admin.categories.viewProducts', 'Visa produkter i denna kategori')"
+                    >
+                      <span>{{ getLocalizedText(category.name) }}</span>
+                      <Icon
+                        name="lucide:arrow-up-right"
+                        class="size-4 text-base-content/40 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors"
+                      />
+                    </NuxtLink>
+                  </h3>
+                  <!-- Protected System Default Category Badge -->
+                  <span
+                    v-if="category.isSystemDefault"
+                    class="badge badge-neutral badge-xs font-semibold px-1.5 py-0.5 text-[10px]"
+                  >
+                    {{ t('admin.categories.systemDefaultBadge', 'System') }}
+                  </span>
+                  <!-- Product Count Badge -->
+                  <NuxtLink
+                    v-if="category.productCount !== undefined"
+                    :to="localePath({ path: '/admin/products', query: { category: category.id } })"
+                    class="badge badge-ghost badge-xs text-[10px] text-base-content/60 hover:bg-base-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                    :title="t('admin.categories.viewProducts', 'Visa produkter i denna kategori')"
+                  >
+                    {{ category.productCount }} prod.
+                  </NuxtLink>
+                </div>
                 <span class="font-mono text-xs text-base-content/70">
                   /{{ getLocalizedText(category.slug) || '—' }}
                 </span>
@@ -413,6 +638,21 @@ async function confirmDeleteCategory() {
 
             <div class="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
               <button
+                v-if="!category.isSystemDefault"
+                type="button"
+                class="btn btn-sm btn-ghost font-bold gap-1.5 rounded-xl"
+                :class="category.isActiveDiscount && category.discountPercent > 0 ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40' : 'text-base-content/75 hover:bg-base-200 dark:hover:bg-zinc-800'"
+                :title="t('admin.categories.discountModalTitle', 'Hantera kategorirabatt')"
+                @click="openPromoModal(category)"
+              >
+                <Icon name="lucide:percent" class="size-3.5" />
+                <span>{{ t('admin.categories.discount', 'Kampanj') }}</span>
+                <span v-if="category.isActiveDiscount && category.discountPercent > 0" class="badge badge-error badge-xs text-white">
+                  -{{ category.discountPercent }}%
+                </span>
+              </button>
+              <button
+                v-if="!category.isSystemDefault"
                 type="button"
                 class="btn btn-sm btn-ghost text-brand-600 dark:text-brand-400 font-bold gap-1.5 rounded-xl hover:bg-brand-50 dark:hover:bg-brand-950/40"
                 :title="t('admin.categories.edit', 'Redigera')"
@@ -422,6 +662,7 @@ async function confirmDeleteCategory() {
                 <span>{{ t('admin.categories.edit', 'Redigera') }}</span>
               </button>
               <button
+                v-if="!category.isSystemDefault"
                 type="button"
                 class="btn btn-sm btn-ghost text-error font-bold gap-1.5 rounded-xl hover:bg-error/10"
                 :title="t('admin.categories.delete', 'Ta bort')"
@@ -430,6 +671,13 @@ async function confirmDeleteCategory() {
                 <Icon name="lucide:trash-2" class="size-3.5" />
                 <span>{{ t('admin.categories.delete', 'Ta bort') }}</span>
               </button>
+              <div
+                v-else
+                class="flex items-center gap-1 text-xs text-base-content/40 px-2 py-1 font-medium select-none"
+              >
+                <Icon name="lucide:lock" class="size-3.5" />
+                <span>{{ t('admin.categories.systemDefaultCannotDelete', 'Skyddad systemkategori') }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -574,7 +822,7 @@ async function confirmDeleteCategory() {
       </form>
     </dialog>
 
-    <!-- Delete Category Confirmation Modal -->
+    <!-- Delete Category Confirmation Modal (Case B: 0 products) -->
     <ConfirmModal
       :is-open="isDeleteModalOpen"
       :title="t('admin.categories.deleteModalTitle', 'Ta bort kategori?')"
@@ -593,5 +841,139 @@ async function confirmDeleteCategory() {
         <span>{{ deleteErrorMessage }}</span>
       </div>
     </ConfirmModal>
+
+    <!-- Guided Category Deletion & Product Reassignment Modal (Case A: > 0 products) (Issue #43) -->
+    <AdminCategoryDeleteModal
+      :is-open="isReassignModalOpen"
+      :category="categoryToDelete"
+      :categories="categories || []"
+      :is-submitting="isDeleting"
+      :error-message="deleteErrorMessage"
+      @confirm="confirmDeleteWithReassignment"
+      @close="closeDeleteModal"
+    />
+
+    <!-- Category Promotional Discount Modal (Issue #41) -->
+    <BaseModal
+      :is-open="isPromoModalOpen"
+      :title="t('admin.categories.discountModalTitle', 'Hantera kategorirabatt')"
+      :subtitle="categoryForPromo ? getLocalizedText(categoryForPromo.name) : undefined"
+      max-width="md"
+      @close="closePromoModal"
+    >
+      <form @submit.prevent="handleSavePromo" class="space-y-4">
+        <div v-if="promoErrorMessage" class="alert alert-error text-xs py-2 px-3 rounded-xl">
+          <span>{{ promoErrorMessage }}</span>
+        </div>
+
+        <!-- Active Toggle (High-Contrast Toggle Card) -->
+        <div
+          class="p-3.5 rounded-2xl border-2 transition-all duration-200 shadow-2xs"
+          :class="promoForm.isActiveDiscount
+            ? 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800/80 ring-1 ring-rose-500/20'
+            : 'bg-slate-100/80 dark:bg-zinc-800/60 border-slate-300 dark:border-zinc-600'"
+        >
+          <label class="flex items-center justify-between gap-3 cursor-pointer select-none">
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-2">
+                <span class="font-extrabold text-sm text-base-content">
+                  {{ t('admin.categories.isActiveDiscount', 'Aktivera rabatt för hela kategorin') }}
+                </span>
+                <span
+                  class="badge badge-sm font-bold text-[10px]"
+                  :class="promoForm.isActiveDiscount ? 'badge-success text-white' : 'badge-ghost text-base-content/60'"
+                >
+                  {{ promoForm.isActiveDiscount ? t('admin.categories.active', 'Aktiv') : t('admin.categories.inactive', 'Inaktiv') }}
+                </span>
+              </div>
+              <p class="text-xs text-base-content/70 leading-snug">
+                {{ t('admin.categories.discountHelp', 'Tillämpas automatiskt på alla produkter i denna kategori som inte har egna specifika rabatter.') }}
+              </p>
+            </div>
+            <input
+              v-model="promoForm.isActiveDiscount"
+              type="checkbox"
+              class="toggle toggle-md toggle-error shrink-0 border-2 border-slate-400 dark:border-zinc-500 cursor-pointer focus:ring-2 focus:ring-rose-500/30 shadow-xs"
+            />
+          </label>
+        </div>
+
+        <!-- Warning when discount rate entered but toggle is off -->
+        <div
+          v-if="promoForm.discountPercent > 0 && !promoForm.isActiveDiscount"
+          class="alert alert-warning text-xs py-2.5 px-3.5 rounded-xl border-2 border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 shadow-xs flex items-start gap-2.5"
+        >
+          <Icon name="lucide:alert-triangle" class="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+          <div class="space-y-0.5">
+            <span class="font-bold block">{{ t('admin.categories.discountInactiveWarningTitle', 'Kampanjen är inaktiv') }}</span>
+            <span class="text-xs opacity-90 leading-tight">
+              {{ t('admin.categories.discountInactiveWarning', 'Obs! Du har angett en rabattsats men reglaget är inaktiverat. Slå på reglaget ovan om du vill att rabatten ska aktiveras i butiken.') }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Discount Percent -->
+        <div class="form-control">
+          <label class="label py-1">
+            <span class="label-text font-bold text-xs">{{ t('admin.categories.discountPercent', 'Rabattsats (%)') }} *</span>
+          </label>
+          <div class="relative">
+            <input
+              v-model.number="promoForm.discountPercent"
+              type="number"
+              min="0"
+              max="90"
+              placeholder="0"
+              class="input input-bordered h-10 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-rose-500 text-sm shadow-xs w-full pr-8"
+              @input="onDiscountPercentInput"
+            />
+            <span class="absolute right-3 top-2.5 text-xs font-bold text-base-content/50">%</span>
+          </div>
+        </div>
+
+        <!-- Start Date -->
+        <div class="form-control">
+          <label class="label py-1">
+            <span class="label-text font-bold text-xs">{{ t('admin.categories.discountStartsAt', 'Kampanj startdatum') }}</span>
+          </label>
+          <input
+            v-model="promoForm.discountStartsAt"
+            type="datetime-local"
+            class="input input-bordered h-10 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 text-sm shadow-xs w-full"
+          />
+        </div>
+
+        <!-- Expiry Date -->
+        <div class="form-control">
+          <label class="label py-1">
+            <span class="label-text font-bold text-xs">{{ t('admin.categories.discountExpiresAt', 'Kampanj slutdatum') }}</span>
+          </label>
+          <input
+            v-model="promoForm.discountExpiresAt"
+            type="datetime-local"
+            class="input input-bordered h-10 border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content rounded-xl focus:border-brand-500 text-sm shadow-xs w-full"
+          />
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 dark:border-zinc-800 mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            class="btn btn-ghost font-bold rounded-xl text-base-content/75 hover:text-base-content"
+            @click="closePromoModal"
+          >
+            {{ t('admin.categories.cancel', 'Avbryt') }}
+          </button>
+          <button
+            type="submit"
+            :disabled="isPromoSubmitting"
+            class="btn bg-rose-600 hover:bg-rose-700 text-white font-bold border-none shadow-sm rounded-xl gap-2 px-6"
+          >
+            <span v-if="isPromoSubmitting" class="loading loading-spinner loading-sm"></span>
+            <Icon v-else name="lucide:check" class="size-4" />
+            {{ t('admin.categories.save', 'Spara kategori') }}
+          </button>
+        </div>
+      </form>
+    </BaseModal>
   </div>
 </template>

@@ -86,6 +86,7 @@ const { mockState, mockProductModel, mockStoreSettingsModel, mockAllergenModel, 
     save: vi.fn(async function (this: any) {
       if (this.general) mockState.settingsDoc.general = this.general
       if (this.socialLinks) mockState.settingsDoc.socialLinks = this.socialLinks
+      if (this.staleOrderPackingThresholdDays !== undefined) mockState.settingsDoc.staleOrderPackingThresholdDays = this.staleOrderPackingThresholdDays
       return this
     }),
   })
@@ -151,6 +152,7 @@ describe('Section 1. Backend & Configuration', () => {
           { platform: 'instagram', url: 'https://instagram.com/siwar', isActive: true, sortOrder: 1 },
           { platform: 'facebook', url: 'https://facebook.com/siwar', isActive: false, sortOrder: 2 },
         ],
+        staleOrderPackingThresholdDays: 4,
       },
       pickup: {
         enabled: true,
@@ -162,6 +164,7 @@ describe('Section 1. Backend & Configuration', () => {
         { platform: 'instagram', url: 'https://instagram.com/siwar', isActive: true, sortOrder: 1 },
         { platform: 'facebook', url: 'https://facebook.com/siwar', isActive: false, sortOrder: 2 },
       ],
+      staleOrderPackingThresholdDays: 4,
     }
   })
 
@@ -197,6 +200,12 @@ describe('Section 1. Backend & Configuration', () => {
       expect(response.socialLinks[1]?.platform).toBe('facebook')
       expect(response.socialLinks[1]?.isActive).toBe(false)
     })
+
+    it('exposes staleOrderPackingThresholdDays with default fallback', async () => {
+      const response = await getSettingsHandler(dummyEvent)
+      expect(response).toHaveProperty('staleOrderPackingThresholdDays')
+      expect(response.staleOrderPackingThresholdDays).toBe(4)
+    })
   })
 
   describe('3. Admin Settings Endpoints (PUT /api/admin/settings and general.put)', () => {
@@ -229,6 +238,22 @@ describe('Section 1. Backend & Configuration', () => {
       expect(res.statusCode).toBe(200)
       expect(res.general.socialLinks).toHaveLength(1)
       expect(res.general.socialLinks[0].platform).toBe('whatsapp')
+    })
+
+    it('persists and clamps staleOrderPackingThresholdDays via PUT /api/admin/settings', async () => {
+      mockState.body = { staleOrderPackingThresholdDays: 7 }
+      const res = await putAdminSettingsHandler(dummyEvent)
+      expect(res.statusCode).toBe(200)
+      expect(res.staleOrderPackingThresholdDays).toBe(7)
+      expect(res.general.staleOrderPackingThresholdDays).toBe(7)
+    })
+
+    it('persists and clamps staleOrderPackingThresholdDays via PUT /api/admin/settings/general', async () => {
+      mockState.body = { staleOrderPackingThresholdDays: 14 }
+      const res = await putAdminGeneralSettingsHandler(dummyEvent)
+      expect(res.statusCode).toBe(200)
+      expect(res.staleOrderPackingThresholdDays).toBe(14)
+      expect(res.general.staleOrderPackingThresholdDays).toBe(14)
     })
   })
 

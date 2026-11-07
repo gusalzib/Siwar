@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { ensureDefaultCategory } from '../utils/defaultCategory'
 
 export default defineNitroPlugin(async (_nitroApp) => {
   const config = useRuntimeConfig()
@@ -39,6 +40,13 @@ export default defineNitroPlugin(async (_nitroApp) => {
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
       })
+
+      // Lazy-initializer: ensure the protected system default "Övrigt" / "Other" fallback category exists
+      try {
+        await ensureDefaultCategory()
+      } catch (catErr) {
+        console.error('Failed to initialize default category:', catErr)
+      }
     } catch (error) {
       console.error('Error connecting to MongoDB. Retrying in 5 seconds...', error)
       setTimeout(connectToDatabase, 5000)

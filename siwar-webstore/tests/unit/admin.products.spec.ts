@@ -179,6 +179,24 @@ describe('Admin Product Endpoints - Acceptance Criteria & Invariants', () => {
         })
       )
     })
+
+    // AC-1 (Kortdatum vs Ordinary Discount Mutual Exclusion Guard)
+    it('rejects creation with HTTP 400 when both Kortdatum and ordinary discount are submitted (AC-1)', async () => {
+      mockState.body = {
+        ...validBasePayload,
+        price: { SEK: 4900, EUR: 430, USD: 470 },
+        discount: 20,
+        kortdatum: {
+          isKortdatum: true,
+          bestBeforeDate: '2026-11-20',
+          clearanceDiscount: 40,
+        },
+      }
+
+      await expect(createProductHandler(dummyEvent)).rejects.toThrowError(
+        'Kortdatum clearance and ordinary discount are mutually exclusive'
+      )
+    })
   })
 
   // -------------------------------------------------------------------------
@@ -275,8 +293,8 @@ describe('Admin Product Endpoints - Acceptance Criteria & Invariants', () => {
   // -------------------------------------------------------------------------
   // Swedish Statutory Tax Compliance (Moms)
   // -------------------------------------------------------------------------
-  describe('Moms Rate Compliance (12% Food, 25% Non-Food)', () => {
-    it('rejects non-standard moms rates (e.g., 6% or 0%)', async () => {
+  describe('Moms Rate Compliance (6%, 12%, 25%)', () => {
+    it('rejects non-standard moms rates (e.g., 0% or 15%)', async () => {
       mockState.body = {
         name: { ar: 'طحينة', sv: 'Tahini', en: 'Tahini' },
         description: { ar: 'وصف', sv: 'Beskrivning', en: 'Description' },
@@ -286,11 +304,11 @@ describe('Admin Product Endpoints - Acceptance Criteria & Invariants', () => {
         stockQuantity: 10,
         safetyBuffer: 3,
         netQuantity: { value: 500, unit: 'g' },
-        momsRate: 6,
+        momsRate: 15,
       }
 
       await expect(createProductHandler(dummyEvent)).rejects.toThrowError(
-        'Moms rate must be 12 (food) or 25 (non-food)'
+        'Moms rate must be 6, 12, or 25'
       )
     })
   })
@@ -365,6 +383,32 @@ describe('Admin Product Endpoints - Acceptance Criteria & Invariants', () => {
         validObjectId,
         expect.any(Object),
         { returnDocument: 'after', runValidators: true }
+      )
+    })
+
+    it('rejects update with HTTP 400 when both Kortdatum and ordinary discount are submitted (AC-1)', async () => {
+      mockState.params = { id: validObjectId }
+      mockState.body = {
+        name: { ar: 'طحينة', sv: 'Tahini', en: 'Tahini' },
+        description: { ar: 'طحينة سمسم', sv: 'Sesampasta', en: 'Sesame paste' },
+        brand: 'Al Kanater',
+        category: validObjectId,
+        price: { SEK: 5500, EUR: 480, USD: 520 },
+        discount: 15,
+        kortdatum: {
+          isKortdatum: true,
+          bestBeforeDate: '2026-11-20',
+          clearanceDiscount: 35,
+        },
+        stockQuantity: 20,
+        safetyBuffer: 2,
+        netQuantity: { value: 450, unit: 'g' },
+        grossWeight: 540,
+        momsRate: 12,
+      }
+
+      await expect(updateProductHandler(dummyEvent)).rejects.toThrowError(
+        'Kortdatum clearance and ordinary discount are mutually exclusive'
       )
     })
   })

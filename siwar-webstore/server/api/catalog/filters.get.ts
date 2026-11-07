@@ -7,7 +7,10 @@ import { Product } from '~/server/models/Product'
 
 export default defineEventHandler(async () => {
   const [categories, allergens, distinctBrands, distinctOrigins, categoryImagesAgg] = await Promise.all([
-    Category.find({ isActive: true }).select('_id name slug').lean(),
+    Category.find({ isActive: true })
+      .select('_id name slug sortOrder isSystemDefault')
+      .sort({ sortOrder: 1, 'name.sv': 1 })
+      .lean(),
     Allergen.find({ isActive: true }).select('_id name code').lean(),
     Product.distinct('brand', { isActive: true }),
     Product.distinct('countryOfOrigin', { isActive: true, countryOfOrigin: { $ne: '' } }),
@@ -108,6 +111,7 @@ export default defineEventHandler(async () => {
         slug: c.slug as Record<string, string>,
         imageUrl: meta?.imageUrl || null,
         productCount: meta?.productCount || 0,
+        isSystemDefault: Boolean(c.isSystemDefault),
       }
     }),
     allergens: allergens.map((a: any) => ({

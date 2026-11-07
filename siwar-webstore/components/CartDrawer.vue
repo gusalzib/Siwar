@@ -272,21 +272,27 @@ function proceedToCheckout() {
       {{ t('cart.momsHeading', 'Momsöversikt') }}
     </div>
 
-    <!-- 12% Food Items Moms -->
+    <!-- 6% Moms -->
+    <div v-if="cartStore.momsBreakdown.itemsMoms6Minor > 0" class="flex justify-between text-base-content/70">
+      <span>{{ t('cart.moms6', 'Moms (6%)') }}</span>
+      <span class="font-mono">{{ formatPrice(cartStore.momsBreakdown.itemsMoms6Minor) }}</span>
+    </div>
+
+    <!-- 12% Moms -->
     <div v-if="cartStore.momsBreakdown.itemsMoms12Minor > 0" class="flex justify-between text-base-content/70">
-      <span>{{ t('cart.moms12', 'Moms på livsmedel (12%)') }}</span>
+      <span>{{ t('cart.moms12', 'Moms (12%)') }}</span>
       <span class="font-mono">{{ formatPrice(cartStore.momsBreakdown.itemsMoms12Minor) }}</span>
     </div>
 
     <!-- 25% General Merchandise Items Moms (Only rendered if 25% products exist in cart) -->
     <div v-if="cartStore.momsBreakdown.itemsMoms25Minor > 0" class="flex justify-between text-base-content/70">
-      <span>{{ t('cart.moms25Items', 'Moms på varor (25%)') }}</span>
+      <span>{{ t('cart.moms25Items', 'Moms (25%)') }}</span>
       <span class="font-mono">{{ formatPrice(cartStore.momsBreakdown.itemsMoms25Minor) }}</span>
     </div>
 
     <!-- 25% Shipping Moms (Explicitly shown separately whenever shipping is applied) -->
     <div v-if="cartStore.shippingFeeMinor > 0" class="flex justify-between text-base-content/70">
-      <span>{{ t('cart.moms25Shipping', 'Moms på frakt (25%)') }}</span>
+      <span>{{ t('cart.moms25Shipping', 'Moms frakt (25%)') }}</span>
       <span class="font-mono">{{ formatPrice(cartStore.momsBreakdown.shippingMoms25Minor) }}</span>
     </div>
 

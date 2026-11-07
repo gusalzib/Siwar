@@ -95,8 +95,15 @@ export interface IProduct {
   // Physical shipping weight in grams (jar/carton + contents) for carrier freight tiers
   grossWeight: number
 
-  // Swedish VAT rate: 12% for food, 25% for non-food items
-  momsRate: 12 | 25
+  // Swedish VAT rate: 6% for books & periodicals, 12% for food, 25% for non-food items
+  momsRate: 6 | 12 | 25
+
+  // Kortdatum (Short-Dated clearance) configuration
+  kortdatum?: {
+    isKortdatum: boolean
+    bestBeforeDate?: Date | null
+    clearanceDiscount?: number
+  }
 
   // Country of origin for imported goods (e.g., "Libanon", "Turkiet")
   countryOfOrigin?: string
@@ -208,8 +215,13 @@ const ProductSchema = new Schema<IProduct>(
     momsRate: {
       type: Number,
       required: true,
-      enum: [12, 25], // Fixed Swedish tax rates: 12% food, 25% non-food
+      enum: [6, 12, 25], // Swedish tax rates: 6% books/periodicals, 12% food, 25% non-food
       default: 12,
+    },
+    kortdatum: {
+      isKortdatum: { type: Boolean, default: false, index: true },
+      bestBeforeDate: { type: Date, default: null },
+      clearanceDiscount: { type: Number, min: 0, max: 90, default: 0 },
     },
     countryOfOrigin: {
       type: String,

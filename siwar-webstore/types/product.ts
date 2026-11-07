@@ -12,6 +12,11 @@ export interface PopulatedCategory {
   _id: string
   name: LocalizedString
   slug: LocalizedString
+  discountPercent?: number
+  discountStartsAt?: Date | string | null
+  discountExpiresAt?: Date | string | null
+  isActiveDiscount?: boolean
+  isSystemDefault?: boolean
 }
 
 export interface PopulatedAllergen {
@@ -47,12 +52,20 @@ export interface StorefrontProduct {
     EUR: number
     USD: number
   } | null
+  discountSource?: string
+  activeDiscountType?: 'KORTDATUM' | 'CATEGORY' | 'ORDINARY' | 'NONE'
+  deadlineDate?: Date | string | null
   freeShipping?: boolean
   netQuantity: {
     value: number
     unit: SupportedUnit
   }
-  momsRate: 12 | 25
+  momsRate: 6 | 12 | 25
+  kortdatum?: {
+    isKortdatum: boolean
+    bestBeforeDate?: Date | string | null
+    clearanceDiscount?: number
+  } | null
   countryOfOrigin?: string
   allergens?: PopulatedAllergen[]
   nutritionTable?: {

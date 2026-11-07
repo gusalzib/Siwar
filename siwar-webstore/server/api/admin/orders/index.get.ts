@@ -1,11 +1,13 @@
 // server/api/admin/orders/index.get.ts
 import type { QueryFilter } from 'mongoose'
 import { Order, type IOrder, type OrderFulfillmentStatus, type OrderPaymentStatus } from '~/server/models/Order'
+import { getStorePackingThresholdDays } from '~/server/models/StoreSettings'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const fulfillmentStatus = query.fulfillmentStatus ? String(query.fulfillmentStatus) : 'all'
   const paymentStatus = query.paymentStatus ? String(query.paymentStatus) : 'all'
+  const staleOnly = query.staleOnly === 'true'
   const search = query.search ? String(query.search).trim() : ''
   const page = Math.max(1, Number(query.page) || 1)
   const limitParam = query.limit !== undefined ? Number(query.limit) : 10
@@ -13,10 +15,16 @@ export default defineEventHandler(async (event) => {
   const limit = isAll ? 0 : Math.min(100, Math.max(1, limitParam || 10))
   const skip = isAll ? 0 : (page - 1) * limit
 
+  const packingThresholdDays = await getStorePackingThresholdDays()
+
   const filter: QueryFilter<IOrder> = {}
 
-  // 1. Filter by Fulfillment Status
-  if (fulfillmentStatus !== 'all') {
+  // 1. Filter by Fulfillment Status or Stale Aging Condition
+  if (staleOnly) {
+    const cutoff = new Date(Date.now() - packingThresholdDays * 24 * 60 * 60 * 1000)
+    filter.fulfillmentStatus = 'PENDING_PACKING'
+    filter.createdAt = { $lte: cutoff }
+  } else if (fulfillmentStatus !== 'all') {
     filter.fulfillmentStatus = fulfillmentStatus as OrderFulfillmentStatus
   }
 
@@ -40,6 +48,7 @@ export default defineEventHandler(async (event) => {
   let totalCount = 0
   let pendingPackingCount = 0
   let dispatchedCount = 0
+  let staleCount = 0
 
   if (typeof (Order as any).countDocuments === 'function') {
     try {
@@ -50,6 +59,11 @@ export default defineEventHandler(async (event) => {
         paymentStatus: { $in: ['AUTHORIZED', 'PAID'] },
       })
       dispatchedCount = await Order.countDocuments({ fulfillmentStatus: 'DISPATCHED' })
+      const cutoff = new Date(Date.now() - packingThresholdDays * 24 * 60 * 60 * 1000)
+      staleCount = await Order.countDocuments({
+        fulfillmentStatus: 'PENDING_PACKING',
+        createdAt: { $lte: cutoff },
+      })
     } catch {
       // Mock / fallback
     }
@@ -108,6 +122,8 @@ export default defineEventHandler(async (event) => {
       totalOrders: totalCount,
       pendingPackingCount,
       dispatchedCount,
+      staleCount,
     },
+    staleOrderPackingThresholdDays: packingThresholdDays,
   }
 })

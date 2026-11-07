@@ -96,6 +96,117 @@ describe('Issue #12: Order Fulfillment & Shortage Engine', () => {
       expect(shortageAdjustments[0]?.adjustedQuantity).toBe(1)
       expect(shortageAdjustments[0]?.note).toBe('1 box was crushed')
     })
+
+    it('correctly audits statutory 6% moms items upon shortage adjustment', () => {
+      const bookItem_Id = new Types.ObjectId()
+      const order = createMockOrder({
+        items: [
+          {
+            productId: bookItem_Id,
+            sku: 'BOOK-01',
+            name: { ar: 'كتاب', sv: 'Bok', en: 'Book' },
+            quantity: 2,
+            fulfilledQuantity: 2,
+            unitPriceMinor: 10600, // 106.00 SEK each (6% moms tier)
+            momsRate: 6,
+            shortageStatus: 'NONE',
+            isPacked: false,
+          },
+        ],
+      })
+
+      const { updatedItems, shortageAdjustments, newPricing } = recalculateOrderShortage(
+        order,
+        [
+          {
+            productId: bookItem_Id.toString(),
+            action: 'REDUCE_QUANTITY',
+            adjustedQuantity: 1,
+            note: 'Damaged cover',
+          },
+        ],
+        'Admin'
+      )
+
+      expect(updatedItems[0]?.fulfilledQuantity).toBe(1)
+      expect(shortageAdjustments[0]?.originalMomsRate).toBe(6)
+      expect(newPricing.taxSplit.moms6.momsAmountMinor).toBe(600) // 6.00 SEK moms
+      expect(newPricing.taxSplit.moms6.netAmountMinor).toBe(10000) // 100.00 SEK net
+    })
+
+    it('correctly calculates remaining 6% item with free shipping when 12% and 25% items are removed', () => {
+      const item6Id = new Types.ObjectId()
+      const item12Id = new Types.ObjectId()
+      const item25Id = new Types.ObjectId()
+
+      const order = createMockOrder({
+        items: [
+          {
+            productId: item6Id,
+            sku: 'MOMS-6',
+            name: { ar: 'كتاب', sv: 'Bok', en: 'Book' },
+            quantity: 1,
+            fulfilledQuantity: 1,
+            unitPriceMinor: 39225, // 392.25 SEK
+            momsRate: 6,
+            freeShipping: true,
+            shortageStatus: 'NONE',
+            isPacked: false,
+          },
+          {
+            productId: item12Id,
+            sku: 'MOMS-12',
+            name: { ar: 'مربى', sv: 'Sylt', en: 'Jam' },
+            quantity: 1,
+            fulfilledQuantity: 1,
+            unitPriceMinor: 10000, // 100.00 SEK
+            momsRate: 12,
+            shortageStatus: 'NONE',
+            isPacked: false,
+          },
+          {
+            productId: item25Id,
+            sku: 'MOMS-25',
+            name: { ar: 'وعاء', sv: 'Skål', en: 'Bowl' },
+            quantity: 1,
+            fulfilledQuantity: 1,
+            unitPriceMinor: 10210, // 102.10 SEK
+            momsRate: 25,
+            shortageStatus: 'NONE',
+            isPacked: false,
+          },
+        ],
+        pricing: {
+          itemsTotalMinor: 59435,
+          shippingFeeMinor: 0,
+          grandTotalMinor: 59435,
+          authorizedTotalMinor: 59435,
+          taxSplit: {
+            moms6: { netAmountMinor: 37005, momsAmountMinor: 2220 },
+            moms12: { netAmountMinor: 8929, momsAmountMinor: 1071 },
+            moms25: { netAmountMinor: 8168, momsAmountMinor: 2042 },
+            totalMomsMinor: 5333,
+          },
+        },
+      })
+
+      const { updatedItems, newPricing } = recalculateOrderShortage(
+        order,
+        [
+          { productId: item12Id.toString(), action: 'REMOVE_LINE', adjustedQuantity: 0 },
+          { productId: item25Id.toString(), action: 'REMOVE_LINE', adjustedQuantity: 0 },
+        ],
+        'Admin'
+      )
+
+      expect(newPricing.grandTotalMinor).toBe(39225)
+      expect(newPricing.shippingFeeMinor).toBe(0)
+      expect(newPricing.taxSplit.moms6.momsAmountMinor).toBe(2220) // Math.round(39225 * 6 / 106) = 2220
+      expect(newPricing.taxSplit.moms12.momsAmountMinor).toBe(0)
+      expect(newPricing.taxSplit.moms25.momsAmountMinor).toBe(0)
+      expect(newPricing.taxSplit.totalMomsMinor).toBe(2220)
+      expect(newPricing.releasedOrRefundedMinor).toBe(20210) // 59435 - 39225 = 20210
+    })
   })
 
   // -------------------------------------------------------------------------

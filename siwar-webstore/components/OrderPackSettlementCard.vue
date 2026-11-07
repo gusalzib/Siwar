@@ -28,6 +28,31 @@ const effectiveAuthorizedTotal = computed(() => {
 const effectiveCurrency = computed(() => props.order?.currency || props.currency || 'SEK')
 const effectivePaymentProvider = computed(() => props.order?.paymentProvider || props.paymentProvider || 'STRIPE')
 
+const moms6Amount = computed(() => {
+  if (typeof effectivePricing.value?.moms6Amount === 'number') return effectivePricing.value.moms6Amount
+  if (typeof effectivePricing.value?.taxSplit?.moms6?.momsAmountMinor === 'number') return effectivePricing.value.taxSplit.moms6.momsAmountMinor
+  return 0
+})
+
+const moms12Amount = computed(() => {
+  if (typeof effectivePricing.value?.moms12Amount === 'number') return effectivePricing.value.moms12Amount
+  if (typeof effectivePricing.value?.taxSplit?.moms12?.momsAmountMinor === 'number') return effectivePricing.value.taxSplit.moms12.momsAmountMinor
+  return 0
+})
+
+const moms25Amount = computed(() => {
+  if (typeof effectivePricing.value?.moms25Amount === 'number') return effectivePricing.value.moms25Amount
+  if (typeof effectivePricing.value?.taxSplit?.moms25?.momsAmountMinor === 'number') return effectivePricing.value.taxSplit.moms25.momsAmountMinor
+  return 0
+})
+
+const totalMoms = computed(() => {
+  if (typeof effectivePricing.value?.totalMoms === 'number') return effectivePricing.value.totalMoms
+  if (typeof effectivePricing.value?.taxSplit?.totalMomsMinor === 'number') return effectivePricing.value.taxSplit.totalMomsMinor
+  if (typeof effectivePricing.value?.totalMomsAmountMinor === 'number') return effectivePricing.value.totalMomsAmountMinor
+  return moms6Amount.value + moms12Amount.value + moms25Amount.value
+})
+
 function formatMoney(amountMinor?: number, currency = effectiveCurrency.value) {
   const value = typeof amountMinor === 'number' && !isNaN(amountMinor) ? amountMinor : 0
   return `${(value / 100).toFixed(2)} ${currency}`
@@ -111,17 +136,21 @@ function formatMoney(amountMinor?: number, currency = effectiveCurrency.value) {
         <!-- Statutory Moms Breakdown -->
         <div class="pt-3 border-t-2 border-slate-200 dark:border-zinc-700 space-y-1.5 text-xs text-base-content/80 font-medium">
           <div class="font-bold text-base-content mb-1 text-xs uppercase tracking-wider">{{ t('admin.orders.pack.summary.momsCalc') }}</div>
-          <div class="flex justify-between font-mono">
-            <span>{{ t('admin.orders.pack.summary.moms12') }}</span>
-            <span class="font-semibold">{{ formatMoney(effectivePricing?.moms12Amount ?? 0, effectiveCurrency) }}</span>
+          <div v-if="moms6Amount > 0" class="flex justify-between font-mono">
+            <span>{{ t('admin.orders.pack.summary.moms6', 'Moms (6%):') }}</span>
+            <span class="font-semibold">{{ formatMoney(moms6Amount, effectiveCurrency) }}</span>
           </div>
-          <div class="flex justify-between font-mono">
-            <span>{{ t('admin.orders.pack.summary.moms25') }}</span>
-            <span class="font-semibold">{{ formatMoney(effectivePricing?.moms25Amount ?? 0, effectiveCurrency) }}</span>
+          <div v-if="moms12Amount > 0" class="flex justify-between font-mono">
+            <span>{{ t('admin.orders.pack.summary.moms12', 'Moms (12%):') }}</span>
+            <span class="font-semibold">{{ formatMoney(moms12Amount, effectiveCurrency) }}</span>
+          </div>
+          <div v-if="moms25Amount > 0" class="flex justify-between font-mono">
+            <span>{{ t('admin.orders.pack.summary.moms25', 'Moms (25%):') }}</span>
+            <span class="font-semibold">{{ formatMoney(moms25Amount, effectiveCurrency) }}</span>
           </div>
           <div class="flex justify-between font-mono font-bold text-base-content border-t border-slate-200 dark:border-zinc-700 pt-1">
-            <span>{{ t('admin.orders.pack.summary.totalMoms') }}</span>
-            <span class="font-black">{{ formatMoney(effectivePricing?.totalMoms ?? 0, effectiveCurrency) }}</span>
+            <span>{{ t('admin.orders.pack.summary.totalMoms', 'Total moms:') }}</span>
+            <span class="font-black">{{ formatMoney(totalMoms, effectiveCurrency) }}</span>
           </div>
         </div>
       </div>

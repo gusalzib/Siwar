@@ -99,6 +99,7 @@ const checkoutGrandTotalMinor = computed<number>(() => {
  */
 const checkoutTotalMomsMinor = computed<number>(() => {
   return (
+    cartStore.momsBreakdown.itemsMoms6Minor +
     cartStore.momsBreakdown.itemsMoms12Minor +
     cartStore.momsBreakdown.itemsMoms25Minor +
     effectiveShippingMomsMinor.value
@@ -762,10 +763,18 @@ async function handleProceedToPayment() {
               </div>
 
               <div
+                v-if="cartStore.momsBreakdown.itemsMoms6Minor > 0"
+                class="flex justify-between text-base-content/70"
+              >
+                <span>{{ t('cart.moms6', 'Moms (6%)') }}</span>
+                <span class="font-mono">{{ formatPrice(cartStore.momsBreakdown.itemsMoms6Minor) }}</span>
+              </div>
+
+              <div
                 v-if="cartStore.momsBreakdown.itemsMoms12Minor > 0"
                 class="flex justify-between text-base-content/70"
               >
-                <span>{{ t('cart.moms12', 'Moms på livsmedel (12%)') }}</span>
+                <span>{{ t('cart.moms12', 'Moms (12%)') }}</span>
                 <span class="font-mono">{{ formatPrice(cartStore.momsBreakdown.itemsMoms12Minor) }}</span>
               </div>
 
@@ -773,7 +782,7 @@ async function handleProceedToPayment() {
                 v-if="cartStore.momsBreakdown.itemsMoms25Minor > 0"
                 class="flex justify-between text-base-content/70"
               >
-                <span>{{ t('cart.moms25Items', 'Moms på varor (25%)') }}</span>
+                <span>{{ t('cart.moms25Items', 'Moms (25%)') }}</span>
                 <span class="font-mono">{{ formatPrice(cartStore.momsBreakdown.itemsMoms25Minor) }}</span>
               </div>
 
@@ -782,7 +791,7 @@ async function handleProceedToPayment() {
                 v-if="effectiveShippingMomsMinor > 0"
                 class="flex justify-between text-base-content/70"
               >
-                <span>{{ t('cart.moms25Shipping', 'Moms på frakt (25%)') }}</span>
+                <span>{{ t('cart.moms25Shipping', 'Moms frakt (25%)') }}</span>
                 <span class="font-mono">{{ formatPrice(effectiveShippingMomsMinor) }}</span>
               </div>
 

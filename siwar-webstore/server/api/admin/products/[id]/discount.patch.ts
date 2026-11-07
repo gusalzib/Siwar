@@ -44,11 +44,19 @@ export default defineEventHandler(async (event) => {
   }
 
   // 4. Find current product
-  const product = await Product.findById(id).select('discount discountStartsAt discountExpiresAt updatedAt')
+  const product = await Product.findById(id).select('discount discountStartsAt discountExpiresAt kortdatum updatedAt')
   if (!product) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Product not found',
+    })
+  }
+
+  // Guard: Reject if attempting to apply ordinary discount when Kortdatum clearance is active
+  if (body.discount > 0 && product.kortdatum?.isKortdatum) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Kortdatum clearance is active for this product. Kortdatum clearance and ordinary discount are mutually exclusive.',
     })
   }
 
@@ -87,6 +95,13 @@ export default defineEventHandler(async (event) => {
       discountExpiresAt: body.discount === 0 ? null : expiresAt,
       updatedAt: new Date(),
     },
+  }
+
+  // If setting an active ordinary discount, clear any conflicting Kortdatum clearance settings
+  if (body.discount > 0) {
+    updateOp.$set['kortdatum.isKortdatum'] = false
+    updateOp.$set['kortdatum.clearanceDiscount'] = 0
+    updateOp.$set['kortdatum.bestBeforeDate'] = null
   }
 
   // 7. Persist atomically
