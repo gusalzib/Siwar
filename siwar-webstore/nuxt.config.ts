@@ -10,6 +10,12 @@ export default defineNuxtConfig({
     builder: 'shared',
   },
 
+  postcss: {
+    plugins: {
+      'tailwindcss/nesting': false,
+    },
+  },
+
   runtimeConfig: {
     mongodbUri: process.env.MONGODB_URI,
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
