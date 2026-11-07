@@ -13,6 +13,9 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
+# Generate Nuxt virtual templates and types from the actual nuxt.config.ts and modules
+RUN npx nuxi prepare
+
 # Build the Nuxt application (generates .output directory)
 RUN npm run build
 
