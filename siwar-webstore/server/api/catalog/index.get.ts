@@ -23,8 +23,9 @@ export default defineEventHandler(async (event) => {
   const skip = (page - 1) * limit
   const sortParam = String(query.sort || 'newest')
 
-  // 2. Base filter: Only active public catalog items
-  const filter: QueryFilter<IProduct> = { isActive: true }
+  try {
+    // 2. Base filter: Only active public catalog items
+    const filter: QueryFilter<IProduct> = { isActive: true }
 
   // 3. Category Filter (by ObjectId or multilingual slug)
   if (query.category) {
@@ -278,13 +279,25 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  return {
-    products,
-    pagination: {
-      total: totalCount,
-      page,
-      limit,
-      totalPages: Math.ceil(totalCount / limit) || 1,
-    },
+    return {
+      products,
+      pagination: {
+        total: totalCount,
+        page,
+        limit,
+        totalPages: Math.ceil(totalCount / limit) || 1,
+      },
+    }
+  } catch (error) {
+    console.error('Error fetching catalog products:', error)
+    return {
+      products: [],
+      pagination: {
+        total: 0,
+        page,
+        limit,
+        totalPages: 1,
+      },
+    }
   }
 })

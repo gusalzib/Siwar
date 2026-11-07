@@ -1,29 +1,29 @@
 import mongoose from 'mongoose'
 import { ensureDefaultCategory } from '../utils/defaultCategory'
+import { ensureDefaultAdmin } from '../utils/defaultAdmin'
 
 export default defineNitroPlugin(async (_nitroApp) => {
   const config = useRuntimeConfig()
   
-  // Access MongoDB URI from runtime config
-  // The mongodbUri is defined in nuxt.config.ts 
-  const uri = config.mongodbUri as string
+  // Access MongoDB URI from runtime config or process.env fallbacks (Railway supports MONGO_URL, MONGODB_URL)
+  const uri = (config.mongodbUri || process.env.MONGODB_URI || process.env.MONGO_URL || process.env.MONGODB_URL || process.env.DATABASE_URL) as string
 
   if (!uri) {
-    console.warn('MONGODB_URI is not set. Mongoose connection skipped.')
+    console.error('❌ MONGODB_URI is not set! Checked MONGODB_URI, MONGO_URL, MONGODB_URL, DATABASE_URL.')
     return
   }
 
   // Set up connection event listeners for maintaining the pool
   mongoose.connection.on('connected', () => {
-    console.log('MongoDB connected successfully')
+    console.log('✅ MongoDB connected successfully')
   })
 
   mongoose.connection.on('disconnected', () => {
-    console.warn('MongoDB disconnected. Mongoose will attempt to reconnect automatically...')
+    console.warn('⚠️ MongoDB disconnected. Mongoose will attempt to reconnect automatically...')
   })
 
   mongoose.connection.on('error', (err) => {
-    console.error('MongoDB connection error:', err)
+    console.error('❌ MongoDB connection error:', err)
   })
 
   let isConnecting = false
@@ -33,28 +33,29 @@ export default defineNitroPlugin(async (_nitroApp) => {
     
     isConnecting = true
     try {
-      console.log('Connecting to MongoDB Atlas...')
+      console.log('Connecting to MongoDB...')
       await mongoose.connect(uri, {
-        // Mongoose 6+ maintains its own connection pool by default.
-        // We set a 5 second timeout for server selection.
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
       })
 
-      // Lazy-initializer: ensure the protected system default "Övrigt" / "Other" fallback category exists
+      // Lazy-initializers: ensure default fallback category and root admin exist in fresh databases
       try {
-        await ensureDefaultCategory()
-      } catch (catErr) {
-        console.error('Failed to initialize default category:', catErr)
+        await Promise.all([
+          ensureDefaultCategory(),
+          ensureDefaultAdmin(),
+        ])
+      } catch (seedErr) {
+        console.error('Failed to run initial database seeds:', seedErr)
       }
     } catch (error) {
-      console.error('Error connecting to MongoDB. Retrying in 5 seconds...', error)
+      console.error('❌ Error connecting to MongoDB:', error)
       setTimeout(connectToDatabase, 5000)
     } finally {
       isConnecting = false
     }
   }
 
-  // Initiate the connection (we don't await here to prevent blocking Nitro startup if DB is down)
-  connectToDatabase()
+  // Await the initial connection so the database is ready before serving incoming HTTP requests
+  await connectToDatabase()
 })
