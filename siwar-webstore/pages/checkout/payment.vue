@@ -246,11 +246,26 @@ async function handleConfirmCardPayment() {
   if (error) {
     errorMessage.value = error.message || t('checkout.cardFailed', 'Kortbetalningen nekades.')
     isProcessing.value = false
-  } else if (paymentIntent && paymentIntent.status === 'requires_capture') {
+  } else if (paymentIntent && (paymentIntent.status === 'requires_capture' || paymentIntent.status === 'succeeded')) {
     isPaymentCommitted.value = true
     if (typeof window !== 'undefined') {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
+
+    // Explicitly notify backend to transition order to AUTHORIZED immediately
+    try {
+      await $fetch('/api/checkout/confirm-payment', {
+        method: 'POST',
+        body: {
+          orderReference: activeOrderReference.value,
+          orderId: activeOrderId.value,
+          paymentIntentId: paymentIntent.id,
+        },
+      })
+    } catch (confirmErr) {
+      console.warn('Direct payment confirmation returned non-200, fallback sync will handle it:', confirmErr)
+    }
+
     cartStore.clearCart()
     sessionStorage.removeItem('siwar_checkout_payload')
     sessionStorage.removeItem('siwar_active_payment_session') // Purge session cache

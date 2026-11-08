@@ -44,9 +44,9 @@ export class StripeGatewayAdapter implements PaymentGatewayAdapter {
     if (!stripeSecretKey) {
       console.error('❌ STRIPE_SECRET_KEY is missing! Checked STRIPE_SECRET_KEY, NUXT_STRIPE_SECRET_KEY, STRIPE_SK, STRIPE_API_KEY.')
     }
-
+    // apiVersion: '2026-08-26.dahlia',
     this.stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2026-08-26.dahlia',
+      apiVersion: '2026-10-28.endive'
     })
   }
 
@@ -148,7 +148,11 @@ export class StripeGatewayAdapter implements PaymentGatewayAdapter {
       throw new Error('Missing stripe-signature header')
     }
 
-    const secret = process.env.STRIPE_WEBHOOK_SECRET || ''
+    const secret = (
+      process.env.STRIPE_WEBHOOK_SECRET ||
+      process.env.NUXT_STRIPE_WEBHOOK_SECRET ||
+      ''
+    ).trim()
     // Validates payload authenticity and integrity against Stripe's signing secret
     const event = this.stripe.webhooks.constructEvent(rawBody, sig, secret)
 

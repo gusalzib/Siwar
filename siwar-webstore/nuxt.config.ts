@@ -19,6 +19,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     mongodbUri: process.env.MONGODB_URI || process.env.MONGO_URL || process.env.MONGODB_URL || process.env.DATABASE_URL || '',
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
     swishPayeeAlias: process.env.SWISH_PAYEE_ALIAS,
     swishCertPath: process.env.SWISH_CERT_PATH,
     swishKeyPath: process.env.SWISH_KEY_PATH,

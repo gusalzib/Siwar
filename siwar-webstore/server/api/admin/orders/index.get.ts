@@ -2,6 +2,7 @@
 import type { QueryFilter } from 'mongoose'
 import { Order, type IOrder, type OrderFulfillmentStatus, type OrderPaymentStatus } from '~/server/models/Order'
 import { getStorePackingThresholdDays } from '~/server/models/StoreSettings'
+import { syncOrderPaymentWithStripe } from '~/server/utils/orderAuthorization'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -82,6 +83,18 @@ export default defineEventHandler(async (event) => {
   const rawOrders = await queryBuilder.lean()
   if (totalCount === 0 && rawOrders) {
     totalCount = rawOrders.length
+  }
+
+  // On-demand sync with Stripe for any PENDING orders on the current page
+  if (rawOrders && rawOrders.length > 0) {
+    for (const o of rawOrders) {
+      if (o.paymentStatus === 'PENDING' && o.paymentProvider === 'STRIPE' && o.paymentId) {
+        const synced = await syncOrderPaymentWithStripe(o)
+        if (synced && synced.paymentStatus) {
+          o.paymentStatus = synced.paymentStatus
+        }
+      }
+    }
   }
 
   const orders = (rawOrders || []).map((o: any) => ({

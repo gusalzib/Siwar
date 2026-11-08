@@ -2,6 +2,7 @@
 import { isValidObjectId } from 'mongoose'
 import { Order } from '~/server/models/Order'
 import { Product } from '~/server/models/Product'
+import { syncOrderPaymentWithStripe } from '~/server/utils/orderAuthorization'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -13,13 +14,21 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const order = await Order.findById(id).lean()
+  let order = await Order.findById(id).lean()
 
   if (!order) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Order not found',
     })
+  }
+
+  // If order is still PENDING with Stripe, verify on-demand with Stripe API
+  if (order.paymentStatus === 'PENDING' && order.paymentProvider === 'STRIPE' && order.paymentId) {
+    const synced = await syncOrderPaymentWithStripe(order)
+    if (synced) {
+      order = typeof (synced as any).toObject === 'function' ? (synced as any).toObject() : synced
+    }
   }
 
   // Populate product image and freeShipping for items if missing (for legacy or substituted items)
