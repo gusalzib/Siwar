@@ -84,46 +84,45 @@ async function initializeSession(draft: any) {
   isInitializing.value = true
   errorMessage.value = null
 
-
   // Safety timer: Don't leave user stuck on spinner if browser network hangs
-  const mountTimer = setTimeout(() => {
+  let timerId: any = setTimeout(() => {
     if (isInitializing.value) {
       isInitializing.value = false
       errorMessage.value = t(
         'checkout.mountFailed',
-        'Kunde inte ansluta till betaltjänsten. Kontrollera din anslutning och försök igen.'
+        'Kunde inte ansluta till betaltjänsten. Kontrollera din anslutning eller annonsblockerare och försök igen.'
       )
     }
-  }, 8000)
+  }, 10000)
+
+  const clearTimer = () => {
+    if (timerId) {
+      clearTimeout(timerId)
+      timerId = null
+    }
+  }
 
   try {
     const activeCurrency = preferences.currency || 'SEK'
 
     // 1. Check for an active session to prevent re-creating intents on language toggles
-    /**
-     * Before adding this check, we had an issue where if a user switches languages multiple times
-     * while on the payment page, a new payment intent was created for each language switch.
-     * This resulted in a lot of "failed" payment attempts in the Stripe dashboard.
-     * 
-     * By checking for an existing session, we can restore the state and prevent this issue.
-     * 
-     * Note: We intentionally do not save the order in the draft to avoid this issue,
-     * and also because we want to use the session data from the session creation API,
-     * which includes the correct locale.
-     */
     const rawCachedSession = sessionStorage.getItem('siwar_active_payment_session')
     let sessionData: any = null
 
     if (rawCachedSession) {
-      const cached = JSON.parse(rawCachedSession)
-      // Reuse if same provider, currency, storefront language, and exact total
-      if (
-        cached.provider === provider.value &&
-        cached.currency === activeCurrency &&
-        cached.locale === locale.value &&
-        cached.totalMinor === cartStore.grandTotalMinor
-      ) {
-        sessionData = cached
+      try {
+        const cached = JSON.parse(rawCachedSession)
+        // Reuse if same provider, currency, storefront language, and exact total
+        if (
+          cached.provider === provider.value &&
+          cached.currency === activeCurrency &&
+          cached.locale === locale.value &&
+          cached.totalMinor === cartStore.grandTotalMinor
+        ) {
+          sessionData = cached
+        }
+      } catch {
+        sessionStorage.removeItem('siwar_active_payment_session')
       }
     }
 
@@ -152,9 +151,20 @@ async function initializeSession(draft: any) {
     if (provider.value === 'SWISH') {
       swishQrUrl.value = sessionData.qrSvgUrl
       swishToken.value = sessionData.swishToken
+      clearTimer()
+      isInitializing.value = false
     } else if (provider.value === 'STRIPE') {
-      stripe = await loadStripe(config.public.stripePublishableKey)
-      if (stripe && sessionData.clientSecret) {
+      const publishableKey = sessionData.publishableKey || (config.public.stripePublishableKey as string)
+      if (!publishableKey) {
+        throw new Error('Stripe publishable key is missing. Please ensure STRIPE_PUBLISHABLE_KEY is set in your Railway environment variables.')
+      }
+
+      stripe = await loadStripe(publishableKey)
+      if (!stripe) {
+        throw new Error('Could not load Stripe SDK. Please check your network or ad blocker.')
+      }
+
+      if (sessionData.clientSecret) {
         // Pass active locale to render Elements in Arabic, Swedish, or English
         const stripeLocale = locale.value === 'ar' ? 'ar' : locale.value === 'sv' ? 'sv' : 'en'
         elements = stripe.elements({
@@ -164,26 +174,49 @@ async function initializeSession(draft: any) {
         const paymentElement = elements.create('payment')
 
         // Listen for mount errors from Stripe's iframe
-        paymentElement.on('loaderror', (event) => {
-          clearTimeout(mountTimer)
+        paymentElement.on('loaderror', (event: any) => {
+          clearTimer()
           isInitializing.value = false
-          errorMessage.value = event.error.message || t('checkout.stripeTimeoutError', 'Kunde inte starta betalning.')
+          console.error('Stripe Payment Element load error:', event?.error)
+          const msg = event?.error?.message || ''
+          if (msg.toLowerCase().includes('blocked') || msg.toLowerCase().includes('failed to load') || msg.toLowerCase().includes('network')) {
+            errorMessage.value = t(
+              'checkout.adBlockerWarning',
+              'Kunde inte ladda kortbetalningen. Om du använder en annonsblockerare (t.ex. uBlock Origin eller Brave Shields), vänligen inaktivera den för denna sida och försök igen.'
+            )
+          } else {
+            errorMessage.value = msg || t('checkout.stripeTimeoutError', 'Kunde inte starta betalning.')
+          }
+        })
+
+        // Listen for successful mount ready event
+        paymentElement.on('ready', () => {
+          clearTimer()
+          isInitializing.value = false
         })
 
         paymentElement.mount('#stripe-element-mount')
+      } else {
+        clearTimer()
+        isInitializing.value = false
+        throw new Error('No clientSecret received from Stripe session.')
       }
     }
   } catch (err: any) {
-    errorMessage.value = err.statusMessage || t('checkout.genericError', 'Kunde inte starta betalning.')
-  } finally {
+    clearTimer()
     isInitializing.value = false
+    console.error('Payment initialization error:', err)
+    errorMessage.value =
+      err?.data?.statusMessage ||
+      err?.statusMessage ||
+      err?.message ||
+      t('checkout.genericError', 'Kunde inte starta betalning.')
   }
 }
 
-
-// Retrying just re-runs initializeSession with the SAME draft payload
-// It will find the existing session in sessionStorage and simply re-attempt the mount
+// Retrying purges any broken cached session and re-requests a clean session
 function retryMount() {
+  sessionStorage.removeItem('siwar_active_payment_session')
   const rawDraft = sessionStorage.getItem('siwar_checkout_payload')
   if (rawDraft) {
     initializeSession(JSON.parse(rawDraft))
@@ -329,9 +362,10 @@ async function confirmCancelOrder() {
         </div>
 
         <!-- Stripe Element Container -->
-        <div v-show="provider === 'STRIPE' && !isInitializing" class="space-y-4">
-          <div id="stripe-element-mount"></div>
+        <div v-show="provider === 'STRIPE'" class="space-y-4">
+          <div id="stripe-element-mount" :class="{ 'opacity-0 h-0 overflow-hidden pointer-events-none': isInitializing }"></div>
           <button
+            v-if="!isInitializing"
             type="button"
             class="btn btn-md w-full !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:transform-none disabled:shadow-none"
             :disabled="isProcessing"

@@ -172,9 +172,20 @@ export default defineEventHandler(async (event) => {
     { $set: { paymentId: session.paymentId } }
   )
 
+  const config = useRuntimeConfig()
+  const stripePublishableKey = (
+    process.env.STRIPE_PUBLISHABLE_KEY ||
+    process.env.NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
+    process.env.STRIPE_PUBLIC_KEY ||
+    process.env.STRIPE_PK ||
+    (config.public?.stripePublishableKey as string) ||
+    ''
+  ).trim()
+
   // 7. Return session parameters to frontend
   return {
     ...session,
+    publishableKey: stripePublishableKey,
     orderId: draftOrder._id.toString(),
     currency: body.currency,
     totalMinor: grandTotalMinor,

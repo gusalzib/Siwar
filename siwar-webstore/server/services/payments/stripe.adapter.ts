@@ -36,8 +36,15 @@ export class StripeGatewayAdapter implements PaymentGatewayAdapter {
       config.stripeSecretKey ||
       process.env.STRIPE_SECRET_KEY ||
       process.env.NUXT_STRIPE_SECRET_KEY ||
+      process.env.STRIPE_SK ||
+      process.env.STRIPE_API_KEY ||
       ''
     ).trim()
+
+    if (!stripeSecretKey) {
+      console.error('❌ STRIPE_SECRET_KEY is missing! Checked STRIPE_SECRET_KEY, NUXT_STRIPE_SECRET_KEY, STRIPE_SK, STRIPE_API_KEY.')
+    }
+
     this.stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2026-08-26.dahlia',
     })
@@ -54,28 +61,39 @@ export class StripeGatewayAdapter implements PaymentGatewayAdapter {
    * @returns PaymentSessionResult containing the client secret required by Stripe Elements on the frontend.
    */
   async createSession(params: CreatePaymentSessionParams): Promise<PaymentSessionResult> {
-    const paymentIntent = await this.stripe.paymentIntents.create({
-      amount: params.amountMinor,
-      currency: params.currency.toLowerCase(),
-      // Place an authorization hold rather than charging immediately (supports warehouse packing workflow)
-      capture_method: 'manual',
-      receipt_email: params.customer.email,
-      // Metadata allows cross-referencing and reconciliation directly within the Stripe Dashboard
-      metadata: {
-        orderReference: params.orderReference,
-        customerName: params.customer.fullName,
-        customerPhone: params.customer.phone,
-        ...params.metadata,
-      },
-    }, 
-      params.idempotencyKey ? { idempotencyKey: params.idempotencyKey } : undefined  
-    )
+    try {
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount: params.amountMinor,
+        currency: params.currency.toLowerCase(),
+        automatic_payment_methods: {
+          enabled: true,
+        },
+        // Place an authorization hold rather than charging immediately (supports warehouse packing workflow)
+        capture_method: 'manual',
+        receipt_email: params.customer.email,
+        // Metadata allows cross-referencing and reconciliation directly within the Stripe Dashboard
+        metadata: {
+          orderReference: params.orderReference,
+          customerName: params.customer.fullName,
+          customerPhone: params.customer.phone,
+          ...params.metadata,
+        },
+      }, 
+        params.idempotencyKey ? { idempotencyKey: params.idempotencyKey } : undefined  
+      )
 
-    return {
-      provider: this.provider,
-      paymentId: paymentIntent.id,
-      status: 'REQUIRES_ACTION',
-      clientSecret: paymentIntent.client_secret || undefined,
+      return {
+        provider: this.provider,
+        paymentId: paymentIntent.id,
+        status: 'REQUIRES_ACTION',
+        clientSecret: paymentIntent.client_secret || undefined,
+      }
+    } catch (err: any) {
+      console.error('❌ Stripe createSession error:', err)
+      throw createError({
+        statusCode: 502,
+        statusMessage: `Stripe gateway error: ${err.message || 'Failed to create payment session'}`,
+      })
     }
   }
 

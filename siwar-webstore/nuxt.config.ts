@@ -40,7 +40,7 @@ export default defineNuxtConfig({
       // Public CDN base URL accessible to client and server
       r2PublicUrl: process.env.R2_PUBLIC_URL || '',
 
-      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+      stripePublishableKey: process.env.NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.STRIPE_PUBLISHABLE_KEY || '',
     },
   },
 

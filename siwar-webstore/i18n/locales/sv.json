@@ -1104,6 +1104,9 @@
     "openSwishApp": "Öppna Swish",
     "cardPayment": "Kortbetalning",
     "stripeTimeoutError": "Betalningsportalen timeout",
+    "adBlockerWarning": "Kunde inte ladda kortbetalningen. Om du använder en annonsblockerare (t.ex. uBlock Origin eller Brave Shields), vänligen inaktivera den för denna sida och försök igen.",
+    "mountFailed": "Kunde inte ansluta till betaltjänsten. Kontrollera din anslutning eller annonsblockerare och försök igen.",
+    "retry": "Försök igen",
     "priceAdjustedWarning": "Priset på en eller flera varor i din varukorg har uppdaterats eftersom kampanjen har avslutats.",
     "swishSEKOnly": "Endast tillgängligt för köp gjorda med svenska kronor"
   },
