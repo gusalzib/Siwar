@@ -32,7 +32,13 @@ export class StripeGatewayAdapter implements PaymentGatewayAdapter {
    */
   constructor() {
     const config = useRuntimeConfig()
-    this.stripe = new Stripe(config.stripeSecretKey, {
+    const stripeSecretKey = (
+      config.stripeSecretKey ||
+      process.env.STRIPE_SECRET_KEY ||
+      process.env.NUXT_STRIPE_SECRET_KEY ||
+      ''
+    ).trim()
+    this.stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2026-08-26.dahlia',
     })
   }
