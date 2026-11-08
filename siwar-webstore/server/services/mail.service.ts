@@ -40,7 +40,7 @@ function getMailFrom(): string {
     (config?.mailFrom as string | undefined) ||
     process.env.MAIL_FROM ||
     process.env.MAIL_FROM_ADDRESS ||
-    'Siwar Webstore <order@ibrahim-alzoubi.se>'
+    'Siwar Webstore <order@siwar.se>'
   )
 }
 
@@ -499,7 +499,7 @@ function renderTotalsAndTax(order: IOrder, locale: EmailLocale): string {
 function generateConfirmationHtml(order: IOrder, locale: EmailLocale): string {
   const isRtl = locale === 'ar'
   const dir = isRtl ? 'rtl' : 'ltr'
-  const receiptUrl = `${process.env.BASE_URL || 'https://ibrahim-alzoubi.se'}/order/confirmation/${order._id}`
+  const receiptUrl = `${process.env.BASE_URL || 'https://siwar.se'}/order/confirmation/${order._id}`
 
   const copy = {
     ar: {
@@ -1053,7 +1053,7 @@ function generateDispatchedReceiptHtml(
       ? `https://www.dhl.com/se-sv/home/tracking.html?tracking-id=${encodeURIComponent(trackingCode)}`
       : `https://www.postnord.se/vara-verktyg/spara-brev-paket-och-pall?shipmentId=${encodeURIComponent(trackingCode)}`
     : '#'
-  const receiptUrl = `${process.env.BASE_URL || 'https://ibrahim-alzoubi.se'}/order/confirmation/${order._id}`
+  const receiptUrl = `${process.env.BASE_URL || 'https://siwar.se'}/order/confirmation/${order._id}`
 
   const totalCharged = order.pricing.capturedTotalMinor ?? order.pricing.grandTotalMinor
   const authorizedTotal = order.pricing.authorizedTotalMinor || order.pricing.grandTotalMinor
