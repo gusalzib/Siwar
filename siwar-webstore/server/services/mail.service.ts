@@ -25,8 +25,17 @@ function getRuntimeConfigSafe(): any {
 
 function getResendClient() {
   const config = getRuntimeConfigSafe()
-  const apiKey = (config?.resendApiKey as string | undefined) || process.env.RESEND_API_KEY || process.env.MAIL_API_KEY
-  if (!apiKey) return null
+  const apiKey = (
+    config?.resendApiKey ||
+    process.env.RESEND_API_KEY ||
+    process.env.MAIL_API_KEY ||
+    process.env.NUXT_RESEND_API_KEY ||
+    ''
+  ).trim()
+  if (!apiKey) {
+    console.warn('⚠️ [MailService] RESEND_API_KEY is not configured! Emails will be mocked.')
+    return null
+  }
   return new Resend(apiKey)
 }
 
@@ -36,12 +45,22 @@ function formatMoney(amountMinor: number, currency = 'SEK'): string {
 
 function getMailFrom(): string {
   const config = getRuntimeConfigSafe()
-  return (
-    (config?.mailFrom as string | undefined) ||
+  let from = (
+    config?.mailFrom ||
     process.env.MAIL_FROM ||
     process.env.MAIL_FROM_ADDRESS ||
     'Siwar Webstore <order@siwar.se>'
-  )
+  ).trim()
+
+  // Clean surrounding quotes if any (e.g. ""Siwar..."")
+  while (
+    (from.startsWith('"') && from.endsWith('"')) ||
+    (from.startsWith("'") && from.endsWith("'"))
+  ) {
+    from = from.slice(1, -1).trim()
+  }
+
+  return from
 }
 
 function getStoreEmail(): string {
@@ -135,12 +154,20 @@ export const mailService = {
       return { id: 'mock-mail-id' }
     }
 
-    return await resend.emails.send({
+    const result = await resend.emails.send({
       from,
       to,
       subject: subjects[locale],
       html,
     })
+
+    if (result.error) {
+      console.error(` [Resend Error] Failed to send order confirmation to ${to}:`, result.error)
+      throw new Error(`Resend error: ${result.error.message}`)
+    }
+
+    console.log(` [Resend Success] Order confirmation sent to ${to}, Resend ID: ${result.data?.id}`)
+    return result
   },
 
   /**
@@ -192,12 +219,20 @@ export const mailService = {
       return { id: 'mock-mail-id' }
     }
 
-    return await resend.emails.send({
+    const result = await resend.emails.send({
       from,
       to,
       subject: subjects[locale],
       html,
     })
+
+    if (result.error) {
+      console.error(` [Resend Error] Failed to send packed notice to ${to}:`, result.error)
+      throw new Error(`Resend error: ${result.error.message}`)
+    }
+
+    console.log(` [Resend Success] Packed notice delivered to ${to}, Resend ID: ${result.data?.id}`)
+    return result
   },
 
   /**
@@ -245,12 +280,20 @@ export const mailService = {
       return { id: 'mock-mail-id' }
     }
 
-    return await resend.emails.send({
+    const result = await resend.emails.send({
       from,
       to,
       subject: subjects[locale],
       html,
     })
+
+    if (result.error) {
+      console.error(` [Resend Error] Failed to send dispatched email to ${to}:`, result.error)
+      throw new Error(`Resend error: ${result.error.message}`)
+    }
+
+    console.log(` [Resend Success] Dispatched email delivered to ${to}, Resend ID: ${result.data?.id}`)
+    return result
   },
 
   /**
@@ -307,13 +350,21 @@ export const mailService = {
       return { id: 'mock-mail-id' }
     }
 
-    return await resend.emails.send({
+    const result = await resend.emails.send({
       from,
       to,
       replyTo: email,
       subject,
       html,
     })
+
+    if (result.error) {
+      console.error(` [Resend Error] Failed to send contact message to ${to}:`, result.error)
+      throw new Error(`Resend error: ${result.error.message}`)
+    }
+
+    console.log(` [Resend Success] Contact message delivered to ${to}, Resend ID: ${result.data?.id}`)
+    return result
   },
 }
 
@@ -810,7 +861,7 @@ export function renderPackedShortageCallout(
           ? `
         <div style="margin-bottom: 14px;">
           <div style="font-weight: bold; color: #78350f; font-size: 13px; text-transform: uppercase; margin-bottom: 6px;">
-            ❌ ${copy.removedTitle}
+             ${copy.removedTitle}
           </div>
           <ul style="margin: 0; padding-${align}: 20px; list-style-type: disc;">
             ${removedOrReduced

@@ -44,9 +44,9 @@ export class StripeGatewayAdapter implements PaymentGatewayAdapter {
     if (!stripeSecretKey) {
       console.error('❌ STRIPE_SECRET_KEY is missing! Checked STRIPE_SECRET_KEY, NUXT_STRIPE_SECRET_KEY, STRIPE_SK, STRIPE_API_KEY.')
     }
-    // apiVersion: '2026-08-26.dahlia',
+    // apiVersion pinned to the installed Stripe SDK (stripe@22.6.2) type definition
     this.stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2026-10-28.endive'
+      apiVersion: '2026-08-26.dahlia',
     })
   }
 
