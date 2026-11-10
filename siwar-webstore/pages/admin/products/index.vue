@@ -699,13 +699,13 @@ function isKortdatumActive(product: any): boolean {
               </div>
 
               <!-- Stock Indicators: Physical, Safety Buffer, Online Available -->
-              <div class="flex flex-wrap items-center gap-3 pt-0.5">
-                <div class="inline-flex items-center gap-2.5 rounded-xl border-2 border-base-300 dark:border-zinc-700 bg-base-200/60 dark:bg-zinc-800/60 px-3 py-1.5 text-xs font-semibold whitespace-nowrap shrink-0">
-                  <span>{{ t('admin.products.cards.stockPhysical') }}: <strong class="text-base-content font-bold">{{ product.stockQuantity }}</strong></span>
-                  <span class="text-base-content/30">•</span>
-                  <span>{{ t('admin.products.cards.stockBuffer') }}: <strong class="text-base-content font-bold">{{ product.safetyBuffer }}</strong></span>
-                  <span class="text-base-content/30">•</span>
-                  <span>
+              <div class="flex flex-wrap items-center gap-2.5 pt-0.5 max-w-full">
+                <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-xl border-2 border-base-300 dark:border-zinc-700 bg-base-200/60 dark:bg-zinc-800/60 px-3 py-1.5 text-xs font-semibold max-w-full">
+                  <span class="whitespace-nowrap">{{ t('admin.products.cards.stockPhysical') }}: <strong class="text-base-content font-bold">{{ product.stockQuantity }}</strong></span>
+                  <span class="text-base-content/30 hidden min-[480px]:inline">•</span>
+                  <span class="whitespace-nowrap">{{ t('admin.products.cards.stockBuffer') }}: <strong class="text-base-content font-bold">{{ product.safetyBuffer }}</strong></span>
+                  <span class="text-base-content/30 hidden min-[480px]:inline">•</span>
+                  <span class="whitespace-nowrap">
                     {{ t('admin.products.cards.stockOnline') }}:
                     <strong :class="product.availableStock > 0 ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-rose-600 dark:text-rose-400 font-extrabold'">
                       {{ product.availableStock }}
@@ -799,7 +799,7 @@ function isKortdatumActive(product: any): boolean {
 
 <!-- Action Buttons Container: 
      Mobile: 2 equal columns (w-full grid-cols-2)
-     Desktop: 3 columns sized strictly to the largest content (sm:w-fit sm:grid-cols-[repeat(3,max-content)])
+     Desktop: 3 columns sized strictly to content
 -->
 <div class="grid grid-cols-2 sm:grid-cols-[repeat(3,max-content)] gap-1.5 sm:gap-2 w-full sm:w-fit justify-items-stretch">
   
@@ -807,22 +807,22 @@ function isKortdatumActive(product: any): boolean {
   <button
     type="button"
     @click="openStockModal(product)"
-    class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 text-base-content hover:border-emerald-600 hover:bg-emerald-600 hover:text-white dark:hover:text-white transition group p-2 sm:px-3 sm:py-1.5 min-h-9 h-9 sm:min-h-8 sm:h-8 w-full justify-center whitespace-nowrap"
+    class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 text-base-content hover:border-emerald-600 hover:bg-emerald-600 hover:text-white dark:hover:text-white transition group px-2 sm:px-3 h-9 min-h-9 sm:h-8 sm:min-h-8 w-full justify-center flex-nowrap"
     :title="t('admin.products.actions.quickStock')"
   >
     <Icon name="lucide:boxes" class="size-4 sm:size-3.5 text-emerald-600 dark:text-emerald-400 group-hover:text-white shrink-0" />
-    <span class="inline text-xs whitespace-nowrap">{{ t('admin.products.actions.quickStock') }}</span>
+    <span class="truncate text-xs min-w-0">{{ t('admin.products.actions.quickStock') }}</span>
   </button>
 
   <!-- 2. Quick Discount Button -->
   <button
     type="button"
     @click="openDiscountModal(product)"
-    class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 text-base-content hover:border-rose-600 hover:bg-rose-600 hover:text-white dark:hover:text-white transition group p-2 sm:px-3 sm:py-1.5 min-h-9 h-9 sm:min-h-8 sm:h-8 w-full justify-center whitespace-nowrap"
+    class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 text-base-content hover:border-rose-600 hover:bg-rose-600 hover:text-white dark:hover:text-white transition group px-2 sm:px-3 h-9 min-h-9 sm:h-8 sm:min-h-8 w-full justify-center flex-nowrap"
     :title="t('admin.products.actions.quickDiscount')"
   >
     <Icon name="lucide:percent" class="size-4 sm:size-3.5 text-rose-600 dark:text-rose-400 group-hover:text-white shrink-0" />
-    <span class="inline text-xs whitespace-nowrap">{{ t('admin.products.actions.quickDiscount') }}</span>
+    <span class="truncate text-xs min-w-0">{{ t('admin.products.actions.quickDiscount') }}</span>
   </button>
 
   <!-- 3. Quick Free Shipping Toggle Button -->
@@ -830,7 +830,7 @@ function isKortdatumActive(product: any): boolean {
     type="button"
     :disabled="isActionLoading === `${product.id}-shipping`"
     @click="toggleFreeShipping(product)"
-    class="btn btn-sm rounded-xl font-bold gap-1.5 border-2 transition group p-2 sm:px-3 sm:py-1.5 min-h-9 h-9 sm:min-h-8 sm:h-8 w-full justify-center whitespace-nowrap"
+    class="btn btn-sm rounded-xl font-bold gap-1.5 border-2 transition group px-2 sm:px-3 h-9 min-h-9 sm:h-8 sm:min-h-8 w-full justify-center flex-nowrap"
     :class="product.freeShipping
       ? 'border-emerald-500 bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white dark:hover:text-white'
       : 'btn-outline border-base-300 dark:border-zinc-700 text-base-content hover:border-emerald-600 hover:bg-emerald-600 hover:text-white dark:hover:text-white'"
@@ -843,7 +843,7 @@ function isKortdatumActive(product: any): boolean {
       class="size-4 sm:size-3.5 shrink-0"
       :class="product.freeShipping ? 'text-emerald-700 dark:text-emerald-400 group-hover:text-white' : 'text-emerald-600 dark:text-emerald-400 group-hover:text-white'"
     />
-    <span class="inline text-xs whitespace-nowrap">
+    <span class="truncate text-xs min-w-0">
       {{ product.freeShipping ? t('admin.products.actions.freeShippingActive', 'Fri frakt') : t('admin.products.actions.addFreeShipping', 'Fri frakt') }}
     </span>
   </button>
@@ -851,11 +851,11 @@ function isKortdatumActive(product: any): boolean {
   <!-- 4. Edit Button -->
   <NuxtLink
     :to="localePath(`/admin/products/${product.id}`)"
-    class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 hover:border-brand-500 hover:bg-brand-500 hover:text-slate-950 transition p-2 sm:px-3 sm:py-1.5 min-h-9 h-9 sm:min-h-8 sm:h-8 w-full justify-center whitespace-nowrap"
+    class="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 hover:border-brand-500 hover:bg-brand-500 hover:text-slate-950 transition px-2 sm:px-3 h-9 min-h-9 sm:h-8 sm:min-h-8 w-full justify-center flex-nowrap"
     :title="t('admin.products.actions.edit')"
   >
     <Icon name="lucide:pencil" class="size-4 sm:size-3.5 shrink-0" />
-    <span class="inline text-xs whitespace-nowrap">{{ t('admin.products.actions.edit') }}</span>
+    <span class="truncate text-xs min-w-0">{{ t('admin.products.actions.edit') }}</span>
   </NuxtLink>
 
   <!-- 5. Toggle Archive / Active Status -->
@@ -863,7 +863,7 @@ function isKortdatumActive(product: any): boolean {
     type="button"
     :disabled="isActionLoading === product.id"
     @click="toggleArchive(product.id)"
-    class="btn btn-ghost btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 hover:bg-warning/20 hover:border-warning text-base-content disabled:opacity-50 transition p-2 sm:px-3 sm:py-1.5 min-h-9 h-9 sm:min-h-8 sm:h-8 w-full justify-center whitespace-nowrap"
+    class="btn btn-ghost btn-sm rounded-xl font-bold gap-1.5 border-2 border-base-300 dark:border-zinc-700 hover:bg-warning/20 hover:border-warning text-base-content disabled:opacity-50 transition px-2 sm:px-3 h-9 min-h-9 sm:h-8 sm:min-h-8 w-full justify-center flex-nowrap"
     :title="product.isActive ? t('admin.products.actions.archive') : t('admin.products.actions.unarchive')"
   >
     <span v-if="isActionLoading === product.id" class="loading loading-spinner loading-xs"></span>
@@ -872,7 +872,7 @@ function isKortdatumActive(product: any): boolean {
       :name="product.isActive ? 'lucide:archive' : 'lucide:archive-restore'"
       class="size-4 sm:size-3.5 shrink-0"
     />
-    <span class="inline text-xs whitespace-nowrap">
+    <span class="truncate text-xs min-w-0">
       {{ product.isActive ? t('admin.products.actions.archive') : t('admin.products.actions.unarchive') }}
     </span>
   </button>
@@ -882,11 +882,11 @@ function isKortdatumActive(product: any): boolean {
     type="button"
     :disabled="isActionLoading === product.id"
     @click="openDeleteModal(product)"
-    class="btn btn-ghost btn-sm rounded-xl font-bold gap-1.5 border-2 border-error/30 text-error hover:bg-error hover:text-white disabled:opacity-50 transition p-2 sm:px-3 sm:py-1.5 min-h-9 h-9 sm:min-h-8 sm:h-8 w-full justify-center whitespace-nowrap"
+    class="btn btn-ghost btn-sm rounded-xl font-bold gap-1.5 border-2 border-error/30 text-error hover:bg-error hover:text-white disabled:opacity-50 transition px-2 sm:px-3 h-9 min-h-9 sm:h-8 sm:min-h-8 w-full justify-center flex-nowrap"
     :title="t('admin.products.actions.delete')"
   >
     <Icon name="lucide:trash-2" class="size-4 sm:size-3.5 shrink-0" />
-    <span class="inline text-xs whitespace-nowrap">{{ t('admin.products.actions.delete') }}</span>
+    <span class="truncate text-xs min-w-0">{{ t('admin.products.actions.delete') }}</span>
   </button>
 
 </div>
