@@ -26,6 +26,7 @@ export interface LineItemState {
   momsRate: 6 | 12 | 25
   shortageStatus: 'NONE' | 'REDUCED' | 'REMOVED' | 'SUBSTITUTED'
   isPacked: boolean
+  grossWeight?: number
 }
 
 export interface ShortageActionDraft {
@@ -358,8 +359,9 @@ export function useOrderPacking(
   })
 
   // 5. Submit with positional indexing
-  async function submitPacking(markDispatched: boolean) {
-    if (isOrderUnpackable.value && markDispatched) {
+  async function submitPacking(markDispatched: boolean, parcel?: any) {
+    const isRetroactiveDhlBooking = order.value?.fulfillmentStatus === 'DISPATCHED' && !order.value?.trackingCode
+    if (isOrderUnpackable.value && markDispatched && !isRetroactiveDhlBooking) {
       errorMessage.value = 'Ordern kan inte skickas eftersom den är avbruten eller saknar giltig betalning.'
       return
     }
@@ -368,7 +370,7 @@ export function useOrderPacking(
     errorMessage.value = null
 
     try {
-      const payload = {
+      const payload: any = {
         items: localItems.value.map((i, index) => ({
           index,
           productId: String(i.productId),
@@ -387,19 +389,21 @@ export function useOrderPacking(
         markDispatched,
       }
 
-      await $fetch(`/api/admin/orders/${order.value._id}/pack`, {
+      if (parcel) {
+        payload.parcel = parcel
+      }
+
+      const res: any = await $fetch(`/api/admin/orders/${order.value._id}/pack`, {
         method: 'POST',
         body: payload,
       })
 
       pendingActions.value.clear()
-      if (markDispatched) {
-        await router.push(localePath('/admin/orders'))
-      } else {
-        await refreshOrder()
-      }
+      await refreshOrder()
+      return res
     } catch (err: any) {
       errorMessage.value = err.data?.statusMessage || err.message || 'Kunde inte slutföra packningen'
+      throw err
     } finally {
       isSubmitting.value = false
     }
