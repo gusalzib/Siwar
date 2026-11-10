@@ -68,6 +68,7 @@ export interface IOrderItem {
   freeShipping?: boolean
   shortageStatus: LineItemShortageStatus
   isPacked?: boolean
+  grossWeight?: number // Item gross weight in grams
 }
 
 export interface IOrderCustomer {
@@ -123,6 +124,15 @@ export interface IOrder extends Document {
   confirmationEmailSent?: boolean
   trackingCode?: string
   carrier?: string
+  shipmentId?: string
+  parcel?: {
+    weightKg: number
+    lengthCm: number
+    widthCm: number
+    heightCm: number
+    preset?: string
+    contentsDescription?: string
+  }
   authorizedAt?: Date
   paidAt?: Date
   packedAt?: Date
@@ -156,6 +166,7 @@ const OrderItemSchema = new Schema<IOrderItem>(
       default: 'NONE',
     },
     isPacked: { type: Boolean, default: false },
+    grossWeight: { type: Number, default: 0 },
   },
   { _id: false }
 )
@@ -261,6 +272,15 @@ const OrderSchema = new Schema<IOrder>(
     confirmationEmailSent: { type: Boolean, default: false },
     trackingCode: { type: String },
     carrier: { type: String },
+    shipmentId: { type: String },
+    parcel: {
+      weightKg: { type: Number },
+      lengthCm: { type: Number },
+      widthCm: { type: Number },
+      heightCm: { type: Number },
+      preset: { type: String },
+      contentsDescription: { type: String },
+    },
     authorizedAt: { type: Date },
     paidAt: { type: Date },
     packedAt: { type: Date },

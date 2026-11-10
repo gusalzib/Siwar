@@ -1099,9 +1099,10 @@ function generateDispatchedReceiptHtml(
   const dir = isRtl ? 'rtl' : 'ltr'
   const align = isRtl ? 'right' : 'left'
   const isDhl = !carrier || carrier.toUpperCase().includes('DHL')
+  const dhlLang = locale === 'sv' ? 'se-sv' : 'se-en'
   const trackingUrl = trackingCode
     ? isDhl
-      ? `https://www.dhl.com/se-sv/home/tracking.html?tracking-id=${encodeURIComponent(trackingCode)}`
+      ? `https://www.dhl.com/${dhlLang}/home/tracking.html?tracking-id=${encodeURIComponent(trackingCode)}`
       : `https://www.postnord.se/vara-verktyg/spara-brev-paket-och-pall?shipmentId=${encodeURIComponent(trackingCode)}`
     : '#'
   const receiptUrl = `${process.env.BASE_URL || 'https://siwar.se'}/order/confirmation/${order._id}`

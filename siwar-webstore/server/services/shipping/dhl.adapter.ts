@@ -125,24 +125,24 @@ export class DhlAdapter implements ShippingCarrierAdapter {
       return {
         name: general?.company?.name || 'Siwar Butik AB',
         companyName: general?.company?.name || 'Siwar Butik AB',
-        street: general?.address?.street || 'Storgatan 12',
-        postalCode: general?.address?.postalCode || '30243',
+        street: general?.address?.street || 'Åttingsstigen 41',
+        postalCode: general?.address?.postalCode || '30254',
         city: general?.address?.city || 'Halmstad',
         countryCode: 'SE',
         email: general?.contact?.email || 'info@siwar.se',
-        phone: general?.contact?.phone || '072-848 83 99',
+        phone: general?.contact?.phone || '072-922 82 51',
       }
     } catch {
       // Fallback defaults for testing or disconnected environments
       return {
         name: 'Siwar Butik AB',
         companyName: 'Siwar Butik AB',
-        street: 'Storgatan 12',
-        postalCode: '30243',
+        street: 'Åttingsstigen 41',
+        postalCode: '30254',
         city: 'Halmstad',
         countryCode: 'SE',
         email: 'info@siwar.se',
-        phone: '072-848 83 99',
+        phone: '072-922 82 51',
       }
     }
   }
@@ -259,6 +259,8 @@ export class DhlAdapter implements ShippingCarrierAdapter {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
+          'DHL-API-Key': clientKey,
+          'dhl-api-key': clientKey,
           'Client-Key': clientKey,
           'client-key': clientKey,
         },
@@ -339,6 +341,8 @@ export class DhlAdapter implements ShippingCarrierAdapter {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
+          'DHL-API-Key': clientKey,
+          'dhl-api-key': clientKey,
           'Client-Key': clientKey,
           'client-key': clientKey,
         },
