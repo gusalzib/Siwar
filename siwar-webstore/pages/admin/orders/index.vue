@@ -286,8 +286,8 @@ function canPackOrder(order: any): boolean {
 
       <!-- Orders Data Table & Mobile Cards -->
       <div class="card bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 shadow-sm rounded-2xl overflow-hidden">
-        <!-- 1. MOBILE & TABLET VIEW (< md: 768px): Responsive Order Cards -->
-        <div class="block lg:hidden divide-y divide-slate-200 dark:divide-zinc-700/80">
+        <!-- 1. MOBILE, TABLET & COMPACT VIEW (< xl: 1280px / ≤ 1200px): Responsive Order Cards -->
+        <div class="block xl:hidden divide-y divide-slate-200 dark:divide-zinc-700/80">
           <!-- Loading -->
           <div v-if="isLoading" class="text-center py-16">
             <span class="loading loading-spinner loading-md text-primary"></span>
@@ -320,7 +320,7 @@ function canPackOrder(order: any): boolean {
                   <!-- Stale Aging Alert Badge -->
                   <span
                     v-if="isOrderStale(order)"
-                    class="badge badge-error badge-xs text-white font-bold gap-1 inline-flex items-center shadow-xs"
+                    class="badge badge-error badge-xs text-white font-bold gap-1 inline-flex items-center shadow-xs p-2"
                     :title="t('admin.orders.badges.staleTooltip', { days: packingThresholdDays })"
                   >
                     <Icon name="lucide:clock-alert" class="size-3" />
@@ -445,8 +445,8 @@ function canPackOrder(order: any): boolean {
           </div>
         </div>
 
-        <!-- 2. DESKTOP VIEW (≥ md: 768px): Spacious Table -->
-        <div class="hidden lg:block overflow-x-auto">
+        <!-- 2. WIDE DESKTOP VIEW (≥ xl: 1280px): Spacious Table -->
+        <div class="hidden xl:block overflow-x-auto">
           <table class="table w-full border-collapse">
             <thead>
               <tr class="bg-slate-100/90 dark:bg-zinc-800/90 border-b-2 border-slate-200 dark:border-zinc-700 text-xs font-bold text-base-content uppercase tracking-wider">
@@ -494,7 +494,7 @@ function canPackOrder(order: any): boolean {
                     <!-- Stale Aging Alert Badge -->
                     <span
                       v-if="isOrderStale(order)"
-                      class="badge badge-error badge-xs text-white font-bold gap-1 inline-flex items-center shadow-xs"
+                      class="badge badge-error badge-xs text-white font-bold gap-1 inline-flex items-center shadow-xs p-2"
                       :title="t('admin.orders.badges.staleTooltip', { days: packingThresholdDays })"
                     >
                       <Icon name="lucide:clock-alert" class="size-3" />
@@ -526,7 +526,7 @@ function canPackOrder(order: any): boolean {
                 <td class="text-center py-4 px-4 font-mono text-xs">
                   <span
                     v-if="order.fulfillmentStatus === 'PENDING_PACKING'"
-                    class="badge badge-neutral badge-sm font-mono font-bold"
+                    class="badge badge-neutral badge-sm font-mono font-bold p-4"
                   >
                     {{ order.itemsCount }} {{ t('admin.orders.badges.pieces') }}
                   </span>
@@ -594,7 +594,7 @@ function canPackOrder(order: any): boolean {
                 <td class="text-center py-4 px-5">
                   <NuxtLink
                     :to="localePath(`/admin/orders/${order.id}/pack`)"
-                    class="btn btn-sm px-4 font-bold shadow-xs gap-1.5 transition-colors"
+                    class="btn btn-md px-4 font-bold shadow-xs gap-1.5 transition-colors"
                     :class="canPackOrder(order) ? 'bg-brand-600 hover:bg-brand-700 text-white border-transparent' : 'btn-ghost border border-slate-300 dark:border-zinc-600 text-base-content hover:bg-slate-200 dark:hover:bg-zinc-800'"
                   >
                     <Icon

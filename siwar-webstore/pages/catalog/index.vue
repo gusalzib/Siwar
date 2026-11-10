@@ -293,8 +293,7 @@ function getLocalized(obj?: Record<string, string>): string {
           <!-- Sort Select -->
           <select
             v-model="selectedSort"
-            class="select select-bordered select-sm h-11 border-2 border-base-300 dark:border-zinc-700 bg-base-100 dark:bg-zinc-800 text-base-content font-bold shadow-xs cursor-pointer w-auto ps-4 pe-10 transition-all rounded-xl focus:border-emerald-500 focus:outline-none"
-            @change="applyFiltersToUrl()"
+            class="select select-bordered select-sm h-11 border-2 border-base-300 dark:border-zinc-700 bg-base-100 dark:bg-zinc-800 text-base-content font-bold shadow-xs cursor-pointer flex-1 min-w-0 sm:flex-initial sm:w-auto ps-3.5 pe-9 truncate transition-all rounded-xl focus:border-emerald-500 focus:outline-none"            @change="applyFiltersToUrl()"
           >
             <option value="newest">{{ t('catalog.sort.newest') }}</option>
             <option value="price_asc">{{ t('catalog.sort.priceAsc') }}</option>
