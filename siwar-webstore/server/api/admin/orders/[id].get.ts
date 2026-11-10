@@ -31,15 +31,15 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Populate product image and freeShipping for items if missing (for legacy or substituted items)
+  // Populate product image, freeShipping, and grossWeight for items if missing (for legacy or substituted items)
   if (order.items && order.items.length > 0) {
     const productIdsToFetch = order.items
-      .filter((it: any) => (!it.imageUrl || typeof it.freeShipping !== 'boolean') && it.productId)
+      .filter((it: any) => (!it.imageUrl || typeof it.freeShipping !== 'boolean' || typeof it.grossWeight !== 'number') && it.productId)
       .map((it: any) => it.productId)
 
     if (productIdsToFetch.length > 0) {
       const products = await Product.find({ _id: { $in: productIdsToFetch } })
-        .select('images freeShipping')
+        .select('images freeShipping grossWeight')
         .lean()
       const pMap = new Map(products.map((p) => [String(p._id), p]))
       for (const it of order.items as any[]) {
@@ -50,6 +50,9 @@ export default defineEventHandler(async (event) => {
           }
           if (!it.imageUrl && prod.images && prod.images.length > 0) {
             it.imageUrl = prod.images.find((img: any) => img.isPrimary)?.url || prod.images[0]?.url || ''
+          }
+          if (typeof it.grossWeight !== 'number') {
+            it.grossWeight = prod.grossWeight || 0
           }
         }
       }
