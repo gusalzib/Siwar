@@ -1,6 +1,9 @@
 <!-- pages/admin/orders/[id]/pack.vue -->
 <script setup lang="ts">
 import type { LineItemState, ShortageActionDraft } from '~/composables/useOrderPacking'
+import type { PackageParcel } from '~/server/types/shipping'
+import OrderParcelModal from '~/components/admin/OrderParcelModal.vue'
+import DhlHandoverModal from '~/components/admin/DhlHandoverModal.vue'
 
 definePageMeta({ middleware: 'admin' })
 
@@ -109,10 +112,83 @@ const unpackableBanner = computed(() => {
 // Modal states
 const activeShortageItem = ref<LineItemState | null>(null) // manages which specific item is currently being addressed in a shortage modal.
 const isCancelModalOpen = ref(false)
+const isParcelModalOpen = ref(false)
+const isHandoverModalOpen = ref(false)
+const activeHandoverData = ref({
+  kolliId: '',
+  consignmentNumber: '',
+  trackingUrl: '',
+  labelUrl: '',
+  weightKg: 0,
+})
+
+// Calculate product catalog grossWeight across all packed/fulfilled line items
+const calculatedGrossWeightGrams = computed<number>(() => {
+  if (!localItems.value || localItems.value.length === 0) return 0
+  return localItems.value.reduce((acc, item) => {
+    const qty = item.fulfilledQuantity ?? item.quantity ?? 0
+    // Use item grossWeight if present or default estimated 500g per packaged unit
+    const weight = (item as any).grossWeight || 500
+    return acc + (weight * qty)
+  }, 0)
+})
 
 function onApplyShortage(draft: ShortageActionDraft) {
   applyShortageAction(draft)
   activeShortageItem.value = null
+}
+
+/**
+ * Intercepts dispatch confirmation:
+ * If the order is fulfilled via DELIVERY, display the parcel dimension & scale verification modal.
+ * If PICKUP, proceed with direct dispatch.
+ */
+function onDispatchRequested() {
+  if (order.value?.customer?.fulfillmentMethod === 'DELIVERY' && totalFulfilledUnits.value > 0) {
+    isParcelModalOpen.value = true
+  } else {
+    submitPacking(true)
+  }
+}
+
+/**
+ * Triggered when admin confirms measured scale weight and box dimensions.
+ */
+async function onConfirmParcelDispatch(parcel: PackageParcel) {
+  isParcelModalOpen.value = false
+  try {
+    const res: any = await submitPacking(true, parcel)
+    if (res?.trackingCode || order.value?.trackingCode) {
+      activeHandoverData.value = {
+        kolliId: res?.trackingCode || order.value?.trackingCode || '',
+        consignmentNumber: res?.consignmentNumber || order.value?.consignmentNumber || (order.value as any)?.shipmentId || '',
+        trackingUrl: res?.trackingUrl || (order.value?.trackingCode ? `https://www.dhl.com/se-en/home/tracking.html?tracking-id=${encodeURIComponent(order.value.trackingCode)}` : ''),
+        labelUrl: res?.labelUrl || order.value?.labelUrl || '',
+        weightKg: parcel.weightKg,
+      }
+      isHandoverModalOpen.value = true
+    }
+  } catch {
+    // errorMessage is handled reactively by useOrderPacking
+  }
+}
+
+/**
+ * Opens the Code 128 DHL mobile handover card on demand, or launches parcel modal to generate it if missing.
+ */
+function onOpenHandoverModal() {
+  if (order.value?.trackingCode) {
+    activeHandoverData.value = {
+      kolliId: order.value.trackingCode,
+      consignmentNumber: order.value.consignmentNumber || (order.value as any).shipmentId || '',
+      trackingUrl: order.value.trackingUrl || `https://www.dhl.com/se-en/home/tracking.html?tracking-id=${encodeURIComponent(order.value.trackingCode)}`,
+      labelUrl: order.value.labelUrl || '',
+      weightKg: (order.value as any).parcel?.weightKg || 0,
+    }
+    isHandoverModalOpen.value = true
+  } else if (order.value?.customer?.fulfillmentMethod === 'DELIVERY') {
+    isParcelModalOpen.value = true
+  }
 }
 
 async function onConfirmCancel(reason: string) {
@@ -164,7 +240,8 @@ async function onConfirmCancel(reason: string) {
           @cancel="isCancelModalOpen = true"
           @pack-all="packAllItems"
           @save="submitPacking(false)"
-          @dispatch="submitPacking(true)"
+          @dispatch="onDispatchRequested"
+          @open-handover="onOpenHandoverModal"
         />
 
         <!-- Warning Banner for Unpackable / Cancelled / Unpaid Orders -->
@@ -228,7 +305,13 @@ async function onConfirmCancel(reason: string) {
         </div>
 
         <!-- Customer & Delivery Cards -->
-        <OrderPackCustomerCard :customer="order.customer" />
+        <OrderPackCustomerCard
+          :customer="order.customer"
+          :tracking-code="order.trackingCode"
+          :carrier="order.carrier"
+          :consignment-number="order.consignmentNumber || order.shipmentId"
+          @open-handover="onOpenHandoverModal"
+        />
 
         <div v-if="errorMessage" class="alert alert-error">
           <span>{{ errorMessage }}</span>
@@ -280,6 +363,27 @@ async function onConfirmCancel(reason: string) {
           :is-submitting="isSubmitting"
           @close="isCancelModalOpen = false"
           @confirm="onConfirmCancel"
+        />
+
+        <!-- Parcel Dimension & Measured Scale Weight Modal (DHL Consignment) -->
+        <OrderParcelModal
+          :is-open="isParcelModalOpen"
+          :calculated-gross-weight-grams="calculatedGrossWeightGrams"
+          :is-submitting="isSubmitting"
+          @close="isParcelModalOpen = false"
+          @confirm="onConfirmParcelDispatch"
+        />
+
+        <!-- Code 128 Handover Modal (Scannable Barcode & Kolli-ID for DHL Handover) -->
+        <DhlHandoverModal
+          :is-open="isHandoverModalOpen"
+          :order-reference="order?.orderReference || ''"
+          :kolli-id="activeHandoverData.kolliId"
+          :consignment-number="activeHandoverData.consignmentNumber"
+          :tracking-url="activeHandoverData.trackingUrl"
+          :label-url="activeHandoverData.labelUrl"
+          :weight-kg="activeHandoverData.weightKg"
+          @close="isHandoverModalOpen = false"
         />
       </template>
     </div>

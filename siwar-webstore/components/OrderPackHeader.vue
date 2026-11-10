@@ -17,6 +17,7 @@ const emit = defineEmits<{
   (e: 'packAll'): void
   (e: 'save'): void
   (e: 'dispatch'): void
+  (e: 'openHandover'): void
 }>()
 
 const { t } = useI18n()
@@ -82,6 +83,28 @@ function formatDate(dateStr?: string | Date) {
 
     <!-- Header Action Buttons -->
     <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 justify-start xl:justify-end pt-1 xl:pt-0">
+      <!-- DHL Mobile Handover Card (Accessible at all times if order is dispatched / has tracking) -->
+      <button
+        v-if="order.trackingCode"
+        type="button"
+        class="btn btn-sm bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold border-none px-3 shadow-sm transition-transform active:scale-95 gap-1.5"
+        @click="emit('openHandover')"
+      >
+        <Icon name="lucide:barcode" class="size-4 shrink-0" />
+        <span class="truncate">{{ t('admin.orders.pack.dhlHandover.openHandover', 'DHL Inlämningskort') }}</span>
+      </button>
+
+      <!-- If order is already DISPATCHED without trackingCode and method is DELIVERY, allow booking DHL consignment -->
+      <button
+        v-else-if="order.fulfillmentStatus === 'DISPATCHED' && !order.trackingCode && order.customer?.fulfillmentMethod === 'DELIVERY'"
+        type="button"
+        class="btn btn-sm bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold border-none px-3 shadow-sm transition-transform active:scale-95 gap-1.5"
+        @click="emit('openHandover')"
+      >
+        <Icon name="lucide:barcode" class="size-4 shrink-0" />
+        <span class="truncate">{{ t('admin.orders.pack.dhlHandover.createShipment', 'Boka DHL-sändning & Inlämningskort') }}</span>
+      </button>
+
       <!-- Manual Cancel Action -->
       <button
         v-if="order.fulfillmentStatus !== 'DISPATCHED' && order.fulfillmentStatus !== 'CANCELLED' && order.paymentStatus !== 'CANCELLED'"
