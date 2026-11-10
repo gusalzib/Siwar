@@ -571,7 +571,7 @@ const StoreSettingsSchema = new Schema<IStoreSettings>(
       max: 30,
     },
   },
-  { timestamps: true }
+  { timestamps: true, bufferCommands: false }
 )
 
 export const StoreSettings =
@@ -584,6 +584,10 @@ export async function getStoreGeneralSettings(): Promise<IGeneralSettings> {
   const now = Date.now()
   if (cachedGeneral && now < generalCacheExpiry) {
     return cachedGeneral
+  }
+
+  if (mongoose.connection.readyState !== 1) {
+    return cachedGeneral || { ...DEFAULT_GENERAL_CONFIG }
   }
 
   try {
@@ -662,6 +666,10 @@ export async function getStorePickupSettings(): Promise<IPickupSettings> {
   const now = Date.now()
   if (cachedPickup && now < cacheExpiry) {
     return cachedPickup
+  }
+
+  if (mongoose.connection.readyState !== 1) {
+    return cachedPickup || { ...DEFAULT_PICKUP_CONFIG }
   }
 
   try {

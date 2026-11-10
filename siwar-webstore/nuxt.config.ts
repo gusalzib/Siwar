@@ -32,6 +32,13 @@ export default defineNuxtConfig({
     mailFrom: process.env.MAIL_FROM || process.env.MAIL_FROM_ADDRESS || 'Siwar Webstore <order@siwar.se>',
     storeEmail: process.env.STORE_EMAIL || '',
 
+    // DHL Freight Sweden Logistics (Product 103 Servicepoint)
+    dhlClientKey: process.env.DHL_CLIENT_KEY || '',
+    dhlAccountNumber: process.env.DHL_ACCOUNT_NUMBER || '',
+    dhlEnvironment: (process.env.DHL_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production',
+    dhlApiFarmSandbox: process.env.DHL_API_FARM_SANDBOX || 'https://test-api.freight-logistics.dhl.com',
+    dhlApiFarmProduction: process.env.DHL_API_FARM_PRODUCTION || 'https://api.freight-logistics.dhl.com',
+
     // Private keys accessible strictly on the server side
     r2AccountId: process.env.R2_ACCOUNT_ID || '',
     r2AccessKeyId: process.env.R2_ACCESS_KEY_ID || '',
