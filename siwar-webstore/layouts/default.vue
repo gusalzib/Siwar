@@ -231,79 +231,85 @@ const logout = async () => {
         </NuxtLink>
       </div>
 
-      <!-- Center: Desktop Navigation Links (Visible on screens >= 1280px for customers, or >= 1600px when admin view is active) -->
+      <!-- Center: Desktop Navigation Links (Catalog always shown >= 768px; remaining links visible >= 1280px for customers, or >= 1600px when admin view is active) -->
       <nav
-        class="items-center justify-center gap-1 xl:gap-2 flex-1 min-w-0 px-2 flex-nowrap"
-        :class="isAdmin ? 'hidden min-[1600px]:flex' : 'hidden xl:flex'"
+        class="hidden md:flex items-center justify-center gap-1 xl:gap-2 flex-1 min-w-0 px-2 flex-nowrap"
       >
         <NuxtLink
           :to="localePath('/catalog')"
-          class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
+          class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200 flex-nowrap whitespace-nowrap"
           active-class="!bg-brand-600 !text-white font-bold shadow-xs"
         >
-          <Icon name="lucide:layout-grid" class="h-4 w-4" />
+          <Icon name="lucide:layout-grid" class="h-4 w-4 shrink-0" />
           {{ t('nav.catalog', 'Sortiment') }}
         </NuxtLink>
-        <NuxtLink
-          :to="localePath('/oppettider')"
-          class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
-          active-class="!bg-brand-600 !text-white font-bold shadow-xs"
-        >
-          <Icon name="lucide:clock" class="h-4 w-4" />
-          {{ t('nav.oppettider', 'Öppettider') }}
-        </NuxtLink>
-        <NuxtLink
-          :to="localePath('/about')"
-          class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
-          active-class="!bg-brand-600 !text-white font-bold shadow-xs"
-        >
-          <Icon name="lucide:info" class="h-4 w-4" />
-          {{ t('nav.about', 'Om oss') }}
-        </NuxtLink>
-        <NuxtLink
-          :to="localePath('/contact')"
-          class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
-          active-class="!bg-brand-600 !text-white font-bold shadow-xs"
-        >
-          <Icon name="lucide:mail" class="h-4 w-4" />
-          {{ t('nav.contact', 'Kontakt') }}
-        </NuxtLink>
-        <NuxtLink
-          :to="localePath('/order/lookup')"
-          class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
-          active-class="!bg-brand-600 !text-white font-bold shadow-xs"
-        >
-          <Icon name="lucide:package-search" class="h-4 w-4" />
-          {{ t('nav.trackOrder', 'Spåra order') }}
-        </NuxtLink>
 
-        <!-- Admin Management Links -->
-        <template v-if="isAdmin">
+        <!-- Secondary & Admin Links (Collapsed into hamburger below xl / 1600px for admin) -->
+        <div
+          class="items-center justify-center gap-1 xl:gap-2 flex-nowrap"
+          :class="isAdmin ? 'hidden min-[1600px]:flex' : 'hidden xl:flex'"
+        >
           <NuxtLink
-            :to="localePath('/admin/products')"
-            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
-            active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+            :to="localePath('/oppettider')"
+            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
+            active-class="!bg-brand-600 !text-white font-bold shadow-xs"
           >
-            <Icon name="lucide:package" class="h-4 w-4" />
-            {{ t('admin.nav.products', 'Produkter') }}
+            <Icon name="lucide:clock" class="h-4 w-4" />
+            {{ t('nav.oppettider', 'Öppettider') }}
           </NuxtLink>
           <NuxtLink
-            :to="localePath('/admin/orders')"
-            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
-            active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+            :to="localePath('/about')"
+            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
+            active-class="!bg-brand-600 !text-white font-bold shadow-xs"
           >
-            <Icon name="lucide:clipboard-list" class="h-4 w-4" />
-            {{ t('admin.nav.orders', 'Beställningar') }}
+            <Icon name="lucide:info" class="h-4 w-4" />
+            {{ t('nav.about', 'Om oss') }}
           </NuxtLink>
           <NuxtLink
-            :to="localePath('/admin/settings')"
-            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
-            active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+            :to="localePath('/contact')"
+            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
+            active-class="!bg-brand-600 !text-white font-bold shadow-xs"
           >
-            <Icon name="lucide:settings" class="h-4 w-4" />
-            {{ t('admin.nav.settings', 'Butiksinställningar') }}
+            <Icon name="lucide:mail" class="h-4 w-4" />
+            {{ t('nav.contact', 'Kontakt') }}
           </NuxtLink>
-        </template>
+          <NuxtLink
+            :to="localePath('/order/lookup')"
+            class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm transition-colors text-base-content hover:bg-base-200"
+            active-class="!bg-brand-600 !text-white font-bold shadow-xs"
+          >
+            <Icon name="lucide:package-search" class="h-4 w-4" />
+            {{ t('nav.trackOrder', 'Spåra order') }}
+          </NuxtLink>
+
+          <!-- Admin Management Links -->
+          <template v-if="isAdmin">
+            <NuxtLink
+              :to="localePath('/admin/products')"
+              class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
+              active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+            >
+              <Icon name="lucide:package" class="h-4 w-4" />
+              {{ t('admin.nav.products', 'Produkter') }}
+            </NuxtLink>
+            <NuxtLink
+              :to="localePath('/admin/orders')"
+              class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
+              active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+            >
+              <Icon name="lucide:clipboard-list" class="h-4 w-4" />
+              {{ t('admin.nav.orders', 'Beställningar') }}
+            </NuxtLink>
+            <NuxtLink
+              :to="localePath('/admin/settings')"
+              class="btn btn-ghost btn-sm font-semibold gap-1 px-2.5 text-xs xl:text-sm text-purple-700 dark:text-purple-300 visited:text-purple-700 dark:visited:text-purple-300 hover:bg-purple-100/80 dark:hover:bg-purple-950/50 transition-colors"
+              active-class="!bg-purple-700 dark:!bg-purple-600 !text-white font-bold shadow-xs"
+            >
+              <Icon name="lucide:settings" class="h-4 w-4" />
+              {{ t('admin.nav.settings', 'Butiksinställningar') }}
+            </NuxtLink>
+          </template>
+        </div>
       </nav>
 
       <!-- Right: Utility Controls (Currency, Language, Theme, Cart, Profile) -->
