@@ -16,6 +16,7 @@ export interface ShortageActionInput {
     priceMinor: number
     momsRate: 6 | 12 | 25
     freeShipping?: boolean
+    grossWeight?: number
   }
   note?: string
 }
@@ -196,6 +197,7 @@ export function recalculateOrderShortage(
         originalSku: line.sku,
         originalName: line.name ? { ...line.name } : undefined,
         originalMomsRate: line.momsRate,
+        originalGrossWeight: typeof line.grossWeight === 'number' ? line.grossWeight : undefined,
         substitutedProductId: new mongoose.Types.ObjectId(sub._id),
         substitutedSku: sub.sku,
         substitutedUnitPriceMinor: sub.priceMinor,
@@ -213,6 +215,7 @@ export function recalculateOrderShortage(
         unitPriceMinor: sub.priceMinor,
         momsRate: sub.momsRate,
         freeShipping: typeof sub.freeShipping === 'boolean' ? sub.freeShipping : false,
+        grossWeight: typeof sub.grossWeight === 'number' ? sub.grossWeight : 0,
         shortageStatus: 'SUBSTITUTED',
         isPacked: line.isPacked ?? false,
       }

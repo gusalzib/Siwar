@@ -34,3 +34,24 @@ export const DEFAULT_SHIPPING_CONFIG: ShippingConfig = {
     },
   ],
 }
+
+/**
+ * Resolves a product's weight in grams from `grossWeight`, falling back to
+ * `netQuantity` (`g` or `kg`) if `grossWeight` is missing or non-positive.
+ */
+export function resolveProductGrossWeightGrams(product?: {
+  grossWeight?: number | null
+  netQuantity?: { value?: number; unit?: string } | null
+} | null): number {
+  if (!product) return 0
+  const rawGross = Number(product.grossWeight)
+  if (Number.isFinite(rawGross) && rawGross > 0) {
+    return rawGross
+  }
+  const netVal = Number(product.netQuantity?.value)
+  if (Number.isFinite(netVal) && netVal > 0) {
+    if (product.netQuantity?.unit === 'g') return netVal
+    if (product.netQuantity?.unit === 'kg') return Math.round(netVal * 1000)
+  }
+  return 0
+}

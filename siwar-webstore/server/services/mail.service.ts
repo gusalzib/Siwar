@@ -119,6 +119,42 @@ function resolveStoreContact(
   return { email, phone }
 }
 
+/**
+ * Escapes HTML special characters for safe interpolation of user- or admin-supplied text.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+/**
+ * Returns true when an order has no fulfilled items remaining or its final total is 0.
+ * Zero-sum orders must never trigger packing or dispatch confirmation emails.
+ */
+export function isZeroTotalOrder(order: IOrder): boolean {
+  const items = order.items || []
+  if (items.length > 0 && items.every((item) => (item.fulfilledQuantity ?? item.quantity) <= 0)) {
+    return true
+  }
+  const finalSum = order.pricing?.capturedTotalMinor ?? order.pricing?.grandTotalMinor
+  if (typeof finalSum === 'number' && finalSum <= 0) {
+    return true
+  }
+  return false
+}
+
+function shouldSuppressFulfillmentEmail(order: IOrder): boolean {
+  return (
+    order.fulfillmentStatus === 'CANCELLED' ||
+    order.paymentStatus === 'CANCELLED' ||
+    isZeroTotalOrder(order)
+  )
+}
+
 export interface IContactMessageParams {
   fullName: string
   email: string
@@ -174,6 +210,13 @@ export const mailService = {
    * 2. Order Packed (Sent when staff clicks 'Spara packstatus' -> PACKED)
    */
   async sendOrderPackedNotice(order: IOrder, locale: EmailLocale = 'sv') {
+    if (shouldSuppressFulfillmentEmail(order)) {
+      console.warn(
+        `[MailService] Skipping packed notice for zero-sum or cancelled order #${order.orderReference}`
+      )
+      return { id: 'skipped-zero-or-cancelled' }
+    }
+
     const resend = getResendClient()
     const from = getMailFrom()
     const to = order.customer?.email
@@ -259,6 +302,14 @@ export const mailService = {
     locale: EmailLocale = 'sv'
   ) {
     const { order, trackingCode, carrier = 'DHL' } = params
+
+    if (shouldSuppressFulfillmentEmail(order)) {
+      console.warn(
+        `[MailService] Skipping dispatch notice for zero-sum or cancelled order #${order.orderReference}`
+      )
+      return { id: 'skipped-zero-or-cancelled' }
+    }
+
     const resend = getResendClient()
     const from = getMailFrom()
     const to = order.customer?.email
@@ -308,6 +359,69 @@ export const mailService = {
 
   generateDispatchedReceiptHtml,
   generateConfirmationHtml,
+  generateCancelledHtml,
+
+  /**
+   * 3b. Order Cancelled (Sent once when an order is cancelled or all items are unavailable / final sum is 0)
+   */
+  async sendOrderCancelled(order: IOrder, locale: EmailLocale = 'sv', reason?: string) {
+    if (order.cancellationEmailSent) {
+      console.info(
+        `[MailService] Cancellation email already sent for #${order.orderReference}; skipping duplicate.`
+      )
+      return { id: 'skipped-already-sent' }
+    }
+
+    const resend = getResendClient()
+    const from = getMailFrom()
+    const to = order.customer?.email
+
+    if (!to) {
+      return { id: 'skipped-no-recipient' }
+    }
+
+    let generalSettings: IGeneralSettings | undefined
+    try {
+      generalSettings = await getStoreGeneralSettings()
+    } catch (err) {
+      console.warn('[MailService] Failed to load store general settings:', err)
+    }
+
+    const subjects: Record<EmailLocale, string> = {
+      ar: `تم إلغاء الطلب #${order.orderReference} - متجر سوار`,
+      sv: `Order avbruten #${order.orderReference} - Siwar`,
+      en: `Order Cancelled #${order.orderReference} - Siwar Store`,
+    }
+
+    const html = generateCancelledHtml(order, locale, reason, generalSettings)
+
+    if (!resend) {
+      console.log(`[MOCK EMAIL: CANCELLED] To: ${to} | Subject: ${subjects[locale]}`)
+      return { id: 'mock-mail-id' }
+    }
+
+    const result = await resend.emails.send({
+      from,
+      to,
+      subject: subjects[locale],
+      html,
+    })
+
+    if (result.error) {
+      console.error(` [Resend Error] Failed to send order cancellation email to ${to}:`, result.error)
+      throw new Error(`Resend error: ${result.error.message}`)
+    }
+
+    console.log(` [Resend Success] Order cancellation email sent to ${to}, Resend ID: ${result.data?.id}`)
+    return result
+  },
+
+  /**
+   * Compatibility alias for Order Cancellation notice
+   */
+  async sendOrderCancelledEmail(order: IOrder, locale: EmailLocale = 'sv', reason?: string) {
+    return this.sendOrderCancelled(order, locale, reason)
+  },
 
   /**
    * 4. Customer Contact Inquiry (Sent to store email when customer submits contact form)
@@ -1221,6 +1335,189 @@ function generateDispatchedReceiptHtml(
   `
 }
 
+function generateCancelledHtml(
+  order: IOrder,
+  locale: EmailLocale = 'sv',
+  reason?: string,
+  generalSettings?: IGeneralSettings | { contact?: { email?: string; phone?: string } } | null
+): string {
+  const isRtl = locale === 'ar'
+  const dir = isRtl ? 'rtl' : 'ltr'
+  const align = isRtl ? 'right' : 'left'
+  const oppAlign = isRtl ? 'left' : 'right'
+  const currency = order.currency || 'SEK'
+  const customerName = escapeHtml(order.customer?.fullName || '')
+  const authorizedTotal = order.pricing?.authorizedTotalMinor ?? order.pricing?.grandTotalMinor ?? 0
+  const { email: storeEmail, phone: storePhone } = resolveStoreContact(generalSettings)
+
+  const isSwish = order.paymentProvider === 'SWISH'
+  const isStripe = order.paymentProvider === 'STRIPE'
+
+  const copy = {
+    ar: {
+      heading: 'تم إلغاء طلبك',
+      orderNum: 'رقم الطلب:',
+      greeting: `مرحباً ${customerName}،`,
+      intro:
+        `نأسف لإبلاغك بأنه تم إلغاء طلبك رقم <strong>#${escapeHtml(order.orderReference)}</strong> لأن جميع المنتجات المطلوبة غير متوفرة حالياً أو تم إلغاء الطلب. المبلغ النهائي للطلب هو <strong>${formatMoney(0, currency)}</strong>.`,
+      reasonLabel: 'سبب الإلغاء:',
+      itemsTitle: 'المنتجات في الطلب الملغى:',
+      unavailableBadge: 'غير متوفر / ملغى',
+      qtyLabel: 'الكمية المطلوبة:',
+      pcs: 'قطعة',
+      financialTitle: 'ملخص الدفع والاسترداد:',
+      originalHold: 'المبلغ الأصلي (المحجوز / المدفوع):',
+      releasedLabel: isSwish ? 'المبلغ المسترد عبر Swish:' : 'المبلغ المحرر (غير مسحوب):',
+      finalCharge: 'المبلغ النهائي المخصوم:',
+      paymentNote: isSwish
+        ? 'تم إرجاع كامل المبلغ المدفوع عبر Swish إلى حسابك البنكي.'
+        : isStripe
+          ? 'تم إلغاء الحجز المؤقت على بطاقتك ولن يتم خصم أي مبلغ.'
+          : 'لن يتم خصم أي مبلغ، وتم تحرير أو إرجاع كامل قيمة الطلب.',
+      contactPrompt: `إذا كانت لديك أي استفسارات، يرجى التواصل معنا عبر البريد الإلكتروني ${escapeHtml(storeEmail)} أو الهاتف ${escapeHtml(storePhone)}.`,
+    },
+    sv: {
+      heading: 'Din order har avbrutits',
+      orderNum: 'Ordernummer:',
+      greeting: `Hej ${customerName},`,
+      intro:
+        `Vi måste tyvärr meddela att din order <strong>#${escapeHtml(order.orderReference)}</strong> har avbrutits eftersom samtliga varor inte finns i lager eller för att ordern har annullerats. Slutsumman för ordern är <strong>${formatMoney(0, currency)}</strong>.`,
+      reasonLabel: 'Anledning:',
+      itemsTitle: 'Berörda varor i den avbrutna ordern:',
+      unavailableBadge: 'Ej tillgänglig / Avbruten',
+      qtyLabel: 'Beställt antal:',
+      pcs: 'st',
+      financialTitle: 'Betalning & Återbetalning:',
+      originalHold: 'Ursprungligt belopp:',
+      releasedLabel: isSwish ? 'Återbetalat belopp via Swish:' : 'Frigjord reservation (dras ej):',
+      finalCharge: 'Slutgiltigt debiterat belopp:',
+      paymentNote: isSwish
+        ? 'Hela beloppet har återbetalats direkt till ditt bankkonto via Swish.'
+        : isStripe
+          ? 'Kortreservationen har släppts automatiskt och inga pengar har dragits.'
+          : 'Reservationen har släppts eller återbetalats i sin helhet och inget belopp debiteras.',
+      contactPrompt: `Om du har några frågor är du varmt välkommen att kontakta vår kundtjänst på ${escapeHtml(storeEmail)} eller ${escapeHtml(storePhone)}.`,
+    },
+    en: {
+      heading: 'Your order has been cancelled',
+      orderNum: 'Order Reference:',
+      greeting: `Hello ${customerName},`,
+      intro:
+        `Unfortunately, your order <strong>#${escapeHtml(order.orderReference)}</strong> has been cancelled because the ordered items are unavailable or the order was cancelled. Your final order total is <strong>${formatMoney(0, currency)}</strong>.`,
+      reasonLabel: 'Reason:',
+      itemsTitle: 'Items in the cancelled order:',
+      unavailableBadge: 'Unavailable / Cancelled',
+      qtyLabel: 'Ordered qty:',
+      pcs: 'pcs',
+      financialTitle: 'Payment & Refund Summary:',
+      originalHold: 'Original Amount:',
+      releasedLabel: isSwish ? 'Refunded via Swish:' : 'Released Authorization Hold:',
+      finalCharge: 'Final Charged Amount:',
+      paymentNote: isSwish
+        ? 'The full paid amount has been refunded directly to your bank account via Swish.'
+        : isStripe
+          ? 'The temporary authorization hold on your card has been released and no funds will be captured.'
+          : 'The full order amount has been released or refunded and you will not be charged.',
+      contactPrompt: `If you have any questions, please contact our support team at ${escapeHtml(storeEmail)} or ${escapeHtml(storePhone)}.`,
+    },
+  }[locale]
+
+  const itemsHtml = (order.items || [])
+    .map((item) => {
+      const rawName = item.name?.[locale] || item.name?.sv || item.name?.en || item.name?.ar || 'Vara'
+      const safeItemName = escapeHtml(rawName)
+      return `
+        <tr>
+          <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: ${align};">
+            <span style="text-decoration: line-through; font-weight: bold; font-size: 14px; color: #4b5563;">${safeItemName}</span>
+            ${item.sku ? `<br><span style="font-size: 11px; color: #6b7280; font-family: monospace;">SKU: ${escapeHtml(item.sku)}</span>` : ''}
+            <br><span style="display: inline-block; font-size: 10px; font-weight: bold; background-color: #fee2e2; color: #b91c1c; padding: 1px 6px; border-radius: 4px; margin-top: 3px;">${copy.unavailableBadge}</span>
+          </td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: center; font-size: 13px; color: #6b7280;">
+            ${item.quantity} ${copy.pcs}
+          </td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: ${oppAlign}; font-size: 13px; font-family: monospace; color: #6b7280; text-decoration: line-through;">
+            ${formatMoney(item.unitPriceMinor * item.quantity, currency)}
+          </td>
+        </tr>
+      `
+    })
+    .join('')
+
+  const safeReason = reason?.trim() ? escapeHtml(reason.trim()) : ''
+
+  return `
+    <div dir="${dir}" style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; color: #1f2937;">
+      <div style="background-color: #dc2626; color: #ffffff; padding: 24px; text-align: center;">
+        <h1 style="margin: 0; font-size: 22px;">${copy.heading}</h1>
+        <p style="margin: 4px 0 0; font-size: 14px; opacity: 0.9;">${copy.orderNum} <strong>${escapeHtml(order.orderReference)}</strong></p>
+      </div>
+
+      <div style="padding: 24px;">
+        <p style="font-size: 15px;">${copy.greeting}</p>
+        <p style="font-size: 14px; color: #4b5563; line-height: 1.6;">${copy.intro}</p>
+
+        ${
+          safeReason
+            ? `
+        <div style="background-color: #fef2f2; border-${align}: 4px solid #dc2626; border-radius: 4px; padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #991b1b;">
+          <strong>${copy.reasonLabel}</strong> ${safeReason}
+        </div>
+        `
+            : ''
+        }
+
+        ${
+          itemsHtml
+            ? `
+        <h3 style="font-size: 14px; margin-top: 22px; margin-bottom: 8px; color: #374151;">${copy.itemsTitle}</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px;">
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+        `
+            : ''
+        }
+
+        <!-- Financial Summary -->
+        <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 18px 0;">
+          <div style="font-weight: bold; color: #111827; font-size: 14px; margin-bottom: 10px;">
+            💳 ${copy.financialTitle}
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
+            ${
+              authorizedTotal > 0
+                ? `
+            <tr>
+              <td style="padding: 4px 0; color: #4b5563; text-align: ${align};">${copy.originalHold}</td>
+              <td style="padding: 4px 0; font-family: monospace; text-align: ${oppAlign};">${formatMoney(authorizedTotal, currency)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: #16a34a; font-weight: bold; text-align: ${align};">${copy.releasedLabel}</td>
+              <td style="padding: 4px 0; font-family: monospace; color: #16a34a; font-weight: bold; text-align: ${oppAlign};">-${formatMoney(authorizedTotal, currency)}</td>
+            </tr>
+            `
+                : ''
+            }
+            <tr style="font-size: 15px; font-weight: bold; color: #111827; border-top: 1px dashed #d1d5db;">
+              <td style="padding: 8px 0 2px 0; text-align: ${align};">${copy.finalCharge}</td>
+              <td style="padding: 8px 0 2px 0; font-family: monospace; text-align: ${oppAlign};">${formatMoney(0, currency)}</td>
+            </tr>
+          </table>
+          <p style="margin: 10px 0 0 0; font-size: 12.5px; color: #4b5563; line-height: 1.5;">
+            ${copy.paymentNote}
+          </p>
+        </div>
+
+        <p style="font-size: 13px; color: #4b5563; line-height: 1.5;">
+          ${copy.contactPrompt}
+        </p>
+      </div>
+    </div>
+  `
+}
+
 function generateContactInquiryHtml(params: {
   fullName: string
   email: string
@@ -1319,6 +1616,7 @@ export {
   generateConfirmationHtml,
   generatePackedHtml,
   generateDispatchedReceiptHtml,
+  generateCancelledHtml,
   generateContactInquiryHtml,
   resolveStoreContact,
 }

@@ -44,6 +44,7 @@ export interface IShortageAdjustment {
   originalSku?: string
   originalName?: { ar: string; sv: string; en: string }
   originalMomsRate?: 6 | 12 | 25
+  originalGrossWeight?: number
   substitutedProductId?: mongoose.Types.ObjectId
   substitutedSku?: string
   substitutedUnitPriceMinor?: number
@@ -122,6 +123,7 @@ export interface IOrder extends Document {
   pricing: IOrderPricing
   inventoryDecremented: boolean
   confirmationEmailSent?: boolean
+  cancellationEmailSent?: boolean
   trackingCode?: string
   carrier?: string
   shipmentId?: string
@@ -191,6 +193,7 @@ const ShortageAdjustmentSchema = new Schema<IShortageAdjustment>(
       en: { type: String },
     },
     originalMomsRate: { type: Number, enum: [6, 12, 25] },
+    originalGrossWeight: { type: Number },
     substitutedProductId: { type: Schema.Types.ObjectId, ref: 'Product' },
     substitutedSku: { type: String },
     substitutedUnitPriceMinor: { type: Number },
@@ -270,6 +273,7 @@ const OrderSchema = new Schema<IOrder>(
     },
     inventoryDecremented: { type: Boolean, default: false },
     confirmationEmailSent: { type: Boolean, default: false },
+    cancellationEmailSent: { type: Boolean, default: false },
     trackingCode: { type: String },
     carrier: { type: String },
     shipmentId: { type: String },
@@ -285,6 +289,7 @@ const OrderSchema = new Schema<IOrder>(
     paidAt: { type: Date },
     packedAt: { type: Date },
     dispatchedAt: { type: Date },
+    cancelledAt: { type: Date },
   },
   {
     timestamps: true,
