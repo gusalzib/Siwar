@@ -9,6 +9,7 @@ import { calculateMomsSplit, isDiscountActive, resolveEffectiveProductDiscount }
 // Added: Import evaluateCheckoutStock to validate cart availability against safety buffers before payment
 import { evaluateCheckoutStock } from '../../services/inventory.service'
 import { getPaymentGateway } from '../../services/payments'
+import { resolveProductGrossWeightGrams } from '../../../utils/shipping'
 import type { PaymentProviderType } from '../../../types/payment'
 
 interface CreateSessionRequestBody {
@@ -109,6 +110,7 @@ export default defineEventHandler(async (event) => {
       discount: discount > 0 ? discount : undefined,
       momsRate: product.momsRate as 6 | 12 | 25,
       freeShipping: Boolean(product.freeShipping),
+      grossWeight: resolveProductGrossWeightGrams(product as any),
     })
   }
 

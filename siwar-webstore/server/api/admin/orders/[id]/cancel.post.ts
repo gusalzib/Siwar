@@ -3,6 +3,7 @@ import { Order } from '~/server/models/Order'
 import { Product } from '~/server/models/Product'
 import { getPaymentGateway } from '~/server/services/payments'
 import { sanitizeSwishMessage } from '~/server/utils/swish'
+import { mailService, type EmailLocale } from '~/server/services/mail.service'
 
 interface CancelOrderBody {
   reason?: string
@@ -49,9 +50,10 @@ export default defineEventHandler(async (event) => {
     for (const item of order.items) {
       // Re-increment based on the quantity originally held
       const qtyToRestore = item.quantity
-      if (qtyToRestore > 0) {
+      const restoreProductId = (item as any).originalProductId || item.productId
+      if (qtyToRestore > 0 && restoreProductId) {
         await Product.updateOne(
-          { _id: item.productId },
+          { _id: restoreProductId },
           { $inc: { stockQuantity: qtyToRestore } }
         )
       }
@@ -59,10 +61,16 @@ export default defineEventHandler(async (event) => {
     order.inventoryDecremented = false
   }
 
-  // 3. Mutate Order status
+  // 3. Mutate Order status & final zero-sum pricing
+  const authorizedHold = order.pricing?.authorizedTotalMinor ?? order.pricing?.grandTotalMinor ?? 0
   order.fulfillmentStatus = 'CANCELLED'
   order.paymentStatus = 'CANCELLED'
   order.cancelledAt = new Date()
+  if (order.pricing) {
+    order.pricing.capturedTotalMinor = 0
+    order.pricing.releasedOrRefundedMinor = authorizedHold
+    order.markModified('pricing')
+  }
 
   // Record audit adjustments
   for (const item of order.items) {
@@ -72,13 +80,29 @@ export default defineEventHandler(async (event) => {
       originalQuantity: item.quantity,
       adjustedQuantity: 0,
       originalUnitPriceMinor: item.unitPriceMinor,
+      originalSku: item.sku,
+      originalName: item.name ? { ...item.name } : undefined,
+      originalMomsRate: item.momsRate,
       performedBy: 'Admin',
       timestamp: new Date(),
-      note: body.reason || 'Manuell orderavbrytning av admin',
+      note: body?.reason || 'Manuell orderavbrytning av admin',
     })
   }
+  order.markModified('shortageAdjustments')
 
   await order.save()
+
+  // 4. Send exactly one cancellation confirmation email
+  if (!order.cancellationEmailSent) {
+    const preferredLocale = (order.customerLocale || 'sv') as EmailLocale
+    try {
+      await mailService.sendOrderCancelled(order, preferredLocale, body?.reason)
+      order.cancellationEmailSent = true
+      await Order.updateOne({ _id: order._id }, { $set: { cancellationEmailSent: true } })
+    } catch (mailErr) {
+      console.error('[MailService] Failed to send order cancellation email:', mailErr)
+    }
+  }
 
   return {
     success: true,

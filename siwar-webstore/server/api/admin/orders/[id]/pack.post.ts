@@ -7,6 +7,8 @@ import { getCachedShippingSettings } from '~/server/services/shipping.service'
 import { getPaymentGateway } from '~/server/services/payments'
 import { mailService, type EmailLocale } from '~/server/services/mail.service'
 import { getShippingCarrier } from '~/server/services/shipping'
+import { sanitizeSwishMessage } from '~/server/utils/swish'
+import { resolveProductGrossWeightGrams } from '~/utils/shipping'
 
 interface PackItemInput {
   index?: number
@@ -20,6 +22,7 @@ interface PackItemInput {
   unitPriceMinor?: number
   momsRate?: 6 | 12 | 25
   freeShipping?: boolean
+  grossWeight?: number
   isPacked?: boolean
 }
 
@@ -145,17 +148,23 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Ensure freeShipping is populated on original items if missing
+  // Ensure freeShipping and grossWeight are populated on original items if missing/defaulted to 0
 
   const unpopulatedProductIds = order.items
-    .filter((it: any) => typeof it.freeShipping !== 'boolean' && it.productId)
+    .filter((it: any) => (typeof it.freeShipping !== 'boolean' || typeof it.grossWeight !== 'number' || it.grossWeight <= 0) && it.productId)
     .map((it: any) => it.productId)
   if (unpopulatedProductIds.length > 0) {
-    const prods = await Product.find({ _id: { $in: unpopulatedProductIds } }, { freeShipping: 1 }).lean()
-    const pMap = new Map(prods.map((p) => [String(p._id), Boolean(p.freeShipping)]))
+    const prods = await Product.find({ _id: { $in: unpopulatedProductIds } }, { freeShipping: 1, grossWeight: 1, netQuantity: 1 }).lean()
+    const pMap = new Map(prods.map((p) => [String(p._id), p]))
     for (const it of order.items as any[]) {
-      if (typeof it.freeShipping !== 'boolean' && it.productId) {
-        it.freeShipping = pMap.get(String(it.productId)) ?? false
+      const prod = it.productId ? pMap.get(String(it.productId)) : undefined
+      if (prod) {
+        if (typeof it.freeShipping !== 'boolean') {
+          it.freeShipping = Boolean(prod.freeShipping)
+        }
+        if (typeof it.grossWeight !== 'number' || it.grossWeight <= 0) {
+          it.grossWeight = resolveProductGrossWeightGrams(prod as any)
+        }
       }
     }
   }
@@ -212,6 +221,9 @@ export default defineEventHandler(async (event) => {
         if (submittedItem.momsRate != null) match.momsRate = submittedItem.momsRate
         if (typeof submittedItem.freeShipping === 'boolean') {
           match.freeShipping = submittedItem.freeShipping
+        }
+        if (typeof submittedItem.grossWeight === 'number' && (submittedItem.grossWeight > 0 || submittedItem.shortageStatus === 'SUBSTITUTED')) {
+          match.grossWeight = submittedItem.grossWeight
         }
         if (submittedItem.name) match.name = submittedItem.name
         if (submittedItem.sku !== undefined) match.sku = submittedItem.sku
@@ -279,9 +291,11 @@ export default defineEventHandler(async (event) => {
 
   const capturedTotal = finalPricing.capturedTotalMinor ?? finalPricing.grandTotalMinor
   const releasedAmount = finalPricing.releasedOrRefundedMinor ?? 0
+  const totalFulfilledUnits = updatedItems.reduce((sum, item) => sum + (item.fulfilledQuantity || 0), 0)
+  const isZeroFinalOrder = capturedTotal <= 0 || totalFulfilledUnits <= 0
 
   const authorizedHold = order.pricing.authorizedTotalMinor ?? order.pricing.grandTotalMinor
-  const safeCaptureTotal = Math.min(capturedTotal, authorizedHold)
+  const safeCaptureTotal = isZeroFinalOrder ? 0 : Math.min(capturedTotal, authorizedHold)
 
   // ──────────────────────────────────────────────────────────────────────
   // 4. Dispatch & Settlement handling
@@ -294,7 +308,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    if (capturedTotal === 0) {
+    if (isZeroFinalOrder) {
       if (order.paymentId) {
         const gateway = getPaymentGateway(order.paymentProvider)
         if (order.paymentProvider === 'STRIPE') {
@@ -304,12 +318,37 @@ export default defineEventHandler(async (event) => {
             paymentId: order.paymentId,
             orderReference: order.orderReference,
             amountMinor: order.pricing.authorizedTotalMinor,
-            reason: `Ordern avbruten pga total varubrist (${order.orderReference})`,
+            reason: sanitizeSwishMessage(
+              `Order avbruten varubrist ${order.orderReference}`,
+              `Order avbruten ${order.orderReference}`
+            ),
           })
         }
       }
       order.fulfillmentStatus = 'CANCELLED'
       order.paymentStatus = 'CANCELLED'
+      order.cancelledAt = new Date()
+
+      // Ensure final pricing reflects a full 0.00 capture and full release/refund
+      finalPricing.itemsTotalMinor = 0
+      finalPricing.shippingFeeMinor = 0
+      finalPricing.grandTotalMinor = 0
+      finalPricing.capturedTotalMinor = 0
+      finalPricing.releasedOrRefundedMinor = authorizedHold
+
+      // Restore all originally reserved stock if it was decremented during checkout authorization
+      if (order.inventoryDecremented) {
+        for (const item of order.items) {
+          const restoreProductId = (item as any).originalProductId || item.productId
+          if (item.quantity > 0 && restoreProductId) {
+            await Product.updateOne(
+              { _id: restoreProductId },
+              { $inc: { stockQuantity: item.quantity } }
+            )
+          }
+        }
+        order.inventoryDecremented = false
+      }
     } else {
       const gateway = getPaymentGateway(order.paymentProvider)
       if (order.paymentProvider === 'STRIPE') {
@@ -426,28 +465,30 @@ export default defineEventHandler(async (event) => {
         order.trackingCode = body.trackingCode
         order.carrier = 'DHL'
       }
-    }
 
-    // Rebalance inventory for removed/reduced items
-    for (const action of body.actions || []) {
-      if (action.action === 'REMOVE_LINE' || action.action === 'REDUCE_QUANTITY') {
-        const originalItem = order.items.find((i) => String(i.productId) === action.productId)
-        if (originalItem) {
-          const droppedQty =
-            originalItem.quantity - (action.action === 'REMOVE_LINE' ? 0 : action.adjustedQuantity)
-          if (droppedQty > 0) {
-            await Product.updateOne(
-              { _id: action.productId },
-              { $inc: { stockQuantity: droppedQty } }
-            )
+      // Rebalance inventory for removed/reduced items on partially fulfilled orders
+      for (const action of body.actions || []) {
+        if (action.action === 'REMOVE_LINE' || action.action === 'REDUCE_QUANTITY') {
+          const originalItem = order.items.find((i) => String(i.productId) === action.productId)
+          if (originalItem) {
+            const droppedQty =
+              originalItem.quantity - (action.action === 'REMOVE_LINE' ? 0 : action.adjustedQuantity)
+            if (droppedQty > 0) {
+              await Product.updateOne(
+                { _id: action.productId },
+                { $inc: { stockQuantity: droppedQty } }
+              )
+            }
           }
         }
       }
     }
   } else {
-    const allPacked = updatedItems.every(
-      (item) => item.fulfilledQuantity === 0 || item.isPacked === true
-    )
+    const hasFulfilledItems = updatedItems.some((item) => item.fulfilledQuantity > 0)
+    const allPacked =
+      !isZeroFinalOrder &&
+      hasFulfilledItems &&
+      updatedItems.every((item) => item.fulfilledQuantity === 0 || item.isPacked === true)
     order.fulfillmentStatus = allPacked ? 'PACKED' : 'PENDING_PACKING'
   }
 
@@ -461,7 +502,9 @@ export default defineEventHandler(async (event) => {
   finalPricing.capturedTotalMinor = safeCaptureTotal
   order.pricing = finalPricing
   order.markModified('pricing')
-  order.packedAt = new Date()
+  if (!isZeroFinalOrder && (body.markDispatched || order.fulfillmentStatus === 'PACKED')) {
+    order.packedAt = new Date()
+  }
 
   await order.save()
 
@@ -472,7 +515,15 @@ export default defineEventHandler(async (event) => {
   try {
     const preferredLocale = (order.customerLocale || 'sv') as EmailLocale
 
-    if (body.markDispatched) {
+    if (order.fulfillmentStatus === 'CANCELLED' || isZeroFinalOrder) {
+      // Zero-sum or cancelled orders must NEVER receive packing or dispatch emails.
+      // Send exactly one cancellation confirmation email once cancellation is finalized.
+      if (order.fulfillmentStatus === 'CANCELLED' && !order.cancellationEmailSent) {
+        await mailService.sendOrderCancelled(order, preferredLocale)
+        order.cancellationEmailSent = true
+        await Order.updateOne({ _id: order._id }, { $set: { cancellationEmailSent: true } })
+      }
+    } else if (body.markDispatched) {
       if (order.customer.fulfillmentMethod === 'DELIVERY') {
         // Carrier Dispatch Email with verified tracking code & carrier
         await mailService.sendOrderDispatched(
@@ -501,6 +552,7 @@ export default defineEventHandler(async (event) => {
     capturedTotalMinor: safeCaptureTotal,
     releasedAmountMinor: releasedAmount,
     fulfillmentStatus: order.fulfillmentStatus,
+    paymentStatus: order.paymentStatus,
     trackingCode: order.trackingCode,
     consignmentNumber: order.shipmentId,
     trackingUrl,
