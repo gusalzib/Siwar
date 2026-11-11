@@ -76,6 +76,8 @@
     "exploreCta": "Utforska sortimentet",
     "add": "Lägg till i favoriter",
     "remove": "Ta bort från favoriter",
+    "save": "Spara",
+    "removeShort": "Ta bort",
     "itemsCount": "{count} sparade produkter",
     "itemsCountOne": "1 sparad produkt",
     "clearAll": "Rensa alla",
@@ -1332,7 +1334,7 @@
     "visit": {
       "badge": "Välkommen in",
       "title": "Upplev butiken på plats i Halmstad",
-      "desc": "Du hittar oss på Åttingsstigen 41 i Halmstad. Kom in och dofta på kryddorna, få personliga recepttips eller hämta dina onlinebeställningar kostnadsfritt.",
+      "desc": "Kom in och dofta på kryddorna, få personliga recepttips eller hämta dina onlinebeställningar kostnadsfritt i vår fysiska butik.",
       "viewAllHours": "Se alla öppettider & vägbeskrivning",
       "findUs": "Hitta till oss"
     },

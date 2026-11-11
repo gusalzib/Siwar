@@ -297,18 +297,20 @@ useSeoMeta({
               {{ t('aboutPage.visit.title', 'Upplev butiken på plats i Halmstad') }}
             </h3>
             <p class="text-xs sm:text-sm text-base-content/70 max-w-xl leading-relaxed">
-              {{ t('aboutPage.visit.desc', 'Du hittar oss på Åttingsstigen 41 i Halmstad. Kom in och dofta på kryddorna, få personliga recepttips eller hämta dina onlinebeställningar kostnadsfritt.') }}
+              {{ t('aboutPage.visit.desc', 'Kom in och dofta på kryddorna, få personliga recepttips eller hämta dina onlinebeställningar kostnadsfritt i vår fysiska butik.') }}
             </p>
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 shrink-0">
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           <NuxtLink
             :to="localePath('/oppettider')"
-            class="btn bg-brand-500 hover:bg-brand-600 !text-white font-bold border-none rounded-xl gap-2 shadow-xs"
+            class="btn bg-brand-500 hover:bg-brand-600 !text-white font-bold border-none rounded-xl gap-2 shadow-xs w-full sm:w-auto h-auto min-h-11 py-2 px-4 whitespace-normal text-center"
           >
-            <Icon name="lucide:clock" class="size-4" />
-            <span>{{ t('aboutPage.visit.viewAllHours', 'Se alla öppettider & hitta hit') }}</span>
+            <Icon name="lucide:clock" class="size-4 shrink-0" />
+            <span class="break-words leading-snug">
+              {{ t('aboutPage.visit.viewAllHours', 'Se alla öppettider & hitta hit') }}
+            </span>
           </NuxtLink>
         </div>
       </div>

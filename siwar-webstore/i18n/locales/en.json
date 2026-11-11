@@ -75,6 +75,8 @@
     "exploreCta": "Explore Catalog",
     "add": "Add to favorites",
     "remove": "Remove from favorites",
+    "save": "Save",
+    "removeShort": "Remove",
     "itemsCount": "{count} saved products",
     "itemsCountOne": "1 saved product",
     "clearAll": "Clear all",
@@ -1334,7 +1336,7 @@
     "visit": {
       "badge": "Visit Us",
       "title": "Experience the store in Halmstad",
-      "desc": "Find us at Åttingsstigen 41 in Halmstad. Stop by to smell the spices, get personal cooking recommendations, or collect your online orders with free Click & Collect.",
+      "desc": "Stop by our physical store to explore fresh spices, get personal cooking recommendations, or collect your online orders with free Click & Collect.",
       "viewAllHours": "View all opening hours & directions",
       "findUs": "Get directions"
     },
