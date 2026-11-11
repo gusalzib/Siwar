@@ -53,6 +53,18 @@ describe('Section 4. Informational Content Pages & Social Shelf', () => {
       expect(visitSection).toContain('whitespace-normal')
       expect(visitSection).toContain('break-words')
     })
+
+    it('displays the high-res store logo medallion cleanly in the hero section so lettering stays legible', () => {
+      const heroMatch = aboutContent.match(/<!-- 1\. Hero Section -->[\s\S]*?<\/header>/)
+      expect(heroMatch).not.toBeNull()
+      const heroSection = heroMatch![0]
+
+      expect(heroSection).toContain('/favicon_io%20siwar%20logo/android-chrome-512x512.png')
+      expect(heroSection).toContain('rounded-full')
+      expect(heroSection).toContain('size-36')
+      expect(heroSection).toContain('sm:size-44')
+      expect(heroSection).toContain('md:size-48')
+    })
   })
 
   describe('2. Contact Page (/pages/contact.vue)', () => {

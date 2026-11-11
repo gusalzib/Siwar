@@ -88,6 +88,15 @@ useSeoMeta({
     
     <!-- 1. Hero Section -->
     <header class="text-center space-y-4 max-w-3xl mx-auto pt-2 sm:pt-4">
+      <!-- Brand Medallion Logo (sized so SIWAR / Arabic inscription stays clearly legible) -->
+      <div class="flex justify-center pb-1">
+        <img
+          src="/favicon_io%20siwar%20logo/android-chrome-512x512.png"
+          :alt="t('storeName', 'Siwar')"
+          class="size-36 sm:size-44 md:size-48 rounded-full object-cover shrink-0 shadow-md ring-2 ring-gold-400/60 dark:ring-gold-400/40 bg-base-100 dark:bg-zinc-900"
+        />
+      </div>
+
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-500/10 text-brand-700 dark:text-brand-300 border border-brand-500/20 text-xs font-bold tracking-wide uppercase">
         <Icon name="lucide:sparkles" class="size-4 text-brand-500" />
         <span>{{ t('aboutPage.badge', 'Vår historia & arv') }}</span>
