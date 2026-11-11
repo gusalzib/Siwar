@@ -29,7 +29,7 @@ const fullAddress = computed(() => `${street.value}, ${postalCode.value} ${city.
 // Dynamic delivery days from StoreSettings
 const shipping = computed(() => settings.value?.shipping || {})
 const deliveryMin = computed(() => shipping.value?.deliveryDays?.min ?? 1)
-const deliveryMax = computed(() => shipping.value?.deliveryDays?.max ?? 5)
+const deliveryMax = computed(() => shipping.value?.deliveryDays?.max ?? 3)
 
 useSeoMeta({
   title: () => `${t('legal.terms.metaTitle')} | ${storeName.value}`,

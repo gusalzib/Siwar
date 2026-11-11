@@ -71,6 +71,9 @@ const effectiveShippingFeeMinor = computed<number>(() => {
   return cartStore.shippingFeeMinor
 })
 
+const deliveryMin = computed<number>(() => cartStore.shippingConfig.deliveryDays?.min ?? 1)
+const deliveryMax = computed<number>(() => cartStore.shippingConfig.deliveryDays?.max ?? 3)
+
 /**
  * Explicit 25% Moms included in shipping:
  * round(gross * 25 / 125) -> satisfies AC-2 (e.g., 69 SEK -> 13.80 SEK moms)
@@ -395,7 +398,7 @@ async function handleProceedToPayment() {
                   />
                 </div>
                 <span class="text-xs text-base-content/60 mt-1">
-                  {{ t('checkout.parcelDeliveryDesc', '1–3 vardagar via DHL') }}
+                  {{ t('checkout.parcelDeliveryDesc', { min: deliveryMin, max: deliveryMax }, `${deliveryMin}–${deliveryMax} vardagar via DHL`) }}
                 </span>
                 <span class="text-xs font-semibold mt-2 font-mono">
                   {{

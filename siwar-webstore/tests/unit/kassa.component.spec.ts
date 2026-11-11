@@ -1,5 +1,7 @@
 // tests/unit/kassa.component.spec.ts
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import KassaPage from '~/pages/kassa.vue'
@@ -21,7 +23,11 @@ vi.mock('vue-router', () => ({
 vi.stubGlobal('useRouter', () => ({ replace: vi.fn(), push: vi.fn() }))
 vi.stubGlobal('useLocalePath', () => (path: string) => path)
 vi.stubGlobal('useI18n', () => ({
-  t: (key: string, fallback?: string) => fallback || key,
+  t: (key: string, paramsOrFallback?: any, fallback?: string) => {
+    if (typeof fallback === 'string') return fallback
+    if (typeof paramsOrFallback === 'string') return paramsOrFallback
+    return key
+  },
   locale: { value: 'sv' },
 }))
 
@@ -135,5 +141,47 @@ describe('Rigorous Component Test: pages/kassa.vue', () => {
     expect(vm.effectiveShippingMomsMinor).toBe(0)
     expect(vm.effectiveShippingNetMinor).toBe(0)
     expect(vm.checkoutGrandTotalMinor).toBe(cartStore.cartSubtotalMinor)
+  })
+
+  it('displays dynamic deliveryDays from StoreSettings via cartStore.shippingConfig instead of hardcoded timeframe', async () => {
+    const prevFetch = (globalThis as any).$fetch
+    vi.stubGlobal(
+      '$fetch',
+      vi.fn(async (url: string) => {
+        if (url === '/api/settings') {
+          return {
+            shipping: {
+              freeShippingThresholdMinorSEK: 89900,
+              freeShippingItemGrantsEntireOrder: false,
+              deliveryDays: { min: 2, max: 7 },
+              tiers: [],
+            },
+          }
+        }
+        return {}
+      })
+    )
+
+    try {
+      await cartStore.fetchShippingConfig()
+      expect(cartStore.shippingConfig.deliveryDays).toEqual({ min: 2, max: 7 })
+
+      const wrapper = createWrapper()
+      expect(wrapper.text()).toContain('2–7 vardagar via DHL')
+    } finally {
+      vi.stubGlobal('$fetch', prevFetch)
+    }
+  })
+
+  it('parameterizes checkout.parcelDeliveryDesc and legal.terms.sec4_delivery_desc across sv, en, and ar locales', () => {
+    for (const locName of ['sv.json', 'en.json', 'ar.json']) {
+      const json = JSON.parse(
+        fs.readFileSync(path.resolve(__dirname, `../../i18n/locales/${locName}`), 'utf-8')
+      )
+      expect(json.checkout.parcelDeliveryDesc).toContain('{min}')
+      expect(json.checkout.parcelDeliveryDesc).toContain('{max}')
+      expect(json.legal.terms.sec4_delivery_desc).toContain('{min}')
+      expect(json.legal.terms.sec4_delivery_desc).toContain('{max}')
+    }
   })
 })

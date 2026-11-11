@@ -1097,7 +1097,7 @@
     "fulfillmentMethod": "طريقة الاستلام",
     "parcelDelivery": "توصيل طرود",
     "delivery": "توصيل طرود",
-    "parcelDeliveryDesc": "خلال 1–5 أيام عمل عبر DHL",
+    "parcelDeliveryDesc": "خلال {min}–{max} أيام عمل عبر DHL",
     "inStorePickup": "استلام من المتجر",
     "pickup": "استلام من المتجر",
     "inStorePickupDesc": "جاهز خلال ساعتين (مجاناً)",

@@ -287,12 +287,12 @@ useSeoMeta({
 
     <!-- 5. Physical Visit Callout Card -->
     <section class="card bg-base-100 dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-sm">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-        <div class="flex items-start gap-4">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div class="flex items-start gap-4 min-w-0 lg:flex-1">
           <div class="size-12 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
             <Icon name="lucide:store" class="size-6" />
           </div>
-          <div class="space-y-1">
+          <div class="space-y-1 min-w-0">
             <h3 class="text-xl font-bold text-base-content tracking-tight">
               {{ t('aboutPage.visit.title', 'Upplev butiken på plats i Halmstad') }}
             </h3>
@@ -302,13 +302,13 @@ useSeoMeta({
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto min-w-0 max-w-full">
           <NuxtLink
             :to="localePath('/oppettider')"
-            class="btn bg-brand-500 hover:bg-brand-600 !text-white font-bold border-none rounded-xl gap-2 shadow-xs w-full sm:w-auto h-auto min-h-11 py-2 px-4 whitespace-normal text-center"
+            class="btn bg-brand-500 hover:bg-brand-600 !text-white font-bold border-none rounded-xl gap-2 shadow-xs w-full sm:w-auto max-w-full min-w-0 shrink h-auto min-h-11 py-2 px-4 whitespace-normal text-center"
           >
             <Icon name="lucide:clock" class="size-4 shrink-0" />
-            <span class="break-words leading-snug">
+            <span class="min-w-0 break-words leading-snug">
               {{ t('aboutPage.visit.viewAllHours', 'Se alla öppettider & hitta hit') }}
             </span>
           </NuxtLink>

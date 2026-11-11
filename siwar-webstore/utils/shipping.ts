@@ -9,6 +9,7 @@ export interface ShippingTier {
 export interface ShippingConfig {
   freeShippingThreshold: MultiCurrencyPrice
   freeShippingItemGrantsEntireOrder?: boolean
+  deliveryDays?: { min: number; max: number }
   tiers: ShippingTier[]
 }
 
@@ -19,6 +20,7 @@ export const DEFAULT_SHIPPING_CONFIG: ShippingConfig = {
     USD: 9000,  // 90.00 USD
   },
   freeShippingItemGrantsEntireOrder: false,
+  deliveryDays: { min: 1, max: 3 },
   tiers: [
     {
       maxWeightGrams: 3000,

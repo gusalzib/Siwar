@@ -38,6 +38,21 @@ describe('Section 4. Informational Content Pages & Social Shelf', () => {
       expect(aboutContent).not.toContain('backdrop-blur-md')
       expect(aboutContent).not.toContain('backdrop-blur-lg')
     })
+
+    it('guards the visit callout CTA against horizontal overflow across sm-xl viewports', () => {
+      const visitSectionMatch = aboutContent.match(/<!-- 5\. Physical Visit Callout Card -->[\s\S]*?<\/section>/)
+      expect(visitSectionMatch).not.toBeNull()
+      const visitSection = visitSectionMatch![0]
+
+      expect(visitSection).not.toContain('sm:flex-row')
+      expect(visitSection).toContain('lg:flex-row')
+      expect(visitSection).toContain('lg:flex-1')
+      expect(visitSection).toContain('min-w-0')
+      expect(visitSection).toContain('max-w-full')
+      expect(visitSection).toContain('shrink ')
+      expect(visitSection).toContain('whitespace-normal')
+      expect(visitSection).toContain('break-words')
+    })
   })
 
   describe('2. Contact Page (/pages/contact.vue)', () => {
