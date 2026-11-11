@@ -85,10 +85,12 @@ const hasActiveSocial = computed(() => {
         
         <!-- Column 1: Store Identity & Physical Store Address + Hours -->
         <div class="space-y-4">
-          <div class="flex items-center gap-2">
-            <div class="size-9 rounded-xl bg-primary text-white flex items-center justify-center font-black shadow-sm">
-              <Icon name="lucide:shopping-bag" class="size-5" />
-            </div>
+          <div class="flex items-center gap-2.5">
+            <img
+              src="/favicon_io%20siwar%20logo/android-chrome-192x192.png"
+              :alt="storeName"
+              class="size-10 rounded-full object-cover shrink-0 shadow-sm ring-1 ring-amber-400/30"
+            />
             <span class="text-xl font-black tracking-tight text-white">{{ storeName }}</span>
           </div>
 

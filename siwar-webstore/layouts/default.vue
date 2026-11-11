@@ -222,7 +222,11 @@ const logout = async () => {
 
         <!-- Store Brand Link -->
         <NuxtLink :to="localePath('/')" class="btn btn-ghost text-base sm:text-xl font-bold cursor-pointer gap-1.5 sm:gap-2 px-1 sm:px-2 shrink-0">
-          <Icon name="lucide:shopping-bag" class="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
+          <img
+            src="/favicon_io%20siwar%20logo/android-chrome-192x192.png"
+            :alt="t('storeName', 'Siwar')"
+            class="h-7 w-7 sm:h-9 sm:w-9 rounded-full object-cover shrink-0 shadow-xs ring-1 ring-base-300 dark:ring-amber-400/20"
+          />
           <span class="inline-block">{{ t('storeName', 'Siwar') }}</span>
         </NuxtLink>
       </div>
