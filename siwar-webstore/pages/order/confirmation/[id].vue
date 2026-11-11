@@ -259,7 +259,7 @@ const hasAnyTaxSplitRows = computed(() => {
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div class="text-xs font-bold text-base-content/60 uppercase tracking-wider">
-                {{ t('order.tracking.carrier', 'Transportör') }}: PostNord
+                {{ t('order.tracking.carrier', 'Transportör') }}: DHL
               </div>
               <div v-if="order.trackingCode" class="mt-1 flex items-center gap-2">
                 <span class="text-xs font-semibold text-base-content/70">{{ t('order.tracking.kolliId', 'Kolli-ID') }}:</span>
