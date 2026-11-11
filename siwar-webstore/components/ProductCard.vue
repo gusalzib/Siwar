@@ -307,7 +307,7 @@ function calculateComparisonPrice(
         <!-- View Product -->
         <NuxtLink
           :to="localePath(`/products/${product.id}`)"
-          class="btn btn-sm w-full h-9 min-h-9 py-0 border border-base-300 dark:border-zinc-700 hover:border-emerald-500 bg-base-100 hover:bg-base-200 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 text-base-content font-bold transition-all rounded-xl text-center flex items-center justify-center gap-1.5 shadow-2xs"
+          class="btn btn-sm h-9 min-h-9 w-full py-0 border border-base-300 dark:border-zinc-700 hover:border-emerald-500 bg-base-100 hover:bg-base-200 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 text-base-content font-bold transition-all rounded-xl text-center flex items-center justify-center gap-1.5 shadow-2xs"
         >
           <Icon name="lucide:eye" class="size-4 shrink-0" />
           <span>{{ t('catalog.viewProduct', 'Visa') }}</span>
@@ -318,7 +318,7 @@ function calculateComparisonPrice(
           type="button"
           :disabled="!product.canAddToCart"
           @click.stop="handleAddToCart"
-          class="btn btn-sm w-full h-9 min-h-9 py-0 !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none gap-1.5 font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-sm rounded-xl disabled:opacity-50 disabled:hover:scale-100 text-center flex items-center justify-center"
+          class="btn btn-sm h-9 min-h-9 w-full py-0 !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none gap-1.5 font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-sm rounded-xl disabled:opacity-50 disabled:hover:scale-100 text-center flex items-center justify-center"
         >
           <Icon name="lucide:shopping-cart" class="size-4 shrink-0" />
           <span>{{ t('cart.add', 'Köp') }}</span>

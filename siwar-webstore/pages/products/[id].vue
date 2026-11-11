@@ -530,56 +530,61 @@ const localePath = useLocalePath()
 
         <!-- Add to Cart & Availability Boundary -->
         <div class="pt-6 border-t-2 border-base-300 dark:border-zinc-700 mt-6 space-y-3">
-          <div class="flex items-center gap-3">
-            <!-- Quantity Selector -->
-            <div class="join border-2 border-base-300 dark:border-zinc-700 rounded-xl bg-base-100 dark:bg-zinc-800 shadow-2xs">
+          <div class="flex flex-col gap-3">
+            <!-- Row 1: Quantity Selector & Favorite Action Button -->
+            <div class="flex items-center gap-3">
+              <!-- Quantity Selector -->
+              <div class="join border-2 border-base-300 dark:border-zinc-700 rounded-xl bg-base-100 dark:bg-zinc-800 shadow-2xs shrink-0">
+                <button
+                  type="button"
+                  class="join-item btn btn-sm btn-ghost px-3"
+                  :disabled="selectedQuantity <= 1 || !product.availability.canAddToCart"
+                  @click="selectedQuantity--"
+                >
+                  -
+                </button>
+                <span class="join-item px-4 flex items-center text-sm font-semibold select-none">
+                  {{ selectedQuantity }}
+                </span>
+                <button
+                  type="button"
+                  class="join-item btn btn-sm btn-ghost px-3"
+                  :disabled="selectedQuantity >= product.availability.availableStock || !product.availability.canAddToCart"
+                  @click="selectedQuantity++"
+                >
+                  +
+                </button>
+              </div>
+
+              <!-- Secondary Favorite Action Button -->
               <button
                 type="button"
-                class="join-item btn btn-sm btn-ghost px-3"
-                :disabled="selectedQuantity <= 1 || !product.availability.canAddToCart"
-                @click="selectedQuantity--"
+                :aria-label="favoritesStore.isFavorite(effectiveProductId) ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
+                :title="favoritesStore.isFavorite(effectiveProductId) ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
+                class="btn btn-md btn-outline border-base-300 dark:border-zinc-700 hover:border-rose-500 text-base-content hover:text-rose-500 rounded-xl transition-all gap-2 shrink-0 px-4"
+                @click="favoritesStore.toggleFavorite(effectiveProductId)"
               >
-                -
-              </button>
-              <span class="join-item px-4 flex items-center text-sm font-semibold">
-                {{ selectedQuantity }}
-              </span>
-              <button
-                type="button"
-                class="join-item btn btn-sm btn-ghost px-3"
-                :disabled="selectedQuantity >= product.availability.availableStock || !product.availability.canAddToCart"
-                @click="selectedQuantity++"
-              >
-                +
+                <Icon
+                  name="lucide:heart"
+                  class="size-5 transition-transform shrink-0"
+                  :class="favoritesStore.isFavorite(effectiveProductId) ? 'text-rose-500 fill-rose-500' : ''"
+                />
+                <span class="font-bold">
+                  {{ favoritesStore.isFavorite(effectiveProductId) ? t('favorites.removeShort', 'Ta bort') : t('favorites.save', 'Spara') }}
+                </span>
               </button>
             </div>
 
-            <!-- Submit Button (FR-4 & AC-1) -->
+            <!-- Row 2: Submit Button (FR-4 & AC-1) -->
             <button
               type="button"
               :disabled="!product.availability.canAddToCart"
               @click="addToCart"
-              class="btn btn-md flex-1 !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none font-bold gap-2 shadow-sm rounded-xl transition-all disabled:opacity-50"
+              class="btn btn-md w-full h-auto min-h-12 py-3 flex-nowrap items-center justify-center !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none font-bold gap-2.5 shadow-sm rounded-xl transition-all disabled:opacity-50"
             >
-              <Icon name="lucide:shopping-cart" class="size-5" />
-              <span>{{ product.availability.canAddToCart ? t('cart.add') : t('inventory.' + product.availability.statusCode) }}</span>
-            </button>
-
-            <!-- Secondary Favorite Action Button -->
-            <button
-              type="button"
-              :aria-label="favoritesStore.isFavorite(effectiveProductId) ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
-              :title="favoritesStore.isFavorite(effectiveProductId) ? t('favorites.remove', 'Ta bort från favoriter') : t('favorites.add', 'Lägg till i favoriter')"
-              class="btn btn-md btn-outline border-base-300 dark:border-zinc-700 hover:border-rose-500 text-base-content hover:text-rose-500 rounded-xl transition-all gap-2"
-              @click="favoritesStore.toggleFavorite(effectiveProductId)"
-            >
-              <Icon
-                name="lucide:heart"
-                class="size-5 transition-transform"
-                :class="favoritesStore.isFavorite(effectiveProductId) ? 'text-rose-500 fill-rose-500' : ''"
-              />
-              <span class="hidden sm:inline font-bold">
-                {{ favoritesStore.isFavorite(effectiveProductId) ? t('favorites.remove', 'Ta bort') : t('favorites.add', 'Spara') }}
+              <Icon name="lucide:shopping-cart" class="size-5 shrink-0" />
+              <span class="leading-snug text-center">
+                {{ product.availability.canAddToCart ? t('cart.add') : t('inventory.' + product.availability.statusCode) }}
               </span>
             </button>
           </div>
