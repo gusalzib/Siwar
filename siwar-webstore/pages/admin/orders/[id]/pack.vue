@@ -144,7 +144,11 @@ function onApplyShortage(draft: ShortageActionDraft) {
  * If PICKUP, proceed with direct dispatch.
  */
 function onDispatchRequested() {
-  if (order.value?.customer?.fulfillmentMethod === 'DELIVERY' && totalFulfilledUnits.value > 0) {
+  if (
+    order.value?.customer?.fulfillmentMethod === 'DELIVERY' &&
+    totalFulfilledUnits.value > 0 &&
+    livePricing.value.grandTotal > 0
+  ) {
     isParcelModalOpen.value = true
   } else {
     submitPacking(true)
@@ -235,6 +239,7 @@ async function onConfirmCancel(reason: string) {
           :order="order"
           :is-submitting="isSubmitting"
           :total-fulfilled-units="totalFulfilledUnits"
+          :final-total-minor="livePricing.grandTotal"
           :can-dispatch="canDispatch"
           :is-unpackable="isOrderUnpackable"
           @cancel="isCancelModalOpen = true"
