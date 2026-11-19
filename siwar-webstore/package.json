@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1141.0",
+    "@mollie/api-client": "^4.6.0",
     "@nuxtjs/i18n": "^10.6.0",
     "@pinia/nuxt": "^1.0.2",
     "@stripe/stripe-js": "^9.17.0",
