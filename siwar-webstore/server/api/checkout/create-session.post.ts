@@ -161,6 +161,20 @@ export default defineEventHandler(async (event) => {
     inventoryDecremented: false,
   })
 
+  // Resolve incoming request origin so hosted checkout gateways (Mollie) redirect back to the
+  // same environment (e.g. http://localhost:3000 in local dev, https://siwar.se in production)
+  let requestOrigin = ''
+  try {
+    if (typeof getRequestURL === 'function') {
+      const origin = getRequestURL(event)?.origin
+      if (origin && origin !== 'null') {
+        requestOrigin = origin
+      }
+    }
+  } catch {
+    // Ignore in unit tests without a live H3 request URL
+  }
+
   // 5. Delegate to the Payment Gateway Adapter with the idempotency key and metadata
   const gateway = getPaymentGateway(body.provider)
   const session = await gateway.createSession({
@@ -180,6 +194,7 @@ export default defineEventHandler(async (event) => {
       // Added: Store database Order _id in payment provider metadata for bi-directional webhook reconciliation
       // MollieGatewayAdapter also uses metadata.orderId to construct /order/confirmation/${draftOrder._id}
       orderId: String(draftOrder._id),
+      ...(requestOrigin ? { redirectBaseUrl: requestOrigin } : {}),
       fulfillmentMethod: body.customer.fulfillmentMethod,
       totalMomsMinor: taxSplit.totalMomsMinor.toString(),
       moms12Minor: taxSplit.moms12.momsAmountMinor.toString(),

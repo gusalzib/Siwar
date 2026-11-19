@@ -73,9 +73,12 @@ export class MollieGatewayAdapter implements PaymentGatewayAdapter {
       const config = useRuntimeConfig()
 
       // 1. Resolve return redirect URL
+      // Priority: explicit MOLLIE_REDIRECT_BASE_URL -> incoming request origin (allows http://localhost:3000 in local dev)
+      // -> BASE_URL -> production fallback
       const redirectBase = (
         config.mollieRedirectBaseUrl ||
         process.env.MOLLIE_REDIRECT_BASE_URL ||
+        params.metadata?.redirectBaseUrl ||
         process.env.BASE_URL ||
         'https://siwar.se'
       ).trim().replace(/\/$/, '')
