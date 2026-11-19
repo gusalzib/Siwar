@@ -2,7 +2,10 @@
 import { isValidObjectId } from 'mongoose'
 import { Order } from '~/server/models/Order'
 import { Product } from '~/server/models/Product'
-import { syncOrderPaymentWithStripe } from '~/server/utils/orderAuthorization'
+import {
+  syncOrderPaymentWithStripe,
+  syncOrderPaymentWithMollie,
+} from '~/server/utils/orderAuthorization'
 import { resolveProductGrossWeightGrams } from '~/utils/shipping'
 
 export default defineEventHandler(async (event) => {
@@ -15,20 +18,27 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  let order = await Order.findById(id).lean()
+  const initialOrder = await Order.findById(id).lean()
 
-  if (!order) {
+  if (!initialOrder) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Order not found',
     })
   }
 
-  // If order is still PENDING with Stripe, verify on-demand with Stripe API
-  if (order.paymentStatus === 'PENDING' && order.paymentProvider === 'STRIPE' && order.paymentId) {
-    const synced = await syncOrderPaymentWithStripe(order)
+  let order = initialOrder
+
+  // If order is still PENDING with Stripe or Mollie, verify on-demand with the gateway API
+  if (order.paymentStatus === 'PENDING' && order.paymentId) {
+    let synced: any = null
+    if (order.paymentProvider === 'MOLLIE') {
+      synced = await syncOrderPaymentWithMollie(order)
+    } else if (order.paymentProvider === 'STRIPE') {
+      synced = await syncOrderPaymentWithStripe(order)
+    }
     if (synced) {
-      order = typeof (synced as any).toObject === 'function' ? (synced as any).toObject() : synced
+      order = typeof synced.toObject === 'function' ? synced.toObject() : synced
     }
   }
 
