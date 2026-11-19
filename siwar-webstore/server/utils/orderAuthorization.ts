@@ -3,15 +3,24 @@ import Stripe from 'stripe'
 import { Order, type IOrder } from '~/server/models/Order'
 import { Product } from '~/server/models/Product'
 import { mailService, type EmailLocale } from '~/server/services/mail.service'
+import { getPaymentGateway } from '~/server/services/payments'
 
 /**
- * Transitions an order to AUTHORIZED, decrements stock atomically (if not decremented),
- * and dispatches order confirmation email (if not sent).
- * Idempotent: safe to call multiple times.
+ * Atomically transitions a PENDING/FAILED order to AUTHORIZED (for manual-capture card holds)
+ * or PAID (for instant settlement methods like Mollie Swish), decrements product stock atomically
+ * (guarded by `inventoryDecremented`), and dispatches the Stage 1 order confirmation email in the
+ * customer's locale (guarded by `confirmationEmailSent`).
+ *
+ * Idempotent: safe to call multiple times (e.g., concurrent webhook + confirmation page sync).
+ *
+ * @param paymentId - Gateway transaction identifier (e.g. Stripe pi_... or Mollie tr_...).
+ * @param orderReference - Optional merchant order reference fallback for lookup.
+ * @param targetStatus - Target canonical payment status ('AUTHORIZED' default, or 'PAID').
  */
 export async function authorizeOrder(
   paymentId: string,
-  orderReference?: string
+  orderReference?: string,
+  targetStatus: 'AUTHORIZED' | 'PAID' = 'AUTHORIZED'
 ): Promise<IOrder | null> {
   const query: any = {
     $or: [{ paymentId }],
@@ -21,14 +30,21 @@ export async function authorizeOrder(
     query.$or.push({ orderReference })
   }
 
+  const now = new Date()
+  const statusFields: Record<string, any> = {
+    paymentId,
+    paymentStatus: targetStatus,
+  }
+  if (targetStatus === 'PAID') {
+    statusFields.paidAt = now
+  } else {
+    statusFields.authorizedAt = now
+  }
+
   const order = await Order.findOneAndUpdate(
     query,
     {
-      $set: {
-        paymentId,
-        paymentStatus: 'AUTHORIZED',
-        authorizedAt: new Date(),
-      },
+      $set: statusFields,
     },
     { returnDocument: 'after' }
   )
@@ -116,6 +132,80 @@ export async function syncOrderPaymentWithStripe(order: any): Promise<any> {
     }
   } catch (err: any) {
     console.error(`[Stripe Sync] Failed to verify PaymentIntent for order ${order.orderReference}:`, err?.message || err)
+  }
+
+  return order
+}
+
+/**
+ * On-demand fallback sync with Mollie's Payments API for orders still in PENDING/FAILED state.
+ *
+ * Critical for two real-world scenarios:
+ * 1. Race condition where the customer returns from Mollie's hosted checkout to
+ *    `/order/confirmation/[id]` slightly before Mollie's asynchronous webhook arrives.
+ * 2. Local development without a public HTTPS tunnel (where `webhookUrl` is omitted to avoid
+ *    Mollie HTTP 422 validation errors).
+ *
+ * Performs an authoritative server-to-server lookup via `MollieGatewayAdapter.verifyWebhook`,
+ * then transitions the order to AUTHORIZED (Card), PAID (Swish), CANCELLED, or FAILED.
+ *
+ * @param order - The current Order document or lean object fetched from MongoDB.
+ * @returns The updated order document if transitioned, or the original order otherwise.
+ */
+export async function syncOrderPaymentWithMollie(order: any): Promise<any> {
+  if (!order || order.paymentProvider !== 'MOLLIE' || !order.paymentId) {
+    return order
+  }
+
+  if (order.paymentStatus !== 'PENDING' && order.paymentStatus !== 'FAILED') {
+    return order
+  }
+
+  try {
+    const gateway = getPaymentGateway('MOLLIE')
+    const verification = await gateway.verifyWebhook(
+      {},
+      JSON.stringify({ id: order.paymentId })
+    )
+
+    if (verification.eventType === 'AUTHORIZED' || verification.eventType === 'PAID') {
+      console.log(
+        `[Mollie Sync] Order ${order.orderReference} payment ${order.paymentId} is ${verification.eventType}. Synchronizing immediately...`
+      )
+      const updated = await authorizeOrder(
+        order.paymentId,
+        order.orderReference,
+        verification.eventType
+      )
+      return updated || order
+    }
+
+    if (verification.eventType === 'CANCELLED' || verification.eventType === 'FAILED') {
+      const updateFields: Record<string, any> = {
+        paymentStatus: verification.eventType,
+      }
+      if (verification.eventType === 'CANCELLED') {
+        updateFields.cancelledAt = new Date()
+      }
+
+      await Order.updateOne(
+        {
+          _id: order._id,
+          paymentStatus: { $in: ['PENDING', 'FAILED'] },
+        },
+        { $set: updateFields }
+      )
+
+      return {
+        ...(typeof order.toObject === 'function' ? order.toObject() : order),
+        ...updateFields,
+      }
+    }
+  } catch (err: any) {
+    console.error(
+      `[Mollie Sync] Failed to verify payment ${order.paymentId} for order ${order.orderReference}:`,
+      err?.message || err
+    )
   }
 
   return order
