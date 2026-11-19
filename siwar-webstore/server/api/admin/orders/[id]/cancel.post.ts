@@ -29,7 +29,24 @@ export default defineEventHandler(async (event) => {
   // 1. Release hold or refund through Payment Gateway
   if (order.paymentId) {
     const gateway = getPaymentGateway(order.paymentProvider)
-    if (order.paymentProvider === 'STRIPE' && order.paymentStatus === 'AUTHORIZED') {
+    if (order.paymentProvider === 'MOLLIE') {
+      if (order.paymentStatus === 'AUTHORIZED') {
+        // Mollie Card manual hold: void/release authorization before capture
+        try {
+          await gateway.cancelAuthorization(order.paymentId)
+        } catch (err: any) {
+          console.warn(`[Mollie Void Warning] ${err.message}`)
+        }
+      } else if (order.paymentStatus === 'PAID' && gateway.refundPayment) {
+        // Mollie Swish (instant settlement): refund the full paid amount
+        await gateway.refundPayment({
+          paymentId: order.paymentId,
+          orderReference: order.orderReference,
+          amountMinor: order.pricing.authorizedTotalMinor,
+          reason: body?.reason || `Order avbruten av admin (${order.orderReference})`,
+        })
+      }
+    } else if (order.paymentProvider === 'STRIPE' && order.paymentStatus === 'AUTHORIZED') {
       try {
         await gateway.cancelAuthorization(order.paymentId)
       } catch (err: any) {

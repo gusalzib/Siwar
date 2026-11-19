@@ -143,7 +143,7 @@ export default defineEventHandler(async (event) => {
       fulfillmentStatus: order.fulfillmentStatus,
       trackingCode: order.trackingCode,
       consignmentNumber: order.shipmentId,
-      trackingUrl: carrierAdapter.getTrackingUrl(order.trackingCode),
+      trackingUrl: order.trackingCode ? carrierAdapter.getTrackingUrl(order.trackingCode) : undefined,
       carrier: order.carrier || 'DHL',
     }
   }
@@ -311,7 +311,19 @@ export default defineEventHandler(async (event) => {
     if (isZeroFinalOrder) {
       if (order.paymentId) {
         const gateway = getPaymentGateway(order.paymentProvider)
-        if (order.paymentProvider === 'STRIPE') {
+        if (order.paymentProvider === 'MOLLIE') {
+          // Mollie Card holds ('AUTHORIZED') are released/cancelled; Mollie Swish ('PAID') requires a full refund
+          if (order.paymentStatus === 'AUTHORIZED') {
+            await gateway.cancelAuthorization(order.paymentId)
+          } else if (order.paymentStatus === 'PAID' && gateway.refundPayment) {
+            await gateway.refundPayment({
+              paymentId: order.paymentId,
+              orderReference: order.orderReference,
+              amountMinor: order.pricing.authorizedTotalMinor,
+              reason: `Order avbruten p.g.a. varubrist (${order.orderReference})`,
+            })
+          }
+        } else if (order.paymentProvider === 'STRIPE') {
           await gateway.cancelAuthorization(order.paymentId)
         } else if (order.paymentProvider === 'SWISH' && gateway.refundPayment) {
           await gateway.refundPayment({
@@ -351,7 +363,39 @@ export default defineEventHandler(async (event) => {
       }
     } else {
       const gateway = getPaymentGateway(order.paymentProvider)
-      if (order.paymentProvider === 'STRIPE') {
+      if (order.paymentProvider === 'MOLLIE') {
+        if (order.paymentStatus === 'AUTHORIZED') {
+          // Mollie Card (manual capture): capture exact fulfilledTotalMinor (adapter releases remaining hold if shorted)
+          const captureOk = await gateway.captureFunds(order.paymentId!, safeCaptureTotal)
+          if (!captureOk) {
+            throw createError({
+              statusCode: 502,
+              statusMessage: `Mollie capture failed for ${order.orderReference}`,
+            })
+          }
+        } else if (order.paymentStatus === 'PAID') {
+          // Mollie Swish (instant settlement): funds are already paid; issue a partial refund for any packing shortage
+          if (releasedAmount > 0 && gateway.refundPayment) {
+            const refundOk = await gateway.refundPayment({
+              paymentId: order.paymentId!,
+              orderReference: order.orderReference,
+              amountMinor: releasedAmount,
+              reason: `Prisjustering för varubrist i order ${order.orderReference}`,
+            })
+            if (!refundOk) {
+              throw createError({
+                statusCode: 502,
+                statusMessage: `Mollie shortage refund failed for ${order.orderReference}`,
+              })
+            }
+          }
+        } else {
+          throw createError({
+            statusCode: 400,
+            statusMessage: `Kan inte genomföra debitering: Mollie-ordern har ogiltig betalningsstatus '${order.paymentStatus}'.`,
+          })
+        }
+      } else if (order.paymentProvider === 'STRIPE') {
         if (order.paymentStatus !== 'AUTHORIZED') {
           throw createError({
             statusCode: 400,
