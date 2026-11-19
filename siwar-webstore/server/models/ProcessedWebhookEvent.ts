@@ -24,7 +24,7 @@ const ProcessedWebhookEventSchema = new Schema<IProcessedWebhookEvent>(
     provider: {
       type: String,
       required: true,
-      enum: ['STRIPE', 'SWISH', 'KLARNA'],
+      enum: ['STRIPE', 'SWISH', 'KLARNA', 'MOLLIE'],
       index: true,
     },
     eventType: {
