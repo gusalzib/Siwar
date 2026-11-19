@@ -108,6 +108,7 @@ vi.mock('~/server/models/Order', () => ({ Order: mockOrderModel }))
 vi.mock('~/server/models/Product', () => ({ Product: mockProductModel }))
 vi.mock('~/server/utils/orderAuthorization', () => ({
   syncOrderPaymentWithStripe: vi.fn(async (o: any) => o),
+  syncOrderPaymentWithMollie: vi.fn(async (o: any) => o),
 }))
 vi.mock('~/server/services/shipping.service', () => ({
   getCachedShippingSettings: vi.fn(async () => ({
