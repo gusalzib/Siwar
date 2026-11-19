@@ -40,6 +40,14 @@ export default defineEventHandler(async (event) => {
     } catch (err: any) {
       console.warn(`[Stripe Cancel] Failed to void intent ${order.paymentId}:`, err.message)
     }
+  } else if (order.paymentId && order.paymentProvider === 'MOLLIE') {
+    // Safely cancel or release any open/authorized Mollie payment hold before marking order abandoned/cancelled
+    try {
+      const gateway = getPaymentGateway('MOLLIE')
+      await gateway.cancelAuthorization(order.paymentId)
+    } catch (err: any) {
+      console.warn(`[Mollie Cancel] Failed to cancel/release payment ${order.paymentId}:`, err.message)
+    }
   }
 
   // 3. Atomically restore physical product inventory if stock was decremented during checkout
