@@ -138,31 +138,39 @@ const isCityValid = computed(() => {
 
 
 /**
- * Choice of payment method
+ * Choice of payment method (Issue #53: Mollie Hosted Checkout)
+ *
+ * Customers choose between Card ('creditcard') and Swish ('swish', SEK-only).
+ * Both choices route through Mollie (`paymentMethod: 'MOLLIE'`) with
+ * `paymentSubMethod: 'creditcard' | 'swish'`:
+ * - Card  -> Mollie manual capture (`captureMode: 'manual'`, AUTHORIZED hold until DHL dispatch)
+ * - Swish -> Mollie instant settlement (`paid`, SEK-only)
  */
 
-// 1. Reactive state for payment method
-const selectedPaymentMethod = ref<PaymentProviderType>('STRIPE')
+// 1. Reactive state for primary gateway ('MOLLIE') and customer-chosen sub-method
+const selectedPaymentMethod = ref<PaymentProviderType>('MOLLIE')
+const selectedPaymentSubMethod = ref<'creditcard' | 'swish'>('creditcard')
 
 // 2. AC-1: Swish is restricted exclusively to SEK
 const isSwishAllowed = computed(() => preferences.currency === 'SEK')
 
-// Auto-switch to STRIPE if user changes site currency to EUR or USD
+// Auto-switch sub-method to 'creditcard' if user changes site currency to EUR or USD
 watch(
   () => preferences.currency,
   (newCurrency) => {
-    if (newCurrency !== 'SEK' && selectedPaymentMethod.value === 'SWISH') {
-      selectedPaymentMethod.value = 'STRIPE'
+    if (newCurrency !== 'SEK' && selectedPaymentSubMethod.value === 'swish') {
+      selectedPaymentSubMethod.value = 'creditcard'
     }
   }
 )
 
-// 3. Include paymentMethod in the stored session payload before routing
+// 3. Include Mollie provider and chosen sub-method in the stored session payload before routing
 function proceedToPayment() {
   const payload = {
     customer: { ...form.value, fulfillmentMethod: fulfillmentMethod.value },
     shippingFeeMinor: effectiveShippingFeeMinor.value,
-    paymentMethod: selectedPaymentMethod.value, // <-- Persist selected method
+    paymentMethod: selectedPaymentMethod.value, // 'MOLLIE'
+    paymentSubMethod: selectedPaymentSubMethod.value, // 'creditcard' | 'swish'
   }
 
   sessionStorage.setItem('siwar_checkout_payload', JSON.stringify(payload))
@@ -292,7 +300,8 @@ async function handleProceedToPayment() {
               : null,
         },
         shippingFeeMinor: effectiveShippingFeeMinor.value,
-        paymentMethod: selectedPaymentMethod.value,
+        paymentMethod: selectedPaymentMethod.value, // 'MOLLIE'
+        paymentSubMethod: selectedPaymentSubMethod.value, // 'creditcard' | 'swish'
       })
     )
 
@@ -589,16 +598,16 @@ async function handleProceedToPayment() {
             <h2 class="font-bold text-base text-base-content">{{ t('checkout.choosePayment', 'Välj betalsätt') }}</h2>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <!-- Card / Stripe -->
+              <!-- Card via Mollie (Manual Capture Hold) -->
               <label
                 class="card border-2 p-4 cursor-pointer flex flex-row items-center justify-between"
-                :class="selectedPaymentMethod === 'STRIPE' ? 'border-primary bg-primary/5' : 'border-base-200'"
+                :class="selectedPaymentSubMethod === 'creditcard' ? 'border-primary bg-primary/5' : 'border-base-200'"
               >
                 <div class="flex items-center gap-3">
                   <input
                     type="radio"
-                    value="STRIPE"
-                    v-model="selectedPaymentMethod"
+                    value="creditcard"
+                    v-model="selectedPaymentSubMethod"
                     class="radio radio-primary radio-sm"
                   />
                   <div>
@@ -609,19 +618,19 @@ async function handleProceedToPayment() {
                 <Icon name="lucide:credit-card" class="size-6 text-primary" />
               </label>
 
-              <!-- Swish (AC-1 Gate) -->
+              <!-- Swish via Mollie (AC-1 SEK-Only Gate) -->
               <label
                 class="card border-2 p-4 flex flex-row items-center justify-between"
                 :class="[
                   !isSwishAllowed ? 'opacity-40 cursor-not-allowed bg-base-200/50' : 'cursor-pointer',
-                  selectedPaymentMethod === 'SWISH' ? 'border-primary bg-primary/5' : 'border-base-200'
+                  selectedPaymentSubMethod === 'swish' ? 'border-primary bg-primary/5' : 'border-base-200'
                 ]"
               >
                 <div class="flex items-center gap-3">
                   <input
                     type="radio"
-                    value="SWISH"
-                    v-model="selectedPaymentMethod"
+                    value="swish"
+                    v-model="selectedPaymentSubMethod"
                     :disabled="!isSwishAllowed"
                     class="radio radio-primary radio-sm"
                   />
