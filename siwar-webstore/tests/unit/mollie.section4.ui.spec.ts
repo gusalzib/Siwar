@@ -140,6 +140,12 @@ describe('Issue #53 - Section 4: Storefront Checkout, Payment UI & Confirmation 
       expect(confirmationSource).toContain("t('order.paymentFailedTitle'")
       expect(confirmationSource).toContain("t('order.returnToCheckout'")
     })
+
+    it('dynamically maps paymentStatus badge classes so FAILED/CANCELLED display red badge-error instead of badge-success', () => {
+      expect(confirmationSource).toContain("'badge-error text-white': order.paymentStatus === 'CANCELLED' || order.paymentStatus === 'FAILED' || order.paymentStatus === 'ABANDONED'")
+      expect(confirmationSource).toContain("'badge-success text-white': order.paymentStatus === 'PAID' || order.paymentStatus === 'CAPTURED'")
+      expect(confirmationSource).toContain('v-if="!isPaymentFailedOrCancelled"')
+    })
   })
 
   describe('4. Full Localization Parity across sv.json, en.json, and ar.json', () => {

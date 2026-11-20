@@ -167,10 +167,12 @@ function getLocalizedName(nameObj?: { ar: string; sv: string; en: string }) {
 }
 
 const milestoneStep = computed(() => {
-  if (!order.value) return 1
+  if (!order.value) return 0
+  if (order.value.fulfillmentStatus === 'CANCELLED' || isPaymentFailedOrCancelled.value) return 0
   if (order.value.fulfillmentStatus === 'DISPATCHED') return 3
   if (order.value.fulfillmentStatus === 'PACKED') return 2
-  return 1
+  if (order.value.fulfillmentStatus === 'PENDING_PACKING' && !isPaymentFailedOrCancelled.value) return 1
+  return 0
 })
 
 const postNordTrackingUrl = computed(() => {
@@ -263,8 +265,11 @@ const hasAnyTaxSplitRows = computed(() => {
         </NuxtLink>
       </div>
 
-      <!-- Live Fulfillment Timeline & Carrier Tracking (no-print) -->
-      <div class="card bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 shadow-md rounded-3xl p-6 sm:p-8 space-y-6 no-print">
+      <!-- Live Fulfillment Timeline & Carrier Tracking (no-print, hidden if payment was failed/cancelled) -->
+      <div
+        v-if="!isPaymentFailedOrCancelled"
+        class="card bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 shadow-md rounded-3xl p-6 sm:p-8 space-y-6 no-print"
+      >
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-zinc-800 pb-4">
           <div class="flex items-center gap-3">
             <div class="size-11 rounded-2xl bg-brand-100 dark:bg-brand-950/70 text-brand-700 dark:text-brand-300 flex items-center justify-center shrink-0 shadow-xs">
@@ -461,7 +466,15 @@ const hasAnyTaxSplitRows = computed(() => {
             <p class="text-xs text-base-content/60">{{ formattedReceiptAddress }}</p>
           </div>
           <div class="sm:text-right">
-            <span class="badge badge-success text-white font-mono font-bold text-xs">
+            <span
+              class="badge font-mono font-bold text-xs"
+              :class="{
+                'badge-success text-white': order.paymentStatus === 'PAID' || order.paymentStatus === 'CAPTURED',
+                'badge-warning text-zinc-900': order.paymentStatus === 'AUTHORIZED' || order.paymentStatus === 'PENDING',
+                'badge-info text-white': order.paymentStatus === 'PARTIALLY_CAPTURED',
+                'badge-error text-white': order.paymentStatus === 'FAILED' || order.paymentStatus === 'CANCELLED' || order.paymentStatus === 'ABANDONED',
+              }"
+            >
               {{ order.paymentStatus }}
             </span>
             <div class="text-xl font-bold font-mono text-base-content mt-1">{{ order.orderReference }}</div>

@@ -183,9 +183,8 @@ export async function syncOrderPaymentWithMollie(order: any): Promise<any> {
     if (verification.eventType === 'CANCELLED' || verification.eventType === 'FAILED') {
       const updateFields: Record<string, any> = {
         paymentStatus: verification.eventType,
-      }
-      if (verification.eventType === 'CANCELLED') {
-        updateFields.cancelledAt = new Date()
+        fulfillmentStatus: 'CANCELLED',
+        cancelledAt: new Date(),
       }
 
       await Order.updateOne(

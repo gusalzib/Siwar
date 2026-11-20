@@ -90,9 +90,8 @@ export default defineEventHandler(async (event) => {
 
     const updateFields: Record<string, any> = {
       paymentStatus: webhookResult.eventType,
-    }
-    if (webhookResult.eventType === 'CANCELLED') {
-      updateFields.cancelledAt = new Date()
+      fulfillmentStatus: 'CANCELLED',
+      cancelledAt: new Date(),
     }
 
     await Order.updateOne(
