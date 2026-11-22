@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
-import { loadStripe, type Stripe, type StripeElements } from '@stripe/stripe-js'
+// import { loadStripe, type Stripe, type StripeElements } from '@stripe/stripe-js'
 import { useCartStore } from '~/stores/cart'
 import { usePreferencesStore } from '~/stores/preferences'
 import type { PaymentProviderType } from '~/types/payment'
@@ -36,13 +36,13 @@ const hasConfirmedLeave = ref(false)
 const isLeaveModalOpen = ref(false)
 const pendingRouteTarget = ref<any | null>(null)
 
-// Swish artifacts (preserved for legacy coexistence — AC-4)
-const swishQrUrl = ref<string | null>(null)
-const swishToken = ref<string | null>(null)
+// Swish artifacts (dormant - preserved for legacy reference)
+// const swishQrUrl = ref<string | null>(null)
+// const swishToken = ref<string | null>(null)
 
-// Stripe instances (preserved for legacy coexistence — AC-4)
-let stripe: Stripe | null = null
-let elements: StripeElements | null = null
+// Stripe instances (dormant - preserved for legacy reference)
+// let stripe: Stripe | null = null
+// let elements: StripeElements | null = null
 
 function handleBeforeUnload(e: BeforeUnloadEvent) {
   // Never fire ABANDONED beacon when payment is committed or legitimately redirecting to Mollie (AC-1)
@@ -183,7 +183,9 @@ async function initializeSession(draft: any) {
       mollieCheckoutUrl.value = checkoutUrl
       clearTimer()
       isInitializing.value = false
-    } else if (provider.value === 'SWISH') {
+    }
+    /* Dormant legacy providers (direct Swish / Stripe) - preserved for legacy reference
+    else if (provider.value === 'SWISH') {
       swishQrUrl.value = sessionData.qrSvgUrl
       swishToken.value = sessionData.swishToken
       clearTimer()
@@ -237,6 +239,7 @@ async function initializeSession(draft: any) {
         throw new Error('No clientSecret received from Stripe session.')
       }
     }
+    */
   } catch (err: any) {
     clearTimer()
     isInitializing.value = false
@@ -260,6 +263,7 @@ function retryMount() {
   }
 }
 
+/* Dormant legacy direct card confirmation - preserved for legacy reference
 async function handleConfirmCardPayment() {
   if (!stripe || !elements || isProcessing.value) return
   isProcessing.value = true
@@ -308,6 +312,7 @@ async function handleConfirmCardPayment() {
     await router.push(localePath(`/order/confirmation/${finalId}`))
   }
 }
+*/
 
 /**
  * Redirects the customer to Mollie's hosted checkout screen (AC-1).
@@ -476,7 +481,7 @@ async function confirmCancelOrder() {
           </button>
         </div>
 
-        <!-- Legacy Stripe & Swish UI Containers (AC-4: Preserved in visibly disabled, non-clickable state until cleanup commit) -->
+        <!-- Legacy Stripe & Swish UI Containers (Commented out - Mollie is active)
         <div
           class="pt-4 border-t border-base-200 opacity-40 pointer-events-none select-none space-y-4"
           aria-disabled="true"
@@ -485,7 +490,7 @@ async function confirmCancelOrder() {
             {{ t('checkout.legacyProvidersDisabled', 'Tidigare betalningsmetoder (inaktiverade under övergången till Mollie)') }}
           </p>
 
-          <!-- Legacy Stripe Element Container (disabled) -->
+          [Legacy Stripe Element Container (disabled)]
           <div class="space-y-3">
             <div id="stripe-element-mount" class="min-h-[2rem] rounded-xl border border-dashed border-base-300 bg-base-200/40 p-3 text-xs text-base-content/60">
               Stripe Card Element (Disabled)
@@ -500,7 +505,7 @@ async function confirmCancelOrder() {
             </button>
           </div>
 
-          <!-- Legacy Swish QR Code Container (disabled) -->
+          [Legacy Swish QR Code Container (disabled)]
           <div class="flex flex-col items-center text-center py-3 px-4 rounded-xl border border-dashed border-base-300 bg-base-200/40 space-y-2">
             <div class="text-xs font-semibold text-base-content">
               {{ t('checkout.scanSwishQR', 'Skanna QR-koden med Swish-appen') }}
@@ -519,6 +524,7 @@ async function confirmCancelOrder() {
             </a>
           </div>
         </div>
+        -->
 
         <!-- Secondary Cancel Action -->
         <div class="pt-2">

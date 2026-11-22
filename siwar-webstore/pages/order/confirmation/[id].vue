@@ -472,7 +472,7 @@ const hasAnyTaxSplitRows = computed(() => {
                 'badge-success text-white': order.paymentStatus === 'PAID' || order.paymentStatus === 'CAPTURED',
                 'badge-warning text-zinc-900': order.paymentStatus === 'AUTHORIZED' || order.paymentStatus === 'PENDING',
                 'badge-info text-white': order.paymentStatus === 'PARTIALLY_CAPTURED',
-                'badge-error text-white': order.paymentStatus === 'FAILED' || order.paymentStatus === 'CANCELLED' || order.paymentStatus === 'ABANDONED',
+                'badge-error text-white': order.paymentStatus === 'CANCELLED' || order.paymentStatus === 'FAILED' || order.paymentStatus === 'ABANDONED',
               }"
             >
               {{ order.paymentStatus }}
