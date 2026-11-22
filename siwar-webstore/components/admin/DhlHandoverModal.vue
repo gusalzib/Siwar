@@ -110,19 +110,19 @@ function openPdfLabel() {
   <Teleport to="body">
     <div
       v-if="isOpen"
-      class="fixed inset-0 z-[9999] overflow-y-auto bg-slate-900/75 dark:bg-black/85 flex items-center justify-center p-4 sm:p-6 md:p-8"
+      class="dhl-handover-modal-overlay fixed inset-0 z-[9999] overflow-y-auto bg-slate-900/75 dark:bg-black/85 flex items-center justify-center p-4 sm:p-6 md:p-8"
       role="dialog"
       aria-modal="true"
     >
       <!-- Clickable backdrop overlay to close -->
       <div
-        class="fixed inset-0"
+        class="fixed inset-0 no-print"
         @click="emit('close')"
       />
 
       <!-- Handover Card Dialog Container with margins and max-height scrolling -->
       <div
-        class="relative w-full max-w-lg my-auto max-h-[calc(100vh-3rem)] overflow-y-auto bg-white dark:bg-zinc-900 rounded-2xl border-2 border-slate-300 dark:border-zinc-700 shadow-2xl p-5 sm:p-7 text-base-content z-10"
+        class="dhl-handover-card relative w-full max-w-lg my-auto max-h-[calc(100vh-3rem)] overflow-y-auto bg-white dark:bg-zinc-900 rounded-2xl border-2 border-slate-300 dark:border-zinc-700 shadow-2xl p-5 sm:p-7 text-base-content z-10"
         @click.stop
       >
       <!-- Header -->
@@ -147,7 +147,7 @@ function openPdfLabel() {
         </div>
         <button
           type="button"
-          class="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200"
+          class="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 no-print"
           @click="emit('close')"
         >
           <Icon name="lucide:x" class="size-5" />
@@ -165,7 +165,7 @@ function openPdfLabel() {
           <!-- SVG Barcode Rendering -->
           <div
             v-if="barcodeSvg"
-            class="w-full flex justify-center items-center py-2 overflow-hidden select-none"
+            class="w-full flex justify-center items-center py-2 overflow-hidden select-none barcode-container"
             v-html="barcodeSvg"
           ></div>
 
@@ -182,7 +182,7 @@ function openPdfLabel() {
 
             <button
               type="button"
-              class="btn btn-sm w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold border-none gap-1.5 shadow-sm active:scale-95 transition-transform"
+              class="btn btn-sm w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold border-none gap-1.5 shadow-sm active:scale-95 transition-transform no-print"
               @click="copyKolliId"
             >
               <Icon :name="kolliCopied ? 'lucide:check' : 'lucide:copy'" class="size-4" />
@@ -204,7 +204,7 @@ function openPdfLabel() {
               <button
                 v-if="consignmentNumber"
                 type="button"
-                class="btn btn-ghost btn-xs text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 gap-1 p-1 h-auto"
+                class="btn btn-ghost btn-xs text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 gap-1 p-1 h-auto no-print"
                 @click="copyConsignmentNumber"
               >
                 <Icon :name="consignmentCopied ? 'lucide:check' : 'lucide:copy'" class="size-3" />
@@ -240,7 +240,7 @@ function openPdfLabel() {
       </div>
 
       <!-- Footer Buttons -->
-      <div class="flex flex-wrap items-center justify-between gap-2.5 mt-6 pt-4 border-t border-slate-200 dark:border-zinc-800">
+      <div class="flex flex-wrap items-center justify-between gap-2.5 mt-6 pt-4 border-t border-slate-200 dark:border-zinc-800 no-print">
         <!-- Emergency PDF Fallback Button -->
         <button
           type="button"
@@ -277,4 +277,81 @@ function openPdfLabel() {
   </div>
 </Teleport>
 </template>
+
+<style>
+@media print {
+  /* 1. Hide the entire Nuxt application layout to eliminate background pages */
+  #__nuxt {
+    display: none !important;
+  }
+
+  /* 2. Reset body styling */
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* 3. Hide all non-printable elements */
+  .no-print {
+    display: none !important;
+  }
+
+  /* 4. Reset modal overlay from fixed viewport to static flow */
+  .dhl-handover-modal-overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    height: auto !important;
+    inset: auto !important;
+    width: 100% !important;
+  }
+
+  /* 5. Clean handover card styling for A4 / standard printer paper */
+  .dhl-handover-card {
+    position: static !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    padding: 24px !important;
+    margin: 0 auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* 6. Ensure high-contrast colors and white backgrounds on inner boxes */
+  .dhl-handover-card * {
+    color: #0f172a !important;
+  }
+
+  .dhl-handover-card .bg-slate-50,
+  .dhl-handover-card .dark\:bg-zinc-800\/60 {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  .dhl-handover-card .bg-amber-50\/70,
+  .dhl-handover-card .dark\:bg-amber-950\/30 {
+    background-color: #fffbeb !important;
+    border-color: #fde68a !important;
+  }
+
+  @page {
+    size: auto;
+    margin: 12mm;
+  }
+}
+</style>
 
