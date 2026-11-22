@@ -304,8 +304,12 @@ export class MollieGatewayAdapter implements PaymentGatewayAdapter {
     try {
       const payment = await this.mollieClient.payments.get(paymentId)
 
-      // Already canceled
-      if (payment.status === PaymentStatus.canceled) {
+      // Already canceled, expired, or failed (no active hold exists)
+      if (
+        payment.status === PaymentStatus.canceled ||
+        payment.status === PaymentStatus.expired ||
+        payment.status === PaymentStatus.failed
+      ) {
         return true
       }
 
@@ -324,6 +328,12 @@ export class MollieGatewayAdapter implements PaymentGatewayAdapter {
           console.warn(`[Mollie Adapter] releaseAuthorization failed on ${paymentId}:`, releaseErr.message)
           return false
         }
+      }
+
+      // If payment is in 'open' or 'pending' state (customer cancelled before completing payment),
+      // no funds have been reserved; the checkout session will safely expire on Mollie without charging the customer.
+      if (payment.status === PaymentStatus.open || payment.status === PaymentStatus.pending) {
+        return true
       }
 
       console.warn(`[Mollie Adapter] Payment ${paymentId} cannot be canceled in state '${payment.status}'`)
