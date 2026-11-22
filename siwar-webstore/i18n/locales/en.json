@@ -1150,7 +1150,13 @@
     "stockAdjustedWarning": "Some item quantities changed in store. Your cart has been adjusted.",
     "priceAdjustedWarning": "The price of one or more items in your cart has been updated because the promotion has ended.",
     "genericError": "An unexpected error occurred. Please try again.",
-    "swishSEKOnly": "Only available for purchases made with Swedish Krona"
+    "swishSEKOnly": "Only available for purchases made with Swedish Krona",
+    "payWithMollie": "Pay securely with Mollie",
+    "redirectingToMollie": "Redirecting to Mollie...",
+    "mollieCardNotice": "The amount is authorized on your card via Mollie and is only captured when your order is packed and dispatched.",
+    "mollieSwishNotice": "You will be redirected to Mollie to complete your Swish payment in SEK.",
+    "legacyProvidersDisabled": "Legacy payment methods (disabled during Mollie migration)",
+    "orderReferenceLabel": "Order Reference"
   },
 
   "order": {
@@ -1158,6 +1164,11 @@
     "holdNotice": "Your amount has been reserved and will be charged when the order is packed.",
     "backToHome": "Back to shop",
     "printReceipt": "Print receipt",
+    "paymentVerifyingTitle": "Verifying your payment...",
+    "paymentVerifyingDesc": "We are awaiting final confirmation from Mollie. This page will update automatically in a few seconds.",
+    "paymentFailedTitle": "Payment was not completed",
+    "paymentFailedDesc": "The payment was cancelled or failed at Mollie. No funds have been charged and you can try again at checkout.",
+    "returnToCheckout": "Return to checkout",
     "milestones": {
       "title": "Order Status & Fulfillment",
       "pendingPacking": "Received",

@@ -14,6 +14,14 @@ import type { PaymentProviderType } from '../../../types/payment'
 
 interface CreateSessionRequestBody {
   provider: PaymentProviderType
+  /**
+   * Optional sub-method used by multi-method gateways like Mollie:
+   * - 'creditcard' -> Mollie Card with manual capture hold (AUTHORIZED)
+   * - 'swish'      -> Mollie Swish instant settlement in SEK (PAID)
+   */
+  paymentMethod?: 'creditcard' | 'swish'
+  /** Alias accepted from storefront checkout payloads (kassa.vue -> payment.vue) */
+  paymentSubMethod?: 'creditcard' | 'swish'
   currency: 'SEK' | 'EUR' | 'USD'
   items: Array<{ productId: string; quantity: number }>
   shippingFeeMinor: number
@@ -34,8 +42,16 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Cart items cannot be empty' })
   }
 
-  // AC-1 Server Guard: Swish is strictly restricted to SEK
-  if (body.provider === 'SWISH' && body.currency !== 'SEK') {
+  // Resolve Mollie sub-method ('creditcard' default, or 'swish' when explicitly selected)
+  const requestedSubMethod = body.paymentMethod || body.paymentSubMethod
+  const resolvedMollieMethod: 'creditcard' | 'swish' =
+    requestedSubMethod === 'swish' ? 'swish' : 'creditcard'
+
+  // AC-1 Server Guard: Swish (both legacy direct Swish and Mollie Swish) is strictly restricted to SEK
+  if (
+    (body.provider === 'SWISH' || (body.provider === 'MOLLIE' && resolvedMollieMethod === 'swish')) &&
+    body.currency !== 'SEK'
+  ) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Swish payments can only be processed in SEK.',
@@ -145,6 +161,20 @@ export default defineEventHandler(async (event) => {
     inventoryDecremented: false,
   })
 
+  // Resolve incoming request origin so hosted checkout gateways (Mollie) redirect back to the
+  // same environment (e.g. http://localhost:3000 in local dev, https://siwar.se in production)
+  let requestOrigin = ''
+  try {
+    if (typeof getRequestURL === 'function') {
+      const origin = getRequestURL(event)?.origin
+      if (origin && origin !== 'null') {
+        requestOrigin = origin
+      }
+    }
+  } catch {
+    // Ignore in unit tests without a live H3 request URL
+  }
+
   // 5. Delegate to the Payment Gateway Adapter with the idempotency key and metadata
   const gateway = getPaymentGateway(body.provider)
   const session = await gateway.createSession({
@@ -153,6 +183,8 @@ export default defineEventHandler(async (event) => {
     currency: body.currency,
     // Added: Pass idempotencyKey to the payment adapter
     idempotencyKey,
+    // Forward chosen sub-method ('creditcard' | 'swish') when using Mollie
+    ...(body.provider === 'MOLLIE' ? { paymentMethod: resolvedMollieMethod } : {}),
     customer: {
       fullName: body.customer.fullName,
       email: body.customer.email,
@@ -160,7 +192,9 @@ export default defineEventHandler(async (event) => {
     },
     metadata: {
       // Added: Store database Order _id in payment provider metadata for bi-directional webhook reconciliation
+      // MollieGatewayAdapter also uses metadata.orderId to construct /order/confirmation/${draftOrder._id}
       orderId: String(draftOrder._id),
+      ...(requestOrigin ? { redirectBaseUrl: requestOrigin } : {}),
       fulfillmentMethod: body.customer.fulfillmentMethod,
       totalMomsMinor: taxSplit.totalMomsMinor.toString(),
       moms12Minor: taxSplit.moms12.momsAmountMinor.toString(),
@@ -168,7 +202,7 @@ export default defineEventHandler(async (event) => {
     },
   })
 
-  // Added: 6. Update Order record with provider-issued paymentId (e.g. PaymentIntent ID) before responding
+  // Added: 6. Update Order record with provider-issued paymentId (e.g. PaymentIntent ID or Mollie tr_...) before responding
   await Order.updateOne(
     { _id: draftOrder._id },
     { $set: { paymentId: session.paymentId } }
@@ -184,9 +218,10 @@ export default defineEventHandler(async (event) => {
     ''
   ).trim()
 
-  // 7. Return session parameters to frontend
+  // 7. Return session parameters to frontend (including Mollie checkoutUrl when applicable)
   return {
     ...session,
+    checkoutUrl: session.checkoutUrl,
     publishableKey: stripePublishableKey,
     orderId: draftOrder._id.toString(),
     currency: body.currency,

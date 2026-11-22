@@ -52,13 +52,8 @@ function getMailFrom(): string {
     'Siwar Webstore <order@siwar.se>'
   ).trim()
 
-  // Clean surrounding quotes if any (e.g. ""Siwar..."")
-  while (
-    (from.startsWith('"') && from.endsWith('"')) ||
-    (from.startsWith("'") && from.endsWith("'"))
-  ) {
-    from = from.slice(1, -1).trim()
-  }
+  // Clean surrounding quotes if any (e.g. ""Siwar..."" or "Siwar...")
+  from = from.replace(/^["']+|["']+$/g, '').trim()
 
   return from
 }

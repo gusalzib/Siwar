@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
-import { loadStripe, type Stripe, type StripeElements } from '@stripe/stripe-js'
+// import { loadStripe, type Stripe, type StripeElements } from '@stripe/stripe-js'
 import { useCartStore } from '~/stores/cart'
 import { usePreferencesStore } from '~/stores/preferences'
 import type { PaymentProviderType } from '~/types/payment'
@@ -14,7 +14,11 @@ const router = useRouter()
 const localePath = useLocalePath()
 const { t, locale } = useI18n()
 
-const provider = ref<PaymentProviderType>('STRIPE')
+const provider = ref<PaymentProviderType>('MOLLIE')
+/**
+ * Chosen Mollie sub-method ('creditcard' for manual authorization hold, 'swish' for SEK instant settlement).
+ */
+const paymentSubMethod = ref<'creditcard' | 'swish'>('creditcard')
 const activeOrderReference = ref<string | null>(null)
 const activeOrderId = ref<string | null>(null)
 const isInitializing = ref(true)
@@ -22,22 +26,34 @@ const isProcessing = ref(false)
 const errorMessage = ref<string | null>(null)
 const isCancelling = ref(false)
 
+// Mollie hosted checkout state (Issue #53)
+const mollieCheckoutUrl = ref<string | null>(null)
+const isRedirectingToGateway = ref(false)
+
 // Exit & Navigation Guard States (Task 40-48)
 const isPaymentCommitted = ref(false)
 const hasConfirmedLeave = ref(false)
 const isLeaveModalOpen = ref(false)
 const pendingRouteTarget = ref<any | null>(null)
 
-// Swish artifacts
-const swishQrUrl = ref<string | null>(null)
-const swishToken = ref<string | null>(null)
+// Swish artifacts (dormant - preserved for legacy reference)
+// const swishQrUrl = ref<string | null>(null)
+// const swishToken = ref<string | null>(null)
 
-// Stripe instances
-let stripe: Stripe | null = null
-let elements: StripeElements | null = null
+// Stripe instances (dormant - preserved for legacy reference)
+// let stripe: Stripe | null = null
+// let elements: StripeElements | null = null
 
 function handleBeforeUnload(e: BeforeUnloadEvent) {
-  if (isPaymentCommitted.value || hasConfirmedLeave.value || !activeOrderReference.value) return
+  // Never fire ABANDONED beacon when payment is committed or legitimately redirecting to Mollie (AC-1)
+  if (
+    isPaymentCommitted.value ||
+    isRedirectingToGateway.value ||
+    hasConfirmedLeave.value ||
+    !activeOrderReference.value
+  ) {
+    return
+  }
 
   if (navigator.sendBeacon && activeOrderReference.value) {
     const payload = JSON.stringify({
@@ -69,7 +85,8 @@ onMounted(async () => {
   }
 
   const draft = JSON.parse(rawDraft)
-  provider.value = draft.paymentMethod || 'STRIPE'
+  provider.value = draft.paymentMethod || 'MOLLIE'
+  paymentSubMethod.value = draft.paymentSubMethod === 'swish' ? 'swish' : 'creditcard'
 
   await initializeSession(draft)
 })
@@ -112,9 +129,10 @@ async function initializeSession(draft: any) {
     if (rawCachedSession) {
       try {
         const cached = JSON.parse(rawCachedSession)
-        // Reuse if same provider, currency, storefront language, and exact total
+        // Reuse if same provider, sub-method, currency, storefront language, and exact total
         if (
           cached.provider === provider.value &&
+          (provider.value !== 'MOLLIE' || cached.paymentSubMethod === paymentSubMethod.value) &&
           cached.currency === activeCurrency &&
           cached.locale === locale.value &&
           cached.totalMinor === cartStore.grandTotalMinor
@@ -132,6 +150,12 @@ async function initializeSession(draft: any) {
         method: 'POST',
         body: {
           provider: provider.value,
+          ...(provider.value === 'MOLLIE'
+            ? {
+                paymentMethod: paymentSubMethod.value,
+                paymentSubMethod: paymentSubMethod.value,
+              }
+            : {}),
           locale: locale.value,
           currency: activeCurrency,
           items: cartStore.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
@@ -140,6 +164,7 @@ async function initializeSession(draft: any) {
         },
       })
       sessionData.locale = locale.value
+      sessionData.paymentSubMethod = paymentSubMethod.value
       // Cache session details
       sessionStorage.setItem('siwar_active_payment_session', JSON.stringify(sessionData))
     }
@@ -147,8 +172,20 @@ async function initializeSession(draft: any) {
     activeOrderReference.value = sessionData.orderReference
     activeOrderId.value = sessionData.orderId || null
 
-    // 3. Mount UI artifacts
-    if (provider.value === 'SWISH') {
+    // 3. Mount UI artifacts (Mollie Hosted Checkout first, legacy Stripe/Swish preserved)
+    if (provider.value === 'MOLLIE') {
+      const checkoutUrl = sessionData.checkoutUrl || sessionData.redirectUrl || null
+      if (!checkoutUrl) {
+        clearTimer()
+        isInitializing.value = false
+        throw new Error('No checkoutUrl received from Mollie session.')
+      }
+      mollieCheckoutUrl.value = checkoutUrl
+      clearTimer()
+      isInitializing.value = false
+    }
+    /* Dormant legacy providers (direct Swish / Stripe) - preserved for legacy reference
+    else if (provider.value === 'SWISH') {
       swishQrUrl.value = sessionData.qrSvgUrl
       swishToken.value = sessionData.swishToken
       clearTimer()
@@ -202,6 +239,7 @@ async function initializeSession(draft: any) {
         throw new Error('No clientSecret received from Stripe session.')
       }
     }
+    */
   } catch (err: any) {
     clearTimer()
     isInitializing.value = false
@@ -225,6 +263,7 @@ function retryMount() {
   }
 }
 
+/* Dormant legacy direct card confirmation - preserved for legacy reference
 async function handleConfirmCardPayment() {
   if (!stripe || !elements || isProcessing.value) return
   isProcessing.value = true
@@ -273,10 +312,38 @@ async function handleConfirmCardPayment() {
     await router.push(localePath(`/order/confirmation/${finalId}`))
   }
 }
+*/
+
+/**
+ * Redirects the customer to Mollie's hosted checkout screen (AC-1).
+ *
+ * Critical Navigation Guard Compatibility:
+ * Sets `isPaymentCommitted.value = true` and `isRedirectingToGateway.value = true`
+ * and detaches `beforeunload` immediately BEFORE changing `window.location.href`
+ * so `handleBeforeUnload` never sends a false ABANDONED beacon during redirect.
+ */
+function redirectToMollieCheckout() {
+  if (!mollieCheckoutUrl.value || isRedirectingToGateway.value) return
+
+  isRedirectingToGateway.value = true
+  isPaymentCommitted.value = true
+
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('beforeunload', handleBeforeUnload)
+    // Clear cached session so navigating back or retrying creates a clean Mollie session
+    sessionStorage.removeItem('siwar_active_payment_session')
+    window.location.href = mollieCheckoutUrl.value
+  }
+}
 
 // Navigation leave guard
 onBeforeRouteLeave((to, from, next) => {
-  if (isPaymentCommitted.value || hasConfirmedLeave.value || !activeOrderReference.value) {
+  if (
+    isPaymentCommitted.value ||
+    isRedirectingToGateway.value ||
+    hasConfirmedLeave.value ||
+    !activeOrderReference.value
+  ) {
     return next()
   }
   pendingRouteTarget.value = to
@@ -362,51 +429,102 @@ async function confirmCancelOrder() {
       <!-- Header with back navigation -->
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-black text-base-content">
-          {{ provider === 'SWISH' ? 'Swish Handel' : t('checkout.cardPayment', 'Kortbetalning') }}
+          {{
+            provider === 'SWISH' || (provider === 'MOLLIE' && paymentSubMethod === 'swish')
+              ? 'Swish Handel'
+              : t('checkout.cardPayment', 'Kortbetalning')
+          }}
         </h1>
         <NuxtLink :to="localePath('/kassa')" class="btn btn-ghost btn-sm text-base-content/80 hover:bg-base-200 hover:text-base-content transition-colors">
           {{ t('checkout.changeMethod', '← Ändra betalsätt') }}
         </NuxtLink>
       </div>
 
-      <!-- Payment Form Container -->
-      <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
+      <!-- Payment Form Container (solid non-glassmorphism card matching site design) -->
+      <div class="card bg-base-100 border border-base-200 p-6 shadow-sm space-y-5">
         <div v-if="isInitializing" class="flex flex-col items-center justify-center py-10 space-y-2">
           <span class="loading loading-spinner loading-md text-primary"></span>
           <span class="text-xs text-base-content/60">{{ t('checkout.initializing', 'Initierar betalning...') }}</span>
         </div>
 
-        <!-- Stripe Element Container -->
-        <div v-show="provider === 'STRIPE'" class="space-y-4">
-          <div id="stripe-element-mount" :class="{ 'opacity-0 h-0 overflow-hidden pointer-events-none': isInitializing }"></div>
+        <!-- Active Mollie Hosted Checkout Container (Issue #53 — AC-1) -->
+        <div v-if="provider === 'MOLLIE' && !isInitializing && mollieCheckoutUrl" class="space-y-4">
+          <div class="rounded-2xl bg-base-200/60 dark:bg-zinc-800/80 border border-base-300 dark:border-zinc-700 p-4 space-y-2">
+            <div class="flex items-center justify-between text-xs font-semibold text-base-content/70">
+              <span>{{ t('checkout.orderReferenceLabel', 'Orderreferens') }}</span>
+              <span class="font-mono font-bold text-base-content">{{ activeOrderReference }}</span>
+            </div>
+            <p class="text-sm text-base-content/80 leading-relaxed">
+              {{
+                paymentSubMethod === 'swish'
+                  ? t('checkout.mollieSwishNotice', 'Du skickas vidare till Mollie för att slutföra din Swish-betalning i SEK.')
+                  : t('checkout.mollieCardNotice', 'Beloppet reserveras på ditt kort via Mollie och dras först när din beställning packas och skickas.')
+              }}
+            </p>
+          </div>
+
           <button
-            v-if="!isInitializing"
             type="button"
-            class="btn btn-md w-full !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:transform-none disabled:shadow-none"
-            :disabled="isProcessing"
-            @click="handleConfirmCardPayment"
+            class="btn btn-md w-full !bg-emerald-600 hover:!bg-emerald-700 !text-white !border-none font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:transform-none disabled:shadow-none gap-2"
+            :disabled="isRedirectingToGateway || isCancelling"
+            @click="redirectToMollieCheckout"
           >
-            <span v-if="isProcessing" class="loading loading-spinner loading-sm"></span>
-            <span v-else>{{ t('checkout.authorizePayment', 'Slutför reservation') }}</span>
+            <span v-if="isRedirectingToGateway" class="loading loading-spinner loading-sm !text-white"></span>
+            <Icon v-else name="lucide:lock" class="size-4 !text-white" />
+            <span>
+              {{
+                isRedirectingToGateway
+                  ? t('checkout.redirectingToMollie', 'Vidarebefordrar till Mollie...')
+                  : t('checkout.payWithMollie', 'Betala säkert med Mollie')
+              }}
+            </span>
           </button>
         </div>
 
-        <!-- Swish QR Code Container -->
-        <div v-if="provider === 'SWISH' && !isInitializing" class="flex flex-col items-center text-center py-4 space-y-4">
-          <div class="text-sm font-semibold text-base-content">
-            {{ t('checkout.scanSwishQR', 'Skanna QR-koden med Swish-appen') }}
+        <!-- Legacy Stripe & Swish UI Containers (Commented out - Mollie is active)
+        <div
+          class="pt-4 border-t border-base-200 opacity-40 pointer-events-none select-none space-y-4"
+          aria-disabled="true"
+        >
+          <p class="text-xs font-semibold text-base-content/70">
+            {{ t('checkout.legacyProvidersDisabled', 'Tidigare betalningsmetoder (inaktiverade under övergången till Mollie)') }}
+          </p>
+
+          [Legacy Stripe Element Container (disabled)]
+          <div class="space-y-3">
+            <div id="stripe-element-mount" class="min-h-[2rem] rounded-xl border border-dashed border-base-300 bg-base-200/40 p-3 text-xs text-base-content/60">
+              Stripe Card Element (Disabled)
+            </div>
+            <button
+              type="button"
+              class="btn btn-md w-full !bg-emerald-600 !text-white !border-none font-bold"
+              disabled
+              @click="handleConfirmCardPayment"
+            >
+              <span>{{ t('checkout.authorizePayment', 'Slutför reservation') }}</span>
+            </button>
           </div>
-          <div v-if="swishQrUrl" class="p-3 bg-white border border-base-300 rounded-xl shadow-sm">
-            <img :src="swishQrUrl" alt="Swish BankID QR" class="size-60" />
+
+          [Legacy Swish QR Code Container (disabled)]
+          <div class="flex flex-col items-center text-center py-3 px-4 rounded-xl border border-dashed border-base-300 bg-base-200/40 space-y-2">
+            <div class="text-xs font-semibold text-base-content">
+              {{ t('checkout.scanSwishQR', 'Skanna QR-koden med Swish-appen') }}
+            </div>
+            <div v-if="swishQrUrl" class="p-3 bg-white border border-base-300 rounded-xl shadow-sm">
+              <img :src="swishQrUrl" alt="Swish BankID QR" class="size-40" />
+            </div>
+            <a
+              v-if="swishToken"
+              :href="`swish://paymentrequest?token=${swishToken}`"
+              class="btn btn-outline btn-sm sm:hidden w-full mt-2"
+              tabindex="-1"
+              aria-disabled="true"
+            >
+              {{ t('checkout.openSwishApp', 'Öppna Swish') }}
+            </a>
           </div>
-          <a
-            v-if="swishToken"
-            :href="`swish://paymentrequest?token=${swishToken}`"
-            class="btn btn-outline btn-sm sm:hidden w-full mt-2"
-          >
-            {{ t('checkout.openSwishApp', 'Öppna Swish') }}
-          </a>
         </div>
+        -->
 
         <!-- Secondary Cancel Action -->
         <div class="pt-2">

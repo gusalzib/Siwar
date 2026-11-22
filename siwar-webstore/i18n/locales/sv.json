@@ -1148,7 +1148,13 @@
     "mountFailed": "Kunde inte ansluta till betaltjänsten. Kontrollera din anslutning eller annonsblockerare och försök igen.",
     "retry": "Försök igen",
     "priceAdjustedWarning": "Priset på en eller flera varor i din varukorg har uppdaterats eftersom kampanjen har avslutats.",
-    "swishSEKOnly": "Endast tillgängligt för köp gjorda med svenska kronor"
+    "swishSEKOnly": "Endast tillgängligt för köp gjorda med svenska kronor",
+    "payWithMollie": "Betala säkert med Mollie",
+    "redirectingToMollie": "Vidarebefordrar till Mollie...",
+    "mollieCardNotice": "Beloppet reserveras på ditt kort via Mollie och dras först när din beställning packas och skickas.",
+    "mollieSwishNotice": "Du skickas vidare till Mollie för att slutföra din Swish-betalning i SEK.",
+    "legacyProvidersDisabled": "Tidigare betalningsmetoder (inaktiverade under övergången till Mollie)",
+    "orderReferenceLabel": "Orderreferens"
   },
 
   "order": {
@@ -1156,6 +1162,11 @@
     "holdNotice": "Ditt belopp har reserverats och dras när ordern packas.",
     "backToHome": "Tillbaka till butiken",
     "printReceipt": "Skriv ut kvitto",
+    "paymentVerifyingTitle": "Verifierar din betalning...",
+    "paymentVerifyingDesc": "Vi inväntar slutlig bekräftelse från Mollie. Sidan uppdateras automatiskt inom några sekunder.",
+    "paymentFailedTitle": "Betalningen slutfördes inte",
+    "paymentFailedDesc": "Betalningen avbröts eller misslyckades hos Mollie. Inga pengar har dragits och du kan försöka igen i kassan.",
+    "returnToCheckout": "Tillbaka till kassan",
     "milestones": {
       "title": "Orderstatus & Följesedel",
       "pendingPacking": "Mottagen",

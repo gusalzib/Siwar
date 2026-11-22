@@ -214,7 +214,7 @@ const OrderSchema = new Schema<IOrder>(
     paymentProvider: {
       type: String,
       required: true,
-      enum: ['STRIPE', 'SWISH', 'KLARNA'],
+      enum: ['STRIPE', 'SWISH', 'KLARNA', 'MOLLIE'],
     },
     paymentId: { type: String, sparse: true, index: true },
     paymentStatus: {
