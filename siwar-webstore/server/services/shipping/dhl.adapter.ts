@@ -49,25 +49,22 @@ export class DhlAdapter implements ShippingCarrierAdapter {
    */
   public getBaseUrl(): string {
     const config = getRuntimeConfigSafe()
-    const env = (
-      config?.dhlEnvironment ||
-      process.env.DHL_ENVIRONMENT ||
-      'sandbox'
-    ).trim().toLowerCase()
+    const rawEnv = config?.dhlEnvironment ?? process.env.DHL_ENVIRONMENT ?? 'sandbox'
+    const env = String(rawEnv).trim().toLowerCase()
 
     if (env === 'production') {
-      return (
-        config?.dhlApiFarmProduction ||
-        process.env.DHL_API_FARM_PRODUCTION ||
+      const prodUrl =
+        config?.dhlApiFarmProduction ??
+        process.env.DHL_API_FARM_PRODUCTION ??
         'https://api.freight-logistics.dhl.com'
-      ).replace(/\/+$/, '')
+      return String(prodUrl).trim().replace(/\/+$/, '')
     }
 
-    return (
-      config?.dhlApiFarmSandbox ||
-      process.env.DHL_API_FARM_SANDBOX ||
+    const sandboxUrl =
+      config?.dhlApiFarmSandbox ??
+      process.env.DHL_API_FARM_SANDBOX ??
       'https://test-api.freight-logistics.dhl.com'
-    ).replace(/\/+$/, '')
+    return String(sandboxUrl).trim().replace(/\/+$/, '')
   }
 
   /**
@@ -75,11 +72,8 @@ export class DhlAdapter implements ShippingCarrierAdapter {
    */
   public getClientKey(): string {
     const config = getRuntimeConfigSafe()
-    return (
-      config?.dhlClientKey ||
-      process.env.DHL_CLIENT_KEY ||
-      ''
-    ).trim()
+    const rawKey = config?.dhlClientKey ?? process.env.DHL_CLIENT_KEY ?? ''
+    return String(rawKey).trim()
   }
 
   /**
@@ -87,11 +81,8 @@ export class DhlAdapter implements ShippingCarrierAdapter {
    */
   public getAccountNumber(): string {
     const config = getRuntimeConfigSafe()
-    return (
-      config?.dhlAccountNumber ||
-      process.env.DHL_ACCOUNT_NUMBER ||
-      ''
-    ).trim()
+    const rawAccount = config?.dhlAccountNumber ?? process.env.DHL_ACCOUNT_NUMBER ?? ''
+    return String(rawAccount).trim()
   }
 
   /**
@@ -181,74 +172,131 @@ export class DhlAdapter implements ShippingCarrierAdapter {
     const cleanSenderPostal = sender.postalCode.replace(/\s+/g, '')
     const cleanRecipientPostal = recipient.postalCode.replace(/\s+/g, '')
 
-    // Assemble the Transport Instruction payload compliant with DHL Freight Sweden schema
+    // Resolve nearest service point for Product 103 delivery (AccessPoint party)
+    let resolvedAccessPoint: {
+      id: string
+      name: string
+      street: string
+      city: string
+      postalCode: string
+    } | null = null
+
+    try {
+      const nearby = await this.findNearestServicePoints({
+        postalCode: cleanRecipientPostal,
+        countryCode: recipient.countryCode || 'SE',
+        city: recipient.city,
+        street: recipient.street,
+        maxResults: 5,
+      })
+
+      if (nearby && nearby.length > 0) {
+        const matched = servicePointId
+          ? nearby.find((p) => p.id === servicePointId || p.id.includes(servicePointId)) || nearby[0]
+          : nearby[0]
+
+        if (matched) {
+          resolvedAccessPoint = {
+            id: matched.id,
+            name: matched.name,
+            street: matched.street || recipient.street,
+            city: matched.city || recipient.city,
+            postalCode: matched.postalCode || cleanRecipientPostal,
+          }
+        }
+      }
+    } catch (spErr) {
+      console.warn('[DhlAdapter] Could not auto-resolve nearest service point for shipment:', spErr)
+    }
+
+    if (!resolvedAccessPoint && servicePointId) {
+      resolvedAccessPoint = {
+        id: servicePointId,
+        name: 'DHL ServicePoint',
+        street: recipient.street,
+        city: recipient.city,
+        postalCode: cleanRecipientPostal,
+      }
+    }
+
+    // Calculate volume in cubic meters (m3), rounded to 4 decimals
+    const volumeM3 = Number(
+      (
+        ((parcel.lengthCm || 35) * (parcel.widthCm || 25) * (parcel.heightCm || 20)) /
+        1_000_000
+      ).toFixed(4)
+    )
+
+    // Assemble the flat root Transport Instruction payload compliant with DHL Freight Sweden Product 103 schema
     const payload = {
-      consignments: [
+      id: '',
+      productCode,
+      shippingDate: new Date().toISOString().split('T')[0],
+      totalNumberOfPieces: 1,
+      totalWeight: Number(parcel.weightKg.toFixed(2)),
+      totalVolume: volumeM3,
+      references: [
         {
-          product: {
-            productCode,
+          qualifier: 'ABC',
+          value: orderReference,
+        },
+      ],
+      payerCode: {
+        code: '1',
+      },
+      parties: [
+        {
+          id: accountNumber,
+          type: 'Consignor',
+          name: sender.companyName || sender.name,
+          contactName: sender.name,
+          address: {
+            street: sender.street,
+            cityName: sender.city,
+            postalCode: cleanSenderPostal,
+            countryCode: sender.countryCode || 'SE',
           },
-          parties: {
-            consignor: {
-              accountNumber,
-              name: sender.companyName || sender.name,
-              address: {
-                street: sender.street,
-                postalCode: cleanSenderPostal,
-                city: sender.city,
-                countryCode: sender.countryCode || 'SE',
-              },
-              contact: {
-                name: sender.name,
-                email: sender.email,
-                phone: sender.phone,
-              },
-            },
-            consignee: {
-              name: recipient.name,
-              companyName: recipient.companyName,
-              address: {
-                street: recipient.street,
-                postalCode: cleanRecipientPostal,
-                city: recipient.city,
-                countryCode: recipient.countryCode || 'SE',
-              },
-              contact: {
-                name: recipient.name,
-                email: recipient.email,
-                phone: recipient.phone,
-              },
-            },
-            ...(servicePointId
-              ? {
-                  servicePoint: {
-                    id: servicePointId,
-                  },
-                }
-              : {}),
+          phone: sender.phone,
+          email: sender.email,
+        },
+        {
+          id: '',
+          type: 'Consignee',
+          name: recipient.name,
+          address: {
+            street: recipient.street,
+            cityName: recipient.city,
+            postalCode: cleanRecipientPostal,
+            countryCode: recipient.countryCode || 'SE',
           },
-          goods: {
-            grossWeight: Number(parcel.weightKg.toFixed(2)),
-            pieces: [
+          phone: recipient.phone,
+          email: recipient.email,
+        },
+        ...(resolvedAccessPoint
+          ? [
               {
-                packageType: 'PC', // Standard parcel carton
-                quantity: 1,
-                weight: Number(parcel.weightKg.toFixed(2)),
-                dimensions: {
-                  length: Math.round(parcel.lengthCm),
-                  width: Math.round(parcel.widthCm),
-                  height: Math.round(parcel.heightCm),
+                id: String(resolvedAccessPoint.id).replace(/^SE-/, '').slice(0, 4),
+                type: 'AccessPoint',
+                name: resolvedAccessPoint.name,
+                address: {
+                  street: resolvedAccessPoint.street,
+                  cityName: resolvedAccessPoint.city,
+                  postalCode: resolvedAccessPoint.postalCode.replace(/\s+/g, ''),
+                  countryCode: 'SE',
                 },
-                goodsDescription: parcel.contentsDescription || 'Livsmedel / Food items',
+                subType: 'ParcelShop',
               },
-            ],
-          },
-          references: [
-            {
-              type: 'CU', // Customer Order Reference
-              value: orderReference,
-            },
-          ],
+            ]
+          : []),
+      ],
+      pieces: [
+        {
+          goodsType: parcel.contentsDescription || 'Livsmedel',
+          packageType: 'CLL',
+          numberOfPieces: 1,
+          weight: Number(parcel.weightKg.toFixed(2)),
+          volume: volumeM3,
+          stackable: true,
         },
       ],
     }
@@ -259,9 +307,6 @@ export class DhlAdapter implements ShippingCarrierAdapter {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
-          'DHL-API-Key': clientKey,
-          'dhl-api-key': clientKey,
-          'Client-Key': clientKey,
           'client-key': clientKey,
         },
         body: JSON.stringify(payload),
@@ -328,11 +373,15 @@ export class DhlAdapter implements ShippingCarrierAdapter {
     const endpoint = `${baseUrl}/servicepointlocatorapi/v1/servicepoint/findnearestservicepoints`
 
     const payload = {
-      countryCode,
-      postalCode: cleanPostal,
-      ...(city ? { city } : {}),
-      ...(street ? { street } : {}),
-      maxResults,
+      address: {
+        street: street || '',
+        cityName: city || '',
+        postalCode: cleanPostal,
+        countryCode,
+      },
+      locationTypes: ['servicepoint'],
+      maxNumberOfItems: maxResults,
+      serviceTypes: ['parcel:pick-up'],
     }
 
     try {
@@ -341,9 +390,6 @@ export class DhlAdapter implements ShippingCarrierAdapter {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
-          'DHL-API-Key': clientKey,
-          'dhl-api-key': clientKey,
-          'Client-Key': clientKey,
           'client-key': clientKey,
         },
         body: JSON.stringify(payload),
@@ -491,9 +537,9 @@ export class DhlAdapter implements ShippingCarrierAdapter {
       return {
         id: String(item.id || item.servicePointId || `SP-${idx + 1}`),
         name: String(item.name || item.servicePointName || 'DHL Ombud'),
-        street: String(addr.street || addr.streetAddress || ''),
-        postalCode: String(addr.postalCode || addr.zipCode || ''),
-        city: String(addr.city || ''),
+        street: String(item.street || addr.street || addr.streetAddress || ''),
+        postalCode: String(item.postalCode || addr.postalCode || addr.zipCode || ''),
+        city: String(item.cityName || item.city || addr.cityName || addr.city || ''),
         distanceMeters: typeof item.distance === 'number' ? Math.round(item.distance) : undefined,
         openingHours: item.openingHours ? String(item.openingHours) : undefined,
       }
