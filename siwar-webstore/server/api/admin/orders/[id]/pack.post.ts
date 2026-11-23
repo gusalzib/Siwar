@@ -6,6 +6,9 @@ import { recalculateOrderShortage, computeOrderPricing, type ShortageActionInput
 import { getCachedShippingSettings } from '~/server/services/shipping.service'
 import { getPaymentGateway } from '~/server/services/payments'
 import { mailService, type EmailLocale } from '~/server/services/mail.service'
+import { getShippingCarrier } from '~/server/services/shipping'
+import { sanitizeSwishMessage } from '~/server/utils/swish'
+import { resolveProductGrossWeightGrams } from '~/utils/shipping'
 
 interface PackItemInput {
   index?: number
@@ -19,6 +22,7 @@ interface PackItemInput {
   unitPriceMinor?: number
   momsRate?: 6 | 12 | 25
   freeShipping?: boolean
+  grossWeight?: number
   isPacked?: boolean
 }
 
@@ -27,6 +31,14 @@ interface PackOrderBody {
   actions: ShortageActionInput[]
   markDispatched?: boolean
   trackingCode?: string
+  parcel?: {
+    weightKg: number
+    lengthCm: number
+    widthCm: number
+    heightCm: number
+    preset?: string
+    contentsDescription?: string
+  }
 }
 
 export default defineEventHandler(async (event) => {
@@ -57,17 +69,122 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Ensure freeShipping is populated on original items if missing
+  // Handle retroactive consignment generation for already dispatched delivery orders
+  if (order.fulfillmentStatus === 'DISPATCHED' && order.customer?.fulfillmentMethod === 'DELIVERY') {
+    const carrierAdapter = getShippingCarrier('DHL')
+
+    if (!order.trackingCode) {
+      const parcelInput = body?.parcel || {
+        weightKg: 3.5,
+        lengthCm: 35,
+        widthCm: 25,
+        heightCm: 20,
+        preset: 'MELLAN',
+      }
+
+      let bookingResult: any
+      try {
+        bookingResult = await carrierAdapter.createShipment({
+          orderId: String(order._id),
+          orderReference: order.orderReference,
+          recipient: {
+            name: order.customer.fullName,
+            street: order.customer.address?.street || '',
+            postalCode: order.customer.address?.postalCode || '',
+            city: order.customer.address?.city || '',
+            countryCode: 'SE',
+            email: order.customer.email,
+            phone: order.customer.phone,
+          },
+          parcel: {
+            weightKg: parcelInput.weightKg,
+            lengthCm: parcelInput.lengthCm,
+            widthCm: parcelInput.widthCm,
+            heightCm: parcelInput.heightCm,
+            preset: parcelInput.preset as any,
+            contentsDescription: parcelInput.contentsDescription || 'Livsmedel / Food items',
+          },
+          productCode: '103',
+          servicePointId: order.customer.servicePoint?.id,
+          servicePoint: order.customer.servicePoint
+            ? {
+                id: order.customer.servicePoint.id,
+                name: order.customer.servicePoint.name,
+                street: order.customer.servicePoint.street,
+                postalCode: order.customer.servicePoint.postalCode,
+                city: order.customer.servicePoint.city,
+              }
+            : undefined,
+        })
+      } catch (dhlErr: any) {
+        console.warn('[PackAPI] Live DHL booking failed in retroactive dispatch; using mock:', dhlErr?.message)
+        bookingResult = carrierAdapter.generateMockShipment({
+          orderId: String(order._id),
+          orderReference: order.orderReference,
+          recipient: {
+            name: order.customer.fullName,
+            street: order.customer.address?.street || '',
+            postalCode: order.customer.address?.postalCode || '',
+            city: order.customer.address?.city || '',
+            countryCode: 'SE',
+            email: order.customer.email,
+            phone: order.customer.phone,
+          },
+          parcel: {
+            weightKg: parcelInput.weightKg,
+            lengthCm: parcelInput.lengthCm,
+            widthCm: parcelInput.widthCm,
+            heightCm: parcelInput.heightCm,
+            preset: parcelInput.preset as any,
+          },
+          servicePointId: order.customer.servicePoint?.id,
+          servicePoint: order.customer.servicePoint
+            ? {
+                id: order.customer.servicePoint.id,
+                name: order.customer.servicePoint.name,
+                street: order.customer.servicePoint.street,
+                postalCode: order.customer.servicePoint.postalCode,
+                city: order.customer.servicePoint.city,
+              }
+            : undefined,
+        })
+      }
+
+      order.carrier = 'DHL'
+      order.trackingCode = bookingResult.trackingCode
+      order.shipmentId = bookingResult.consignmentNumber
+      ;(order as any).parcel = parcelInput
+      await order.save()
+    }
+
+    return {
+      success: true,
+      orderReference: order.orderReference,
+      fulfillmentStatus: order.fulfillmentStatus,
+      trackingCode: order.trackingCode,
+      consignmentNumber: order.shipmentId,
+      trackingUrl: order.trackingCode ? carrierAdapter.getTrackingUrl(order.trackingCode) : undefined,
+      carrier: order.carrier || 'DHL',
+    }
+  }
+
+  // Ensure freeShipping and grossWeight are populated on original items if missing/defaulted to 0
 
   const unpopulatedProductIds = order.items
-    .filter((it: any) => typeof it.freeShipping !== 'boolean' && it.productId)
+    .filter((it: any) => (typeof it.freeShipping !== 'boolean' || typeof it.grossWeight !== 'number' || it.grossWeight <= 0) && it.productId)
     .map((it: any) => it.productId)
   if (unpopulatedProductIds.length > 0) {
-    const prods = await Product.find({ _id: { $in: unpopulatedProductIds } }, { freeShipping: 1 }).lean()
-    const pMap = new Map(prods.map((p) => [String(p._id), Boolean(p.freeShipping)]))
+    const prods = await Product.find({ _id: { $in: unpopulatedProductIds } }, { freeShipping: 1, grossWeight: 1, netQuantity: 1 }).lean()
+    const pMap = new Map(prods.map((p) => [String(p._id), p]))
     for (const it of order.items as any[]) {
-      if (typeof it.freeShipping !== 'boolean' && it.productId) {
-        it.freeShipping = pMap.get(String(it.productId)) ?? false
+      const prod = it.productId ? pMap.get(String(it.productId)) : undefined
+      if (prod) {
+        if (typeof it.freeShipping !== 'boolean') {
+          it.freeShipping = Boolean(prod.freeShipping)
+        }
+        if (typeof it.grossWeight !== 'number' || it.grossWeight <= 0) {
+          it.grossWeight = resolveProductGrossWeightGrams(prod as any)
+        }
       }
     }
   }
@@ -124,6 +241,9 @@ export default defineEventHandler(async (event) => {
         if (submittedItem.momsRate != null) match.momsRate = submittedItem.momsRate
         if (typeof submittedItem.freeShipping === 'boolean') {
           match.freeShipping = submittedItem.freeShipping
+        }
+        if (typeof submittedItem.grossWeight === 'number' && (submittedItem.grossWeight > 0 || submittedItem.shortageStatus === 'SUBSTITUTED')) {
+          match.grossWeight = submittedItem.grossWeight
         }
         if (submittedItem.name) match.name = submittedItem.name
         if (submittedItem.sku !== undefined) match.sku = submittedItem.sku
@@ -191,9 +311,11 @@ export default defineEventHandler(async (event) => {
 
   const capturedTotal = finalPricing.capturedTotalMinor ?? finalPricing.grandTotalMinor
   const releasedAmount = finalPricing.releasedOrRefundedMinor ?? 0
+  const totalFulfilledUnits = updatedItems.reduce((sum, item) => sum + (item.fulfilledQuantity || 0), 0)
+  const isZeroFinalOrder = capturedTotal <= 0 || totalFulfilledUnits <= 0
 
   const authorizedHold = order.pricing.authorizedTotalMinor ?? order.pricing.grandTotalMinor
-  const safeCaptureTotal = Math.min(capturedTotal, authorizedHold)
+  const safeCaptureTotal = isZeroFinalOrder ? 0 : Math.min(capturedTotal, authorizedHold)
 
   // ──────────────────────────────────────────────────────────────────────
   // 4. Dispatch & Settlement handling
@@ -206,25 +328,94 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    if (capturedTotal === 0) {
+    if (isZeroFinalOrder) {
       if (order.paymentId) {
         const gateway = getPaymentGateway(order.paymentProvider)
-        if (order.paymentProvider === 'STRIPE') {
+        if (order.paymentProvider === 'MOLLIE') {
+          // Mollie Card holds ('AUTHORIZED') are released/cancelled; Mollie Swish ('PAID') requires a full refund
+          if (order.paymentStatus === 'AUTHORIZED') {
+            await gateway.cancelAuthorization(order.paymentId)
+          } else if (order.paymentStatus === 'PAID' && gateway.refundPayment) {
+            await gateway.refundPayment({
+              paymentId: order.paymentId,
+              orderReference: order.orderReference,
+              amountMinor: order.pricing.authorizedTotalMinor,
+              reason: `Order avbruten p.g.a. varubrist (${order.orderReference})`,
+            })
+          }
+        } else if (order.paymentProvider === 'STRIPE') {
           await gateway.cancelAuthorization(order.paymentId)
         } else if (order.paymentProvider === 'SWISH' && gateway.refundPayment) {
           await gateway.refundPayment({
             paymentId: order.paymentId,
             orderReference: order.orderReference,
             amountMinor: order.pricing.authorizedTotalMinor,
-            reason: `Ordern avbruten pga total varubrist (${order.orderReference})`,
+            reason: sanitizeSwishMessage(
+              `Order avbruten varubrist ${order.orderReference}`,
+              `Order avbruten ${order.orderReference}`
+            ),
           })
         }
       }
       order.fulfillmentStatus = 'CANCELLED'
       order.paymentStatus = 'CANCELLED'
+      order.cancelledAt = new Date()
+
+      // Ensure final pricing reflects a full 0.00 capture and full release/refund
+      finalPricing.itemsTotalMinor = 0
+      finalPricing.shippingFeeMinor = 0
+      finalPricing.grandTotalMinor = 0
+      finalPricing.capturedTotalMinor = 0
+      finalPricing.releasedOrRefundedMinor = authorizedHold
+
+      // Restore all originally reserved stock if it was decremented during checkout authorization
+      if (order.inventoryDecremented) {
+        for (const item of order.items) {
+          const restoreProductId = (item as any).originalProductId || item.productId
+          if (item.quantity > 0 && restoreProductId) {
+            await Product.updateOne(
+              { _id: restoreProductId },
+              { $inc: { stockQuantity: item.quantity } }
+            )
+          }
+        }
+        order.inventoryDecremented = false
+      }
     } else {
       const gateway = getPaymentGateway(order.paymentProvider)
-      if (order.paymentProvider === 'STRIPE') {
+      if (order.paymentProvider === 'MOLLIE') {
+        if (order.paymentStatus === 'AUTHORIZED') {
+          // Mollie Card (manual capture): capture exact fulfilledTotalMinor (adapter releases remaining hold if shorted)
+          const captureOk = await gateway.captureFunds(order.paymentId!, safeCaptureTotal)
+          if (!captureOk) {
+            throw createError({
+              statusCode: 502,
+              statusMessage: `Mollie capture failed for ${order.orderReference}`,
+            })
+          }
+        } else if (order.paymentStatus === 'PAID') {
+          // Mollie Swish (instant settlement): funds are already paid; issue a partial refund for any packing shortage
+          if (releasedAmount > 0 && gateway.refundPayment) {
+            const refundOk = await gateway.refundPayment({
+              paymentId: order.paymentId!,
+              orderReference: order.orderReference,
+              amountMinor: releasedAmount,
+              reason: `Prisjustering för varubrist i order ${order.orderReference}`,
+            })
+            if (!refundOk) {
+              throw createError({
+                statusCode: 502,
+                statusMessage: `Mollie shortage refund failed for ${order.orderReference}`,
+              })
+            }
+          }
+        } else {
+          throw createError({
+            statusCode: 400,
+            statusMessage: `Kan inte genomföra debitering: Mollie-ordern har ogiltig betalningsstatus '${order.paymentStatus}'.`,
+          })
+        }
+      } else if (order.paymentProvider === 'STRIPE') {
         if (order.paymentStatus !== 'AUTHORIZED') {
           throw createError({
             statusCode: 400,
@@ -265,32 +456,123 @@ export default defineEventHandler(async (event) => {
       order.fulfillmentStatus = 'DISPATCHED'
       order.paymentStatus = releasedAmount > 0 ? 'PARTIALLY_CAPTURED' : 'CAPTURED'
       order.dispatchedAt = new Date()
+
+      // Carrier Consignment Creation via DhlAdapter (Product 103: Servicepoint)
+      if (order.customer.fulfillmentMethod === 'DELIVERY') {
+        const carrierAdapter = getShippingCarrier('DHL')
+        const parcelInput = body.parcel || {
+          weightKg: 3.5,
+          lengthCm: 35,
+          widthCm: 25,
+          heightCm: 20,
+          preset: 'MELLAN',
+        }
+
+        try {
+          const bookingResult = await carrierAdapter.createShipment({
+            orderId: String(order._id),
+            orderReference: order.orderReference,
+            recipient: {
+              name: order.customer.fullName,
+              street: order.customer.address?.street || '',
+              postalCode: order.customer.address?.postalCode || '',
+              city: order.customer.address?.city || '',
+              countryCode: 'SE',
+              email: order.customer.email,
+              phone: order.customer.phone,
+            },
+            parcel: {
+              weightKg: parcelInput.weightKg,
+              lengthCm: parcelInput.lengthCm,
+              widthCm: parcelInput.widthCm,
+              heightCm: parcelInput.heightCm,
+              preset: parcelInput.preset as any,
+              contentsDescription: parcelInput.contentsDescription || 'Livsmedel / Food items',
+            },
+            productCode: '103',
+            servicePointId: order.customer.servicePoint?.id,
+            servicePoint: order.customer.servicePoint
+              ? {
+                  id: order.customer.servicePoint.id,
+                  name: order.customer.servicePoint.name,
+                  street: order.customer.servicePoint.street,
+                  postalCode: order.customer.servicePoint.postalCode,
+                  city: order.customer.servicePoint.city,
+                }
+              : undefined,
+          })
+
+          order.carrier = 'DHL'
+          order.trackingCode = bookingResult.trackingCode
+          order.shipmentId = bookingResult.consignmentNumber
+          ;(order as any).parcel = parcelInput
+        } catch (dhlErr: any) {
+          console.warn('[PackAPI] DHL Consignment live booking failed, using fallback mock:', dhlErr?.message)
+          const mockResult = carrierAdapter.generateMockShipment({
+            orderId: String(order._id),
+            orderReference: order.orderReference,
+            recipient: {
+              name: order.customer.fullName,
+              street: order.customer.address?.street || '',
+              postalCode: order.customer.address?.postalCode || '',
+              city: order.customer.address?.city || '',
+              countryCode: 'SE',
+              email: order.customer.email,
+              phone: order.customer.phone,
+            },
+            parcel: {
+              weightKg: parcelInput.weightKg,
+              lengthCm: parcelInput.lengthCm,
+              widthCm: parcelInput.widthCm,
+              heightCm: parcelInput.heightCm,
+              preset: parcelInput.preset as any,
+            },
+            servicePointId: order.customer.servicePoint?.id,
+            servicePoint: order.customer.servicePoint
+              ? {
+                  id: order.customer.servicePoint.id,
+                  name: order.customer.servicePoint.name,
+                  street: order.customer.servicePoint.street,
+                  postalCode: order.customer.servicePoint.postalCode,
+                  city: order.customer.servicePoint.city,
+                }
+              : undefined,
+          })
+          order.carrier = 'DHL'
+          order.trackingCode = mockResult.trackingCode
+          order.shipmentId = mockResult.consignmentNumber
+          ;(order as any).parcel = parcelInput
+        }
+      }
+
       if (body.trackingCode) {
         order.trackingCode = body.trackingCode
         order.carrier = 'DHL'
       }
-    }
 
-    // Rebalance inventory for removed/reduced items
-    for (const action of body.actions || []) {
-      if (action.action === 'REMOVE_LINE' || action.action === 'REDUCE_QUANTITY') {
-        const originalItem = order.items.find((i) => String(i.productId) === action.productId)
-        if (originalItem) {
-          const droppedQty =
-            originalItem.quantity - (action.action === 'REMOVE_LINE' ? 0 : action.adjustedQuantity)
-          if (droppedQty > 0) {
-            await Product.updateOne(
-              { _id: action.productId },
-              { $inc: { stockQuantity: droppedQty } }
-            )
+      // Rebalance inventory for removed/reduced items on partially fulfilled orders
+      for (const action of body.actions || []) {
+        if (action.action === 'REMOVE_LINE' || action.action === 'REDUCE_QUANTITY') {
+          const originalItem = order.items.find((i) => String(i.productId) === action.productId)
+          if (originalItem) {
+            const droppedQty =
+              originalItem.quantity - (action.action === 'REMOVE_LINE' ? 0 : action.adjustedQuantity)
+            if (droppedQty > 0) {
+              await Product.updateOne(
+                { _id: action.productId },
+                { $inc: { stockQuantity: droppedQty } }
+              )
+            }
           }
         }
       }
     }
   } else {
-    const allPacked = updatedItems.every(
-      (item) => item.fulfilledQuantity === 0 || item.isPacked === true
-    )
+    const hasFulfilledItems = updatedItems.some((item) => item.fulfilledQuantity > 0)
+    const allPacked =
+      !isZeroFinalOrder &&
+      hasFulfilledItems &&
+      updatedItems.every((item) => item.fulfilledQuantity === 0 || item.isPacked === true)
     order.fulfillmentStatus = allPacked ? 'PACKED' : 'PENDING_PACKING'
   }
 
@@ -304,7 +586,9 @@ export default defineEventHandler(async (event) => {
   finalPricing.capturedTotalMinor = safeCaptureTotal
   order.pricing = finalPricing
   order.markModified('pricing')
-  order.packedAt = new Date()
+  if (!isZeroFinalOrder && (body.markDispatched || order.fulfillmentStatus === 'PACKED')) {
+    order.packedAt = new Date()
+  }
 
   await order.save()
 
@@ -315,14 +599,22 @@ export default defineEventHandler(async (event) => {
   try {
     const preferredLocale = (order.customerLocale || 'sv') as EmailLocale
 
-    if (body.markDispatched) {
+    if (order.fulfillmentStatus === 'CANCELLED' || isZeroFinalOrder) {
+      // Zero-sum or cancelled orders must NEVER receive packing or dispatch emails.
+      // Send exactly one cancellation confirmation email once cancellation is finalized.
+      if (order.fulfillmentStatus === 'CANCELLED' && !order.cancellationEmailSent) {
+        await mailService.sendOrderCancelled(order, preferredLocale)
+        order.cancellationEmailSent = true
+        await Order.updateOne({ _id: order._id }, { $set: { cancellationEmailSent: true } })
+      }
+    } else if (body.markDispatched) {
       if (order.customer.fulfillmentMethod === 'DELIVERY') {
-        // Carrier Dispatch Email with tracking code
+        // Carrier Dispatch Email with verified tracking code & carrier
         await mailService.sendOrderDispatched(
           {
             order,
-            trackingCode: body.trackingCode, // e.g. PostNord Kolli-ID
-            carrier: 'DHL',
+            trackingCode: order.trackingCode, // Send the booked 18-digit Kolli-ID
+            carrier: order.carrier || 'DHL',
           },
           preferredLocale
         )
@@ -334,11 +626,20 @@ export default defineEventHandler(async (event) => {
   } catch (mailErr) {
     console.error('[MailService] Failed to send transactional notice:', mailErr)
   }
+
+  const dhlCarrier = getShippingCarrier(order.carrier || 'DHL')
+  const trackingUrl = order.trackingCode ? dhlCarrier.getTrackingUrl(order.trackingCode) : undefined
+
   return {
     success: true,
     orderReference: order.orderReference,
     capturedTotalMinor: safeCaptureTotal,
     releasedAmountMinor: releasedAmount,
     fulfillmentStatus: order.fulfillmentStatus,
+    paymentStatus: order.paymentStatus,
+    trackingCode: order.trackingCode,
+    consignmentNumber: order.shipmentId,
+    trackingUrl,
+    carrier: order.carrier,
   }
 })

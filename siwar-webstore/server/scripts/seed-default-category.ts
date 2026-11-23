@@ -20,10 +20,10 @@ import { ensureDefaultCategory } from '../utils/defaultCategory'
 config()
 
 async function seedDefaultCategoryCli(): Promise<void> {
-  const dbUri = process.env.DATABASE_URL || process.env.MONGODB_URI
+  const dbUri = process.env.DATABASE_URL || process.env.MONGODB_URI || process.env.MONGO_URL || process.env.MONGODB_URL
 
   if (!dbUri) {
-    console.error('Error: DATABASE_URL or MONGODB_URI is not set in your .env file.')
+    console.error('Error: DATABASE_URL, MONGODB_URI, or MONGO_URL is not set in your environment.')
     process.exit(1)
   }
 

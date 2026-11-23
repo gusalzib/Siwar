@@ -657,36 +657,47 @@ async function moveBanner(index: number, direction: 'up' | 'down') {
             </div>
 
             <!-- Slideshow Timer Control (Right next to search field) -->
-            <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
-              <div class="inline-flex items-center gap-2 px-3 h-10 rounded-xl border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content text-xs shadow-xs">
-                <Icon name="lucide:timer" class="size-4 text-brand-500 shrink-0" />
-                <label for="carousel-interval-input" class="font-bold text-xs whitespace-nowrap text-base-content/80">
-                  {{ t('admin.banners.slideshowTimer', 'Bildväxling:') }}
-                </label>
-                <input
-                  id="carousel-interval-input"
-                  v-model.number="carouselIntervalSeconds"
-                  type="number"
-                  min="2"
-                  max="30"
-                  step="1"
-                  class="w-14 h-7 text-center font-mono font-bold bg-slate-100 dark:bg-zinc-700 rounded-lg border border-slate-200 dark:border-zinc-600 text-xs focus:outline-brand-500"
-                  :title="t('admin.banners.timerTooltip', 'Tid i sekunder innan nästa bild visas (2–30 sek)')"
-                  @change="handleIntervalChange"
-                  @keydown.enter.prevent="handleIntervalChange"
-                />
-                <span class="text-[11px] font-semibold text-base-content/60">s</span>
-                <button
-                  type="button"
-                  class="btn btn-xs btn-ghost text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/40 rounded-lg ml-0.5 font-bold"
-                  :disabled="isSavingInterval"
-                  :title="t('common.save', 'Spara')"
-                  @click="handleIntervalChange"
-                >
-                  <span v-if="isSavingInterval" class="loading loading-spinner loading-xs" />
-                  <Icon v-else-if="intervalSavedFeedback" name="lucide:check" class="size-3.5 text-success" />
-                  <span v-else>{{ t('admin.banners.saveTimer', 'Spara') }}</span>
-                </button>
+            <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
+              <!-- Slideshow Interval Pill -->
+              <div class="flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2 px-2.5 sm:px-3 h-10 rounded-xl border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-base-content text-xs shadow-xs w-full sm:w-auto max-w-full">
+                
+                <!-- Left: Icon & Label -->
+                <div class="flex items-center gap-1.5 shrink-0 min-w-0">
+                  <Icon name="lucide:timer" class="size-4 text-brand-500 shrink-0" />
+                  <label for="carousel-interval-input" class="font-bold text-xs whitespace-nowrap text-base-content/80">
+                    {{ t('admin.banners.slideshowTimer', 'Bildväxling:') }}
+                  </label>
+                </div>
+
+                <!-- Right: Input, Unit & Save Action -->
+                <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                  <input
+                    id="carousel-interval-input"
+                    v-model.number="carouselIntervalSeconds"
+                    type="number"
+                    min="2"
+                    max="30"
+                    step="1"
+                    class="w-12 sm:w-14 h-7 shrink-0 px-1 text-center font-mono font-bold bg-slate-100 dark:bg-zinc-700 rounded-lg border border-slate-200 dark:border-zinc-600 text-xs focus:outline-brand-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    :title="t('admin.banners.timerTooltip', 'Tid i sekunder innan nästa bild visas (2–30 sek)')"
+                    @change="handleIntervalChange"
+                    @keydown.enter.prevent="handleIntervalChange"
+                  />
+                  <span class="text-[11px] font-semibold text-base-content/60 select-none">s</span>
+
+                  <button
+                    type="button"
+                    class="btn btn-xs btn-ghost text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/40 rounded-lg font-bold px-2"
+                    :disabled="isSavingInterval"
+                    :title="t('common.save', 'Spara')"
+                    @click="handleIntervalChange"
+                  >
+                    <span v-if="isSavingInterval" class="loading loading-spinner loading-xs" />
+                    <Icon v-else-if="intervalSavedFeedback" name="lucide:check" class="size-3.5 text-success" />
+                    <span v-else>{{ t('admin.banners.saveTimer', 'Spara') }}</span>
+                  </button>
+                </div>
+
               </div>
             </div>
           </div>
@@ -732,147 +743,15 @@ async function moveBanner(index: number, direction: 'up' | 'down') {
       </div>
 
       <template v-else>
-        <!-- Desktop Table View (>= lg) -->
-        <div class="hidden lg:block overflow-x-auto">
-          <table class="table w-full">
-            <thead>
-              <tr class="text-xs font-bold uppercase tracking-wider text-base-content/70 bg-slate-50 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-700/80">
-                <th class="py-3 px-4 w-20 text-center">{{ t('admin.banners.table.order', 'Ordning') }}</th>
-                <th class="py-3 px-4 w-32">{{ t('admin.banners.table.preview', 'Bild') }}</th>
-                <th class="py-3 px-4">{{ t('admin.banners.table.title', 'Titel & Innehåll') }}</th>
-                <th class="py-3 px-4">{{ t('admin.banners.table.link', 'Länk') }}</th>
-                <th class="py-3 px-4">{{ t('admin.banners.table.status', 'Status') }}</th>
-                <th class="py-3 px-4 text-right rtl:text-left">{{ t('admin.banners.table.actions', 'Åtgärder') }}</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
-              <tr
-                v-for="(banner, idx) in filteredBanners"
-                :key="banner.id || banner._id || idx"
-                class="hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-colors"
-              >
-                <!-- Order controls -->
-                <td class="py-3.5 px-4 text-center">
-                  <div class="flex items-center justify-center gap-1">
-                    <span class="font-mono text-xs font-bold w-5">{{ banner.sortOrder ?? idx }}</span>
-                    <div class="flex flex-col">
-                      <button
-                        type="button"
-                        :disabled="idx === 0"
-                        class="btn btn-ghost btn-xs btn-square h-4 min-h-0 disabled:opacity-30"
-                        @click="moveBanner(idx, 'up')"
-                      >
-                        <Icon name="lucide:chevron-up" class="size-3" />
-                      </button>
-                      <button
-                        type="button"
-                        :disabled="idx === filteredBanners.length - 1"
-                        class="btn btn-ghost btn-xs btn-square h-4 min-h-0 disabled:opacity-30"
-                        @click="moveBanner(idx, 'down')"
-                      >
-                        <Icon name="lucide:chevron-down" class="size-3" />
-                      </button>
-                    </div>
-                  </div>
-                </td>
-
-                <!-- Thumbnail -->
-                <td class="py-3.5 px-4">
-                  <div class="w-24 h-14 rounded-xl overflow-hidden bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 shadow-xs relative">
-                    <img
-                      :src="banner.imageUrl"
-                      :alt="getLocalizedText(banner.title)"
-                      class="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                </td>
-
-                <!-- Title & Subtitle across languages -->
-                <td class="py-3.5 px-4">
-                  <div class="space-y-1">
-                    <div class="flex items-center gap-2">
-                      <span v-if="getLocalizedText(banner.badge)" class="badge badge-xs badge-primary font-bold">
-                        {{ getLocalizedText(banner.badge) }}
-                      </span>
-                      <span class="font-bold text-sm text-base-content">
-                        {{ getLocalizedText(banner.title) }}
-                      </span>
-                    </div>
-                    <p class="text-xs text-base-content/70 line-clamp-1">
-                      {{ getLocalizedText(banner.subtitle) || '—' }}
-                    </p>
-                    <div class="flex items-center gap-1.5 text-[10px] text-base-content/60 font-medium">
-                      <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800">
-                        SV: {{ banner.title?.sv || '—' }}
-                      </span>
-                      <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800">
-                        EN: {{ banner.title?.en || '—' }}
-                      </span>
-                      <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800">
-                        AR: {{ banner.title?.ar || '—' }}
-                      </span>
-                    </div>
-                  </div>
-                </td>
-
-                <!-- Destination Link -->
-                <td class="py-3.5 px-4">
-                  <div class="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800/80 px-2.5 py-1 rounded-lg text-xs font-mono text-base-content/80">
-                    <Icon name="lucide:link" class="size-3 opacity-60" />
-                    <span>{{ banner.linkUrl || '/catalog' }}</span>
-                  </div>
-                </td>
-
-                <!-- Status Badge -->
-                <td class="py-3.5 px-4">
-                  <div class="flex flex-col gap-1 items-start">
-                    <span
-                      class="badge badge-sm gap-1 text-[11px]"
-                      :class="getBannerStatus(banner).class"
-                    >
-                      <Icon :name="getBannerStatus(banner).icon" class="size-3" />
-                      {{ getBannerStatus(banner).label }}
-                    </span>
-                    <span v-if="banner.startsAt || banner.expiresAt" class="text-[10px] text-base-content/60 font-mono">
-                      {{ formatDisplayDate(banner.startsAt) }} → {{ formatDisplayDate(banner.expiresAt) }}
-                    </span>
-                  </div>
-                </td>
-
-                <!-- Actions -->
-                <td class="py-3.5 px-4 text-right rtl:text-left space-x-1 rtl:space-x-reverse">
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-ghost text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/40 rounded-lg"
-                    :title="t('admin.banners.edit', 'Redigera')"
-                    @click="openModal(banner)"
-                  >
-                    <Icon name="lucide:pencil" class="size-4" />
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-ghost text-error hover:bg-error/10 rounded-lg"
-                    :title="t('admin.banners.delete', 'Ta bort')"
-                    @click="openDeleteModal(banner)"
-                  >
-                    <Icon name="lucide:trash-2" class="size-4" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Mobile & Tablet Card View (< lg): Decluttered responsive layout -->
-        <div class="block lg:hidden divide-y divide-slate-100 dark:divide-zinc-800">
+        <!-- Banner Cards View (Uniform < 640px visual display across all screen sizes) -->
+        <div class="divide-y divide-slate-100 dark:divide-zinc-800">
           <div
             v-for="(banner, idx) in filteredBanners"
             :key="banner.id || banner._id || idx"
-            class="p-4 sm:p-5 flex flex-col sm:flex-row gap-4 items-start transition-colors hover:bg-slate-50/50 dark:hover:bg-zinc-800/20"
+            class="p-4 sm:p-5 flex flex-col gap-4 items-start transition-colors hover:bg-slate-50/50 dark:hover:bg-zinc-800/20"
           >
             <!-- Banner Graphic Preview with Status Badge -->
-            <div class="w-full sm:w-56 shrink-0 aspect-[21/9] sm:aspect-[16/9] rounded-xl overflow-hidden bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 relative shadow-xs">
+            <div class="w-full aspect-[21/9] rounded-xl overflow-hidden bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 relative shadow-xs">
               <img
                 :src="banner.imageUrl"
                 :alt="getLocalizedText(banner.title)"
@@ -881,7 +760,7 @@ async function moveBanner(index: number, direction: 'up' | 'down') {
               />
               <div class="absolute top-2 right-2 rtl:right-auto rtl:left-2">
                 <span
-                  class="badge badge-sm gap-1 text-[11px] font-semibold backdrop-blur-md shadow-xs"
+                  class="badge badge-sm gap-1 text-[11px] font-semibold backdrop-blur-md shadow-xs p-3"
                   :class="getBannerStatus(banner).class"
                 >
                   <Icon :name="getBannerStatus(banner).icon" class="size-3" />
@@ -894,7 +773,7 @@ async function moveBanner(index: number, direction: 'up' | 'down') {
             <div class="flex-1 w-full min-w-0 flex flex-col justify-between gap-3">
               <div>
                 <div class="flex flex-wrap items-center gap-1.5">
-                  <span v-if="getLocalizedText(banner.badge)" class="badge badge-xs badge-primary font-bold">
+                  <span v-if="getLocalizedText(banner.badge)" class="badge badge-xs badge-primary font-bold p-3 py-4">
                     {{ getLocalizedText(banner.badge) }}
                   </span>
                   <h3 class="font-bold text-base text-base-content truncate">

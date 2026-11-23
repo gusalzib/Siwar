@@ -14,7 +14,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   currency: 'SEK',
-  paymentProvider: 'STRIPE',
+  paymentProvider: 'MOLLIE',
 })
 
 const { t } = useI18n()
@@ -26,7 +26,16 @@ const effectiveAuthorizedTotal = computed(() => {
   return 0
 })
 const effectiveCurrency = computed(() => props.order?.currency || props.currency || 'SEK')
-const effectivePaymentProvider = computed(() => props.order?.paymentProvider || props.paymentProvider || 'STRIPE')
+const effectivePaymentProvider = computed(() => props.order?.paymentProvider || props.paymentProvider || 'MOLLIE')
+
+const settlementNote = computed(() => {
+  // Card authorization hold (Mollie Card hold or legacy Stripe): remaining authorization hold is released without charge
+  if (props.order?.paymentStatus === 'AUTHORIZED' || effectivePaymentProvider.value === 'STRIPE') {
+    return t('admin.orders.pack.summary.stripeNote')
+  }
+  // Instant settlement (Mollie Swish or legacy Swish): adjustments are refunded directly to the customer
+  return t('admin.orders.pack.summary.swishNote')
+})
 
 const moms6Amount = computed(() => {
   if (typeof effectivePricing.value?.moms6Amount === 'number') return effectivePricing.value.moms6Amount
@@ -125,11 +134,7 @@ function formatMoney(amountMinor?: number, currency = effectiveCurrency.value) {
             {{ formatMoney(effectivePricing?.releaseAmount ?? 0, effectiveCurrency) }}
           </div>
           <p class="text-[11px] text-base-content/80 leading-relaxed font-medium">
-            {{
-              effectivePaymentProvider === 'STRIPE'
-                ? t('admin.orders.pack.summary.stripeNote')
-                : t('admin.orders.pack.summary.swishNote')
-            }}
+            {{ settlementNote }}
           </p>
         </div>
 

@@ -88,6 +88,15 @@ useSeoMeta({
     
     <!-- 1. Hero Section -->
     <header class="text-center space-y-4 max-w-3xl mx-auto pt-2 sm:pt-4">
+      <!-- Brand Medallion Logo (sized so SIWAR / Arabic inscription stays clearly legible) -->
+      <div class="flex justify-center pb-1">
+        <img
+          src="/favicon_io%20siwar%20logo/android-chrome-512x512.png"
+          :alt="t('storeName', 'Siwar')"
+          class="size-36 sm:size-44 md:size-48 rounded-full object-cover shrink-0 shadow-md ring-2 ring-gold-400/60 dark:ring-gold-400/40 bg-base-100 dark:bg-zinc-900"
+        />
+      </div>
+
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-500/10 text-brand-700 dark:text-brand-300 border border-brand-500/20 text-xs font-bold tracking-wide uppercase">
         <Icon name="lucide:sparkles" class="size-4 text-brand-500" />
         <span>{{ t('aboutPage.badge', 'Vår historia & arv') }}</span>
@@ -287,28 +296,30 @@ useSeoMeta({
 
     <!-- 5. Physical Visit Callout Card -->
     <section class="card bg-base-100 dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-sm">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-        <div class="flex items-start gap-4">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div class="flex items-start gap-4 min-w-0 lg:flex-1">
           <div class="size-12 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
             <Icon name="lucide:store" class="size-6" />
           </div>
-          <div class="space-y-1">
+          <div class="space-y-1 min-w-0">
             <h3 class="text-xl font-bold text-base-content tracking-tight">
               {{ t('aboutPage.visit.title', 'Upplev butiken på plats i Halmstad') }}
             </h3>
             <p class="text-xs sm:text-sm text-base-content/70 max-w-xl leading-relaxed">
-              {{ t('aboutPage.visit.desc', 'Du hittar oss på Åttingsstigen 41 i Halmstad. Kom in och dofta på kryddorna, få personliga recepttips eller hämta dina onlinebeställningar kostnadsfritt.') }}
+              {{ t('aboutPage.visit.desc', 'Kom in och dofta på kryddorna, få personliga recepttips eller hämta dina onlinebeställningar kostnadsfritt i vår fysiska butik.') }}
             </p>
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 shrink-0">
+        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto min-w-0 max-w-full">
           <NuxtLink
             :to="localePath('/oppettider')"
-            class="btn bg-brand-500 hover:bg-brand-600 !text-white font-bold border-none rounded-xl gap-2 shadow-xs"
+            class="btn bg-brand-500 hover:bg-brand-600 !text-white font-bold border-none rounded-xl gap-2 shadow-xs w-full sm:w-auto max-w-full min-w-0 shrink h-auto min-h-11 py-2 px-4 whitespace-normal text-center"
           >
-            <Icon name="lucide:clock" class="size-4" />
-            <span>{{ t('aboutPage.visit.viewAllHours', 'Se alla öppettider & hitta hit') }}</span>
+            <Icon name="lucide:clock" class="size-4 shrink-0" />
+            <span class="min-w-0 break-words leading-snug">
+              {{ t('aboutPage.visit.viewAllHours', 'Se alla öppettider & hitta hit') }}
+            </span>
           </NuxtLink>
         </div>
       </div>

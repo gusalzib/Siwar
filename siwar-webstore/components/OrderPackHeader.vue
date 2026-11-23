@@ -1,22 +1,31 @@
 <!-- components/admin/orders/pack/OrderPackHeader.vue -->
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 interface Props {
   order: any
   isSubmitting: boolean
   totalFulfilledUnits: number
+  finalTotalMinor?: number
   canDispatch: boolean
   isUnpackable?: boolean
 }
 
 const props = defineProps<Props>()
 
+const isZeroFinalOrder = computed(() => {
+  if (props.totalFulfilledUnits <= 0) return true
+  if (typeof props.finalTotalMinor === 'number' && props.finalTotalMinor <= 0) return true
+  return false
+})
+
 const emit = defineEmits<{
   (e: 'cancel'): void
   (e: 'packAll'): void
   (e: 'save'): void
   (e: 'dispatch'): void
+  (e: 'openHandover'): void
 }>()
 
 const { t } = useI18n()
@@ -69,7 +78,7 @@ function formatDate(dateStr?: string | Date) {
             </span>
           </div>
         </div>
-        <p class="text-xs text-base-content/80 mt-1 font-mono font-medium truncate">
+        <p class="text-xs text-base-content/80 mt-1 font-mono font-medium">
           <ClientOnly>
             <span>{{ t('admin.orders.pack.summary.createdAt', 'Skapad:') }} {{ formatDate(order.createdAt) }}</span>
             <template #fallback>
@@ -82,6 +91,28 @@ function formatDate(dateStr?: string | Date) {
 
     <!-- Header Action Buttons -->
     <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 justify-start xl:justify-end pt-1 xl:pt-0">
+      <!-- DHL Mobile Handover Card (Accessible at all times if order is dispatched / has tracking) -->
+      <button
+        v-if="order.trackingCode"
+        type="button"
+        class="btn btn-sm bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold border-none px-3 shadow-sm transition-transform active:scale-95 gap-1.5"
+        @click="emit('openHandover')"
+      >
+        <Icon name="lucide:barcode" class="size-4 shrink-0" />
+        <span>{{ t('admin.orders.pack.dhlHandover.openHandover', 'DHL Inlämningskort') }}</span>
+      </button>
+
+      <!-- If order is already DISPATCHED without trackingCode and method is DELIVERY, allow booking DHL consignment -->
+      <button
+        v-else-if="order.fulfillmentStatus === 'DISPATCHED' && !order.trackingCode && order.customer?.fulfillmentMethod === 'DELIVERY'"
+        type="button"
+        class="btn btn-sm bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold border-none px-3 shadow-sm transition-transform active:scale-95 gap-1.5"
+        @click="emit('openHandover')"
+      >
+        <Icon name="lucide:barcode" class="size-4 shrink-0" />
+        <span>{{ t('admin.orders.pack.dhlHandover.createShipment', 'Boka DHL-sändning & Inlämningskort') }}</span>
+      </button>
+
       <!-- Manual Cancel Action -->
       <button
         v-if="order.fulfillmentStatus !== 'DISPATCHED' && order.fulfillmentStatus !== 'CANCELLED' && order.paymentStatus !== 'CANCELLED'"
@@ -91,32 +122,32 @@ function formatDate(dateStr?: string | Date) {
         @click="emit('cancel')"
       >
         <Icon name="lucide:ban" class="size-4 shrink-0" />
-        <span class="truncate">{{ t('admin.orders.pack.actions.cancelOrder', 'Avbryt order') }}</span>
+        <span>{{ t('admin.orders.pack.actions.cancelOrder', 'Avbryt order') }}</span>
       </button>
 
       <!-- Mark All Packed -->
       <button
         type="button"
         class="btn btn-sm bg-transparent hover:bg-base-200 text-base-content px-3 border-2 border-brand-500 hover:border-brand-600 shadow-sm transition-colors active:scale-95 max-w-full disabled:opacity-40"
-        :disabled="order.fulfillmentStatus === 'DISPATCHED' || order.fulfillmentStatus === 'CANCELLED' || props.isUnpackable || isSubmitting"
+        :disabled="order.fulfillmentStatus === 'DISPATCHED' || order.fulfillmentStatus === 'CANCELLED' || props.isUnpackable || isSubmitting || isZeroFinalOrder"
         @click="emit('packAll')"
       >
         <Icon name="lucide:check-check" class="size-4 shrink-0" />
-        <span class="truncate">{{ t('admin.orders.pack.actions.markAllPacked', 'Markera alla som packade') }}</span>
+        <span>{{ t('admin.orders.pack.actions.markAllPacked', 'Markera alla som packade') }}</span>
       </button>
 
       <button
         type="button"
         class="btn btn-sm bg-transparent hover:bg-base-200 text-base-content px-3 border-2 border-brand-500 hover:border-brand-300 shadow-sm transition-colors max-w-full disabled:opacity-40"
-        :disabled="isSubmitting || order.fulfillmentStatus === 'DISPATCHED' || order.fulfillmentStatus === 'CANCELLED' || props.isUnpackable"
+        :disabled="isSubmitting || order.fulfillmentStatus === 'DISPATCHED' || order.fulfillmentStatus === 'CANCELLED' || props.isUnpackable || isZeroFinalOrder"
         @click="emit('save')"
       >
         <Icon name="lucide:save" class="size-4 shrink-0" />
-        <span class="truncate">{{ t('admin.orders.pack.actions.savePacked', 'Spara packstatus') }}</span>
+        <span>{{ t('admin.orders.pack.actions.savePacked', 'Spara packstatus') }}</span>
       </button>
 
       <button
-        v-if="totalFulfilledUnits === 0"
+        v-if="isZeroFinalOrder"
         type="button"
         class="btn btn-sm bg-error hover:bg-error/90 text-white border-transparent px-3 shadow-sm transition-transform active:scale-95 disabled:opacity-40 max-w-full"
         :disabled="isSubmitting || order.fulfillmentStatus === 'CANCELLED' || props.isUnpackable"
@@ -124,7 +155,7 @@ function formatDate(dateStr?: string | Date) {
       >
         <span v-if="isSubmitting" class="loading loading-spinner loading-xs shrink-0"></span>
         <Icon v-else name="lucide:x-circle" class="size-4 shrink-0" />
-        <span class="truncate">{{ t('admin.orders.pack.actions.cancelEmptyOrder', 'Avbryt order (Hela ordern saknas)') }}</span>
+        <span>{{ t('admin.orders.pack.actions.cancelEmptyOrder', 'Avbryt order (Hela ordern saknas)') }}</span>
       </button>
       <button
         v-else
@@ -135,7 +166,7 @@ function formatDate(dateStr?: string | Date) {
       >
         <span v-if="isSubmitting" class="loading loading-spinner loading-xs shrink-0"></span>
         <Icon v-else name="lucide:truck" class="size-4 shrink-0" />
-        <span class="truncate">{{ t('admin.orders.pack.actions.dispatch', 'Slutför och Skicka') }}</span>
+        <span>{{ t('admin.orders.pack.actions.dispatch', 'Slutför och Skicka') }}</span>
       </button>
     </div>
   </div>

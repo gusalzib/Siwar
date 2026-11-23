@@ -2,7 +2,7 @@
 import { randomUUID } from 'node:crypto'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
-import { getR2Client } from '~/server/utils/r2'
+import { getR2Client, getR2Config } from '~/server/utils/r2'
 
 /**
  * Route: POST /api/admin/upload
@@ -21,8 +21,6 @@ import { getR2Client } from '~/server/utils/r2'
  * }
  */
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-
   // 1. Read multipart form data from the incoming HTTP request
   const formData = await readMultipartFormData(event)
   if (!formData || formData.length === 0) {
@@ -77,6 +75,7 @@ export default defineEventHandler(async (event) => {
       .webp({ quality: 82 })
       .toBuffer()
   } catch (err: any) {
+    console.error('Sharp image processing error:', err)
     throw createError({
       statusCode: 422,
       statusMessage: `Image optimization failed: ${err.message || 'Corrupted file'}`,
@@ -87,12 +86,32 @@ export default defineEventHandler(async (event) => {
   // Format: products/<timestamp>-<uuid>.webp
   const objectKey = `products/${Date.now()}-${randomUUID()}.webp`
 
-  // 6. Upload directly to Cloudflare R2
-  const r2 = getR2Client()
+  // 6. Resolve R2 credentials and bucket config
+  const r2Config = getR2Config()
+  if (!r2Config.bucketName) {
+    console.error('❌ Cloudflare R2 error: R2_BUCKET_NAME is missing.')
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Cloudflare R2 configuration error: Missing R2_BUCKET_NAME environment variable on Railway.',
+    })
+  }
+
+  let r2
+  try {
+    r2 = getR2Client()
+  } catch (err: any) {
+    console.error('❌ Cloudflare R2 Client error:', err)
+    throw createError({
+      statusCode: 500,
+      statusMessage: err.statusMessage || err.message || 'Failed to initialize Cloudflare R2 client',
+    })
+  }
+
+  // 7. Upload directly to Cloudflare R2
   try {
     await r2.send(
       new PutObjectCommand({
-        Bucket: config.r2BucketName,
+        Bucket: r2Config.bucketName,
         Key: objectKey,
         Body: processedBuffer,
         ContentType: 'image/webp',
@@ -101,14 +120,21 @@ export default defineEventHandler(async (event) => {
       })
     )
   } catch (err: any) {
+    console.error('❌ Cloudflare R2 PutObjectCommand error:', err)
     throw createError({
       statusCode: 502,
-      statusMessage: `Cloudflare R2 storage error: ${err.message || 'Upload failed'}`,
+      statusMessage: `Cloudflare R2 storage error: ${err.message || 'Upload failed'} (${err.name || 'PutObjectError'})`,
     })
   }
 
-  // 7. Assemble public URL for client consumption
-  const publicBaseUrl = ((config.public.r2PublicUrl as string) || '').replace(/\/$/, '')
+  // 8. Assemble public URL for client consumption
+  // Uses R2_PUBLIC_URL if defined (e.g. https://pub-xxx.r2.dev or custom CDN domain).
+  let publicBaseUrl = r2Config.publicUrl
+  if (!publicBaseUrl) {
+    console.warn('⚠️ R2_PUBLIC_URL is not set. Falling back to default R2 bucket URL.')
+    publicBaseUrl = `https://${r2Config.bucketName}.${r2Config.accountId}.r2.cloudflarestorage.com`
+  }
+
   const publicUrl = `${publicBaseUrl}/${objectKey}`
 
   setResponseStatus(event, 201)

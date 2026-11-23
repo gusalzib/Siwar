@@ -3,6 +3,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { LineItemState, ShortageActionDraft } from '~/composables/useOrderPacking'
+import { resolveProductGrossWeightGrams } from '~/utils/shipping'
 
 interface Props {
   isOpen: boolean
@@ -157,6 +158,7 @@ function applyShortageAction() {
         priceMinor: subPriceMinor,
         momsRate: sub.momsRate || 12,
         freeShipping: Boolean(sub.freeShipping),
+        grossWeight: resolveProductGrossWeightGrams(sub),
         imageUrl: sub.images?.find((img: any) => img.isPrimary)?.url || sub.images?.[0]?.url || '',
       },
       note: modalNote.value,

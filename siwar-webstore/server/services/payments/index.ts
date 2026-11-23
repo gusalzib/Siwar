@@ -2,6 +2,7 @@
 import type { PaymentGatewayAdapter, PaymentProviderType } from '../../../types/payment'
 import { StripeGatewayAdapter } from './stripe.adapter'
 import { SwishGatewayAdapter } from './swish.adapter'
+import { MollieGatewayAdapter } from './mollie.adapter'
 
 /**
  * In-memory adapter cache (Registry / Multiton Pattern).
@@ -28,6 +29,8 @@ export function getPaymentGateway(provider: PaymentProviderType): PaymentGateway
       registry.set('STRIPE', new StripeGatewayAdapter())
     } else if (provider === 'SWISH') {
       registry.set('SWISH', new SwishGatewayAdapter())
+    } else if (provider === 'MOLLIE') {
+      registry.set('MOLLIE', new MollieGatewayAdapter())
     } else {
       throw new Error(`Unsupported payment provider: ${provider}`)
     }

@@ -297,7 +297,7 @@ function handleAddToCart(product: any) {
             <!-- View Details Button -->
             <NuxtLink
               :to="localePath(`/products/${product.id}`)"
-              class="btn btn-sm h-auto min-h-8 sm:min-h-9 py-1.5 px-2 leading-tight text-center btn-outline border-base-content/20 text-base-content hover:bg-base-200 hover:border-base-content/30 gap-1 font-semibold transition-all rounded-xl text-[11px] sm:text-xs flex items-center justify-center"
+              class="btn btn-sm h-auto min-h-8 sm:min-h-9 py-1.5 px-2 leading-tight text-center bg-transparent border-2 border-base-content/20 text-base-content hover:bg-base-200 hover:border-base-content/40 hover:text-base-content gap-1 font-semibold transition-all rounded-xl text-[11px] sm:text-xs flex items-center justify-center"
             >
               <Icon name="lucide:eye" class="size-3.5 shrink-0" />
               <span>{{ t('catalog.viewProduct', 'Visa') }}</span>

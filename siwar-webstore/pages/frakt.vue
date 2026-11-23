@@ -26,7 +26,7 @@ const contactPhone = computed(() => settings.value?.contact?.phone || settings.v
 // Shipping settings
 const shipping = computed(() => settings.value?.shipping || {})
 const deliveryMin = computed(() => shipping.value?.deliveryDays?.min ?? 1)
-const deliveryMax = computed(() => shipping.value?.deliveryDays?.max ?? 5)
+const deliveryMax = computed(() => shipping.value?.deliveryDays?.max ?? 3)
 
 const freeShippingThresholdSEK = computed(() => {
   const minor = shipping.value?.freeShippingThresholdMinorSEK ?? 89900

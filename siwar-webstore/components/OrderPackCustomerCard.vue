@@ -15,9 +15,15 @@ interface Props {
       city?: string
     }
   }
+  trackingCode?: string
+  carrier?: string
+  consignmentNumber?: string
 }
 
 const props = defineProps<Props>()
+const emit = defineEmits<{
+  (e: 'openHandover'): void
+}>()
 const { t } = useI18n()
 
 const addressCopied = ref(false)
@@ -118,6 +124,35 @@ function copyDeliveryAddress() {
           >
             <Icon :name="addressCopied ? 'lucide:check' : 'lucide:copy'" class="size-3" />
             <span>{{ addressCopied ? t('admin.orders.pack.actions.copied', 'Kopierad!') : t('admin.orders.pack.actions.copyAddress', 'Kopiera adress') }}</span>
+          </button>
+        </div>
+
+        <div v-if="trackingCode" class="mt-2 pt-2 border-t border-slate-200 dark:border-zinc-700/80 flex items-center justify-between gap-2">
+          <div class="text-xs font-mono">
+            <span class="text-slate-500 dark:text-zinc-400">Kolli-ID:</span>
+            <span class="font-bold ml-1 text-slate-900 dark:text-zinc-100">{{ trackingCode }}</span>
+          </div>
+          <button
+            type="button"
+            class="btn btn-xs bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold border-none gap-1 shadow-xs"
+            @click="emit('openHandover')"
+          >
+            <Icon name="lucide:barcode" class="size-3" />
+            <span>{{ t('admin.orders.pack.dhlHandover.openHandover', 'Inlämningskort') }}</span>
+          </button>
+        </div>
+
+        <div v-else-if="customer.fulfillmentMethod === 'DELIVERY'" class="mt-2 pt-2 border-t border-slate-200 dark:border-zinc-700/80 flex items-center justify-between gap-2">
+          <div class="text-xs text-amber-700 dark:text-amber-400 font-medium">
+            {{ t('admin.orders.pack.dhlHandover.noShipment', 'Saknar DHL-sändning') }}
+          </div>
+          <button
+            type="button"
+            class="btn btn-xs bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold border-none gap-1 shadow-xs"
+            @click="emit('openHandover')"
+          >
+            <Icon name="lucide:barcode" class="size-3" />
+            <span>{{ t('admin.orders.pack.dhlHandover.createShipment', 'Boka DHL-sändning') }}</span>
           </button>
         </div>
       </div>

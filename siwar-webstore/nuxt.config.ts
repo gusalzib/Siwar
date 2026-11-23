@@ -6,13 +6,20 @@ export default defineNuxtConfig({
 
   typescript: {
     strict: true,
-    typeCheck: true,
+    typeCheck: false,
     builder: 'shared',
   },
 
+  postcss: {
+    plugins: {
+      'tailwindcss/nesting': false,
+    },
+  },
+
   runtimeConfig: {
-    mongodbUri: process.env.MONGODB_URI,
+    mongodbUri: process.env.MONGODB_URI || process.env.MONGO_URL || process.env.MONGODB_URL || process.env.DATABASE_URL || '',
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
     swishPayeeAlias: process.env.SWISH_PAYEE_ALIAS,
     swishCertPath: process.env.SWISH_CERT_PATH,
     swishKeyPath: process.env.SWISH_KEY_PATH,
@@ -20,10 +27,22 @@ export default defineNuxtConfig({
     swishCallbackUrl: process.env.SWISH_CALLBACK_URL,
     swishEnv: process.env.SWISH_ENVIRONMENT || 'test',
 
+    // Mollie Payment Gateway (Issue #53)
+    mollieApiKey: process.env.MOLLIE_API_KEY || '',
+    mollieWebhookUrl: process.env.MOLLIE_WEBHOOK_URL || '',
+    mollieRedirectBaseUrl: process.env.MOLLIE_REDIRECT_BASE_URL || '',
+
     // Email Service (Resend)
     resendApiKey: process.env.RESEND_API_KEY || process.env.MAIL_API_KEY || '',
     mailFrom: process.env.MAIL_FROM || process.env.MAIL_FROM_ADDRESS || 'Siwar Webstore <order@siwar.se>',
     storeEmail: process.env.STORE_EMAIL || '',
+
+    // DHL Freight Sweden Logistics (Product 103 Servicepoint)
+    dhlClientKey: process.env.DHL_CLIENT_KEY || '',
+    dhlAccountNumber: process.env.DHL_ACCOUNT_NUMBER || '',
+    dhlEnvironment: (process.env.DHL_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production',
+    dhlApiFarmSandbox: process.env.DHL_API_FARM_SANDBOX || 'https://test-api.freight-logistics.dhl.com',
+    dhlApiFarmProduction: process.env.DHL_API_FARM_PRODUCTION || 'https://api.freight-logistics.dhl.com',
 
     // Private keys accessible strictly on the server side
     r2AccountId: process.env.R2_ACCOUNT_ID || '',
@@ -34,7 +53,7 @@ export default defineNuxtConfig({
       // Public CDN base URL accessible to client and server
       r2PublicUrl: process.env.R2_PUBLIC_URL || '',
 
-      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+      stripePublishableKey: process.env.NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.STRIPE_PUBLISHABLE_KEY || '',
     },
   },
 

@@ -1,14 +1,98 @@
 <!-- pages/order/confirmation/[id].vue -->
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useCartStore } from '~/stores/cart'
 
 const route = useRoute()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
+const cartStore = useCartStore()
 const orderId = route.params.id as string
 
-const { data: order, pending, error } = await useFetch<any>(`/api/orders/${orderId}`)
+const { data: order, pending, error, refresh } = await useFetch<any>(`/api/orders/${orderId}`)
+
+// ---------------------------------------------------------------------------
+// Mollie Redirect Return & Async Webhook Status Polling (Issue #53 — Section 4)
+// ---------------------------------------------------------------------------
+// When returning from Mollie's hosted checkout, the customer's browser may land
+// on this page slightly before Mollie's async webhook finishes settling the order.
+// GET /api/orders/[id] performs an on-demand Mollie sync, and this brief polling
+// loop refreshes status automatically if the transaction is still PENDING.
+const isPaymentPending = computed(() => order.value?.paymentStatus === 'PENDING')
+const isPaymentFailedOrCancelled = computed(() =>
+  ['FAILED', 'CANCELLED', 'ABANDONED'].includes(order.value?.paymentStatus)
+)
+const isPaymentConfirmed = computed(() =>
+  ['AUTHORIZED', 'PAID', 'CAPTURED', 'PARTIALLY_CAPTURED'].includes(order.value?.paymentStatus)
+)
+
+const isPollingPayment = ref(false)
+let pollTimer: ReturnType<typeof setInterval> | null = null
+let pollAttempts = 0
+const MAX_POLL_ATTEMPTS = 6 // 6 * 2.5s = 15s max polling window
+
+function stopPaymentPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+  isPollingPayment.value = false
+}
+
+function clearCompletedCheckoutState() {
+  if (typeof window === 'undefined') return
+  cartStore.clearCart()
+  sessionStorage.removeItem('siwar_checkout_payload')
+  sessionStorage.removeItem('siwar_active_payment_session')
+}
+
+function startPaymentPolling() {
+  if (pollTimer || !isPaymentPending.value) return
+  isPollingPayment.value = true
+  pollAttempts = 0
+  pollTimer = setInterval(async () => {
+    pollAttempts += 1
+    try {
+      await refresh()
+    } catch {
+      // Ignore transient polling errors
+    }
+    if (!isPaymentPending.value || pollAttempts >= MAX_POLL_ATTEMPTS) {
+      stopPaymentPolling()
+    }
+  }, 2500)
+}
+
+watch(
+  () => order.value?.paymentStatus,
+  (newStatus) => {
+    if (['AUTHORIZED', 'PAID', 'CAPTURED', 'PARTIALLY_CAPTURED'].includes(newStatus)) {
+      stopPaymentPolling()
+      clearCompletedCheckoutState()
+    } else if (['FAILED', 'CANCELLED', 'ABANDONED'].includes(newStatus)) {
+      stopPaymentPolling()
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('siwar_active_payment_session')
+      }
+    }
+  }
+)
+
+onMounted(() => {
+  if (isPaymentConfirmed.value) {
+    clearCompletedCheckoutState()
+  } else if (isPaymentPending.value) {
+    startPaymentPolling()
+  } else if (isPaymentFailedOrCancelled.value && typeof window !== 'undefined') {
+    sessionStorage.removeItem('siwar_active_payment_session')
+  }
+})
+
+onUnmounted(() => {
+  stopPaymentPolling()
+})
 
 // Fetch dynamic store settings from DB
 const { data: storeInfo } = await useFetch<any>('/api/settings', {
@@ -83,10 +167,12 @@ function getLocalizedName(nameObj?: { ar: string; sv: string; en: string }) {
 }
 
 const milestoneStep = computed(() => {
-  if (!order.value) return 1
+  if (!order.value) return 0
+  if (order.value.fulfillmentStatus === 'CANCELLED' || isPaymentFailedOrCancelled.value) return 0
   if (order.value.fulfillmentStatus === 'DISPATCHED') return 3
   if (order.value.fulfillmentStatus === 'PACKED') return 2
-  return 1
+  if (order.value.fulfillmentStatus === 'PENDING_PACKING' && !isPaymentFailedOrCancelled.value) return 1
+  return 0
 })
 
 const postNordTrackingUrl = computed(() => {
@@ -133,14 +219,57 @@ const hasAnyTaxSplitRows = computed(() => {
           <Icon name="lucide:arrow-left" class="size-4 rtl:rotate-180" />
           <span>{{ t('order.backToHome', 'Tillbaka till butiken') }}</span>
         </NuxtLink>
-        <button type="button" class="btn btn-sm text-white px-4 bg-brand-600 hover:bg-brand-700 font-bold border-none shadow-xs gap-2 rounded-xl" @click="printReceipt">
-          <Icon name="lucide:printer" class="size-4" />
+        <button type="button" class="btn btn-sm !text-white px-4 !bg-brand-600 hover:!bg-brand-700 font-bold border-none shadow-xs gap-2 rounded-xl" @click="printReceipt">
+          <Icon name="lucide:printer" class="size-4 !text-white" />
           <span>{{ t('order.printReceipt', 'Skriv ut kvitto') }}</span>
         </button>
       </div>
 
-      <!-- Live Fulfillment Timeline & Carrier Tracking (no-print) -->
-      <div class="card bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 shadow-md rounded-3xl p-6 sm:p-8 space-y-6 no-print">
+      <!-- Mollie Async Payment Verification Banner (shown while status is PENDING) -->
+      <div
+        v-if="isPaymentPending"
+        class="card bg-amber-50 dark:bg-amber-950/50 border-2 border-amber-300 dark:border-amber-700 rounded-3xl p-5 flex flex-row items-center gap-4 no-print"
+      >
+        <span class="loading loading-spinner loading-md text-amber-600 dark:text-amber-400 shrink-0"></span>
+        <div>
+          <h3 class="text-sm font-bold text-amber-950 dark:text-amber-100">
+            {{ t('order.paymentVerifyingTitle', 'Verifierar din betalning...') }}
+          </h3>
+          <p class="text-xs text-amber-900/80 dark:text-amber-200/80 mt-0.5">
+            {{ t('order.paymentVerifyingDesc', 'Vi inväntar slutlig bekräftelse från Mollie. Sidan uppdateras automatiskt inom några sekunder.') }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Payment Cancelled / Failed Banner (shown if customer cancelled at Mollie or payment failed) -->
+      <div
+        v-else-if="isPaymentFailedOrCancelled"
+        class="card bg-red-50 dark:bg-red-950/50 border-2 border-red-300 dark:border-red-700 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print"
+      >
+        <div class="flex items-start gap-3">
+          <Icon name="lucide:alert-circle" class="size-6 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+          <div>
+            <h3 class="text-sm font-bold text-red-950 dark:text-red-100">
+              {{ t('order.paymentFailedTitle', 'Betalningen slutfördes inte') }}
+            </h3>
+            <p class="text-xs text-red-900/80 dark:text-red-200/80 mt-0.5">
+              {{ t('order.paymentFailedDesc', 'Betalningen avbröts eller misslyckades hos Mollie. Inga pengar har dragits och du kan försöka igen i kassan.') }}
+            </p>
+          </div>
+        </div>
+        <NuxtLink
+          :to="localePath('/kassa')"
+          class="btn btn-sm !bg-brand-600 hover:!bg-brand-700 !text-white !border-none font-bold rounded-xl shrink-0"
+        >
+          {{ t('order.returnToCheckout', 'Tillbaka till kassan') }}
+        </NuxtLink>
+      </div>
+
+      <!-- Live Fulfillment Timeline & Carrier Tracking (no-print, hidden if payment was failed/cancelled) -->
+      <div
+        v-if="!isPaymentFailedOrCancelled"
+        class="card bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-zinc-700/80 shadow-md rounded-3xl p-6 sm:p-8 space-y-6 no-print"
+      >
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-zinc-800 pb-4">
           <div class="flex items-center gap-3">
             <div class="size-11 rounded-2xl bg-brand-100 dark:bg-brand-950/70 text-brand-700 dark:text-brand-300 flex items-center justify-center shrink-0 shadow-xs">
@@ -259,7 +388,7 @@ const hasAnyTaxSplitRows = computed(() => {
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div class="text-xs font-bold text-base-content/60 uppercase tracking-wider">
-                {{ t('order.tracking.carrier', 'Transportör') }}: PostNord
+                {{ t('order.tracking.carrier', 'Transportör') }}: DHL
               </div>
               <div v-if="order.trackingCode" class="mt-1 flex items-center gap-2">
                 <span class="text-xs font-semibold text-base-content/70">{{ t('order.tracking.kolliId', 'Kolli-ID') }}:</span>
@@ -337,7 +466,15 @@ const hasAnyTaxSplitRows = computed(() => {
             <p class="text-xs text-base-content/60">{{ formattedReceiptAddress }}</p>
           </div>
           <div class="sm:text-right">
-            <span class="badge badge-success text-white font-mono font-bold text-xs">
+            <span
+              class="badge font-mono font-bold text-xs"
+              :class="{
+                'badge-success text-white': order.paymentStatus === 'PAID' || order.paymentStatus === 'CAPTURED',
+                'badge-warning text-zinc-900': order.paymentStatus === 'AUTHORIZED' || order.paymentStatus === 'PENDING',
+                'badge-info text-white': order.paymentStatus === 'PARTIALLY_CAPTURED',
+                'badge-error text-white': order.paymentStatus === 'CANCELLED' || order.paymentStatus === 'FAILED' || order.paymentStatus === 'ABANDONED',
+              }"
+            >
               {{ order.paymentStatus }}
             </span>
             <div class="text-xl font-bold font-mono text-base-content mt-1">{{ order.orderReference }}</div>

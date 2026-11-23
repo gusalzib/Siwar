@@ -14,6 +14,7 @@ export interface LineItemState {
     unitPriceMinor: number
     momsRate: 6 | 12 | 25
     freeShipping?: boolean
+    grossWeight?: number
   }
   sku?: string
   imageUrl?: string
@@ -26,6 +27,7 @@ export interface LineItemState {
   momsRate: 6 | 12 | 25
   shortageStatus: 'NONE' | 'REDUCED' | 'REMOVED' | 'SUBSTITUTED'
   isPacked: boolean
+  grossWeight?: number
 }
 
 export interface ShortageActionDraft {
@@ -40,6 +42,7 @@ export interface ShortageActionDraft {
     priceMinor: number
     momsRate: 6 | 12 | 25
     freeShipping?: boolean
+    grossWeight?: number
   }
   note?: string
 }
@@ -110,6 +113,9 @@ export function useOrderPacking(
               freeShipping: typeof (subAdjustment as any).originalFreeShipping === 'boolean'
                 ? (subAdjustment as any).originalFreeShipping
                 : (typeof i.freeShipping === 'boolean' ? i.freeShipping : false),
+              grossWeight: typeof (subAdjustment as any).originalGrossWeight === 'number'
+                ? (subAdjustment as any).originalGrossWeight
+                : undefined,
             }
           } else if (dbOriginalProductId && dbOriginalProductId !== idStr) {
             // Item has originalProductId in DB but no adjustment record (shouldn't happen but handle gracefully).
@@ -124,6 +130,7 @@ export function useOrderPacking(
               unitPriceMinor: i.unitPriceMinor,
               momsRate: i.momsRate,
               freeShipping: typeof i.freeShipping === 'boolean' ? i.freeShipping : false,
+              grossWeight: typeof i.grossWeight === 'number' ? i.grossWeight : undefined,
             }
           } else {
             // Normal intact item
@@ -136,6 +143,7 @@ export function useOrderPacking(
               unitPriceMinor: i.unitPriceMinor,
               momsRate: i.momsRate,
               freeShipping: typeof i.freeShipping === 'boolean' ? i.freeShipping : false,
+              grossWeight: typeof i.grossWeight === 'number' ? i.grossWeight : undefined,
             }
           }
         }
@@ -150,6 +158,7 @@ export function useOrderPacking(
           productId: idStr,
           imageUrl: i.imageUrl || existing?.imageUrl || '',
           freeShipping: typeof i.freeShipping === 'boolean' ? i.freeShipping : (existing?.freeShipping ?? false),
+          grossWeight: typeof i.grossWeight === 'number' ? i.grossWeight : existing?.grossWeight,
           originalProductId: resolvedOriginalProductId && resolvedOriginalProductId !== idStr
             ? resolvedOriginalProductId
             : undefined,
@@ -179,6 +188,7 @@ export function useOrderPacking(
         unitPriceMinor: target.unitPriceMinor,
         momsRate: target.momsRate,
         freeShipping: target.freeShipping ?? false,
+        grossWeight: target.grossWeight,
       }
     }
 
@@ -193,6 +203,7 @@ export function useOrderPacking(
       target.unitPriceMinor = sub.priceMinor
       target.momsRate = sub.momsRate || 12
       target.freeShipping = Boolean(sub.freeShipping)
+      target.grossWeight = typeof sub.grossWeight === 'number' ? sub.grossWeight : target.grossWeight
       target.shortageStatus = 'SUBSTITUTED'
       pendingActions.value.set(target.originalProductId, draft)
     } else if (draft.action === 'REMOVE_LINE') {
@@ -234,6 +245,7 @@ export function useOrderPacking(
       item.quantity = orig.quantity
       item.fulfilledQuantity = orig.quantity
       item.freeShipping = orig.freeShipping ?? false
+      item.grossWeight = typeof orig.grossWeight === 'number' ? orig.grossWeight : item.grossWeight
     }
 
     item.originalProductId = undefined
@@ -351,6 +363,7 @@ export function useOrderPacking(
     // Payment must be legitimately authorized (Stripe hold) or paid (Swish capture) before dispatch
     if (!['AUTHORIZED', 'PAID'].includes(order.value?.paymentStatus)) return false
     if (totalFulfilledUnits.value === 0) return false
+    if (livePricing.value.grandTotal <= 0) return false
     if (order.value?.pricing?.authorizedTotalMinor && livePricing.value.grandTotal > order.value.pricing.authorizedTotalMinor) {
       return false
     }
@@ -358,8 +371,9 @@ export function useOrderPacking(
   })
 
   // 5. Submit with positional indexing
-  async function submitPacking(markDispatched: boolean) {
-    if (isOrderUnpackable.value && markDispatched) {
+  async function submitPacking(markDispatched: boolean, parcel?: any) {
+    const isRetroactiveDhlBooking = order.value?.fulfillmentStatus === 'DISPATCHED' && !order.value?.trackingCode
+    if (isOrderUnpackable.value && markDispatched && !isRetroactiveDhlBooking) {
       errorMessage.value = 'Ordern kan inte skickas eftersom den är avbruten eller saknar giltig betalning.'
       return
     }
@@ -368,7 +382,7 @@ export function useOrderPacking(
     errorMessage.value = null
 
     try {
-      const payload = {
+      const payload: any = {
         items: localItems.value.map((i, index) => ({
           index,
           productId: String(i.productId),
@@ -381,25 +395,28 @@ export function useOrderPacking(
           unitPriceMinor: i.unitPriceMinor,
           momsRate: i.momsRate,
           freeShipping: Boolean(i.freeShipping),
+          grossWeight: typeof i.grossWeight === 'number' ? i.grossWeight : undefined,
           isPacked: i.isPacked,
         })),
         actions: Array.from(pendingActions.value.values()),
         markDispatched,
       }
 
-      await $fetch(`/api/admin/orders/${order.value._id}/pack`, {
+      if (parcel) {
+        payload.parcel = parcel
+      }
+
+      const res: any = await $fetch(`/api/admin/orders/${order.value._id}/pack`, {
         method: 'POST',
         body: payload,
       })
 
       pendingActions.value.clear()
-      if (markDispatched) {
-        await router.push(localePath('/admin/orders'))
-      } else {
-        await refreshOrder()
-      }
+      await refreshOrder()
+      return res
     } catch (err: any) {
       errorMessage.value = err.data?.statusMessage || err.message || 'Kunde inte slutföra packningen'
+      throw err
     } finally {
       isSubmitting.value = false
     }

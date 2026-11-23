@@ -4,7 +4,7 @@
  * Supported payment providers across the platform.
  * Used for routing checkout requests and gateway factory lookups.
  */
-export type PaymentProviderType = 'STRIPE' | 'SWISH'
+export type PaymentProviderType = 'STRIPE' | 'SWISH' | 'MOLLIE'
 
 /**
  * Unified payment lifecycle states across all gateways.
@@ -43,6 +43,9 @@ export interface CreatePaymentSessionParams {
 
   /** Unique idempotency key to prevent duplicate charges or sessions on retries */
   idempotencyKey?: string
+
+  /** Sub-method for multi-method gateways like Mollie ('creditcard' for card manual authorization, 'swish' for instant Swish) */
+  paymentMethod?: 'creditcard' | 'swish'
 }
 
 /**
@@ -62,8 +65,10 @@ export interface PaymentSessionResult {
   qrSvgUrl?: string
   /** Swish payment request token used to launch the Swish app on mobile */
   swishToken?: string
-  /** External redirect URL used for hosted checkout gateways (e.g. Klarna) */
+  /** External redirect URL used for hosted checkout gateways (e.g. Klarna, Mollie) */
   redirectUrl?: string
+  /** Hosted checkout URL specifically issued by Mollie (alias for redirectUrl for gateway consistency) */
+  checkoutUrl?: string
 }
 
 /**

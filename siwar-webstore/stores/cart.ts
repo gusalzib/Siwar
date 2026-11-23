@@ -72,6 +72,12 @@ export const useCartStore = defineStore('cart', () => {
         if (typeof s.freeShippingThresholdMinorSEK === 'number') {
           shippingConfig.value.freeShippingThreshold.SEK = s.freeShippingThresholdMinorSEK
         }
+        if (s.deliveryDays && typeof s.deliveryDays.min === 'number' && typeof s.deliveryDays.max === 'number') {
+          shippingConfig.value.deliveryDays = {
+            min: s.deliveryDays.min,
+            max: s.deliveryDays.max,
+          }
+        }
         if (Array.isArray(s.tiers) && s.tiers.length > 0) {
           shippingConfig.value.tiers = s.tiers.map((t: any) => ({
             maxWeightGrams: t.maxWeightGrams,

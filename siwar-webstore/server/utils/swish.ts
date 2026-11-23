@@ -82,6 +82,18 @@ async function fetchSwishQrDataUrl(token: string): Promise<string> {
   }
 }
 
+function getSwishConfig() {
+  const config = useRuntimeConfig()
+  return {
+    swishEnv: (config.swishEnv || process.env.SWISH_ENVIRONMENT || process.env.SWISH_ENV || 'test').trim(),
+    swishCallbackUrl: (config.swishCallbackUrl || process.env.SWISH_CALLBACK_URL || '').trim(),
+    swishPayeeAlias: (config.swishPayeeAlias || process.env.SWISH_PAYEE_ALIAS || '').trim(),
+    swishCertPath: (config.swishCertPath || process.env.SWISH_CERT_PATH || '').trim(),
+    swishKeyPath: (config.swishKeyPath || process.env.SWISH_KEY_PATH || '').trim(),
+    swishCaPath: (config.swishCaPath || process.env.SWISH_CA_PATH || '').trim(),
+  }
+}
+
 /**
  * Initiates an e-commerce payment request with the Swish API over mutual TLS (mTLS).
  *
@@ -99,7 +111,7 @@ async function fetchSwishQrDataUrl(token: string): Promise<string> {
  */
 export function createSwishPaymentRequest(input: SwishPaymentInput): Promise<SwishResponse> {
   return new Promise((resolve, reject) => {
-    const config = useRuntimeConfig()
+    const config = getSwishConfig()
     const isTest = config.swishEnv === 'test'
 
     // // Swish specification strictly requires instruction UUIDs to be 32 uppercase hexadecimal characters without hyphens
@@ -198,7 +210,7 @@ export function createSwishPaymentRequest(input: SwishPaymentInput): Promise<Swi
 
 export function createSwishRefund(input: SwishRefundInput): Promise<{ refundUUID: string }> {
   return new Promise((resolve, reject) => {
-    const config = useRuntimeConfig()
+    const config = getSwishConfig()
     const isTest = config.swishEnv === 'test'
 
     const refundUUID = randomUUID().replace(/-/g, '').toUpperCase()

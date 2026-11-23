@@ -2,9 +2,8 @@
 import type Stripe from 'stripe'
 import { getPaymentGateway } from '~/server/services/payments'
 import { Order } from '~/server/models/Order'
-import { Product } from '~/server/models/Product'
 import { ProcessedWebhookEvent } from '~/server/models/ProcessedWebhookEvent'
-import { mailService, type EmailLocale } from '~/server/services/mail.service'
+import { authorizeOrder } from '~/server/utils/orderAuthorization'
 
 export default defineEventHandler(async (event) => {
   // 1. AC-1: Extract signature header
@@ -52,64 +51,15 @@ export default defineEventHandler(async (event) => {
   }
 
   // 5. Handle lifecycle events
-  if (webhookResult.eventType === 'payment_intent.amount_capturable_updated') {
-    // AC-2: Funds successfully held (requires_capture)
+  if (
+    webhookResult.eventType === 'payment_intent.amount_capturable_updated' ||
+    webhookResult.eventType === 'payment_intent.succeeded'
+  ) {
     const paymentIntent = stripeEvent.data.object as Stripe.PaymentIntent
     const orderRef =
       webhookResult.orderReference || paymentIntent.metadata?.orderReference
 
-    // Atomically transition the order to AUTHORIZED
-    const order = await Order.findOneAndUpdate(
-      {
-        $or: [
-          { paymentId: webhookResult.paymentId },
-          { orderReference: orderRef },
-        ],
-        paymentStatus: { $in: ['PENDING', 'FAILED'] }
-      },
-      {
-        $set: {
-          paymentId: webhookResult.paymentId,
-          paymentStatus: 'AUTHORIZED',
-          authorizedAt: new Date(),
-        },
-      },
-      { returnDocument: 'after' }
-    )
-
-    // AC-2: Atomic Stock Decrementing with Query Guards
-    if (order && !order.inventoryDecremented) {
-      for (const item of order.items) {
-        await Product.updateOne(
-          {
-            _id: item.productId,
-            stockQuantity: { $gte: item.quantity }, // Guard condition against overselling
-          },
-          {
-            $inc: { stockQuantity: -item.quantity },
-          }
-        )
-      }
-
-      await Order.updateOne(
-        { _id: order._id },
-        { $set: { inventoryDecremented: true } }
-      )
-    }
-
-    // Trigger Order Confirmation email immediately upon authorization
-    if (order && !order.confirmationEmailSent) {
-      const customerLocale = (order.customerLocale || 'sv') as EmailLocale
-      try {
-        await mailService.sendOrderConfirmation(order, customerLocale)
-        await Order.updateOne(
-          { _id: order._id },
-          { $set: { confirmationEmailSent: true } }
-        )
-      } catch (mailErr) {
-        console.error('[MailService] Failed to send order confirmation notice:', mailErr)
-      }
-    }
+    await authorizeOrder(webhookResult.paymentId, orderRef)
   } else if (webhookResult.eventType === 'payment_intent.payment_failed') {
     const paymentIntent = stripeEvent.data.object as Stripe.PaymentIntent
     const orderRef =

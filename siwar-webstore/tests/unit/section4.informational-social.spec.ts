@@ -38,6 +38,33 @@ describe('Section 4. Informational Content Pages & Social Shelf', () => {
       expect(aboutContent).not.toContain('backdrop-blur-md')
       expect(aboutContent).not.toContain('backdrop-blur-lg')
     })
+
+    it('guards the visit callout CTA against horizontal overflow across sm-xl viewports', () => {
+      const visitSectionMatch = aboutContent.match(/<!-- 5\. Physical Visit Callout Card -->[\s\S]*?<\/section>/)
+      expect(visitSectionMatch).not.toBeNull()
+      const visitSection = visitSectionMatch![0]
+
+      expect(visitSection).not.toContain('sm:flex-row')
+      expect(visitSection).toContain('lg:flex-row')
+      expect(visitSection).toContain('lg:flex-1')
+      expect(visitSection).toContain('min-w-0')
+      expect(visitSection).toContain('max-w-full')
+      expect(visitSection).toContain('shrink ')
+      expect(visitSection).toContain('whitespace-normal')
+      expect(visitSection).toContain('break-words')
+    })
+
+    it('displays the high-res store logo medallion cleanly in the hero section so lettering stays legible', () => {
+      const heroMatch = aboutContent.match(/<!-- 1\. Hero Section -->[\s\S]*?<\/header>/)
+      expect(heroMatch).not.toBeNull()
+      const heroSection = heroMatch![0]
+
+      expect(heroSection).toContain('/favicon_io%20siwar%20logo/android-chrome-512x512.png')
+      expect(heroSection).toContain('rounded-full')
+      expect(heroSection).toContain('size-36')
+      expect(heroSection).toContain('sm:size-44')
+      expect(heroSection).toContain('md:size-48')
+    })
   })
 
   describe('2. Contact Page (/pages/contact.vue)', () => {

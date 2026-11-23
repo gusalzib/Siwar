@@ -44,6 +44,7 @@ export interface IShortageAdjustment {
   originalSku?: string
   originalName?: { ar: string; sv: string; en: string }
   originalMomsRate?: 6 | 12 | 25
+  originalGrossWeight?: number
   substitutedProductId?: mongoose.Types.ObjectId
   substitutedSku?: string
   substitutedUnitPriceMinor?: number
@@ -68,6 +69,7 @@ export interface IOrderItem {
   freeShipping?: boolean
   shortageStatus: LineItemShortageStatus
   isPacked?: boolean
+  grossWeight?: number // Item gross weight in grams
 }
 
 export interface IOrderCustomer {
@@ -79,6 +81,13 @@ export interface IOrderCustomer {
     street: string
     postalCode: string
     city: string
+  } | null
+  servicePoint?: {
+    id: string
+    name?: string
+    street?: string
+    postalCode?: string
+    city?: string
   } | null
 }
 
@@ -121,8 +130,18 @@ export interface IOrder extends Document {
   pricing: IOrderPricing
   inventoryDecremented: boolean
   confirmationEmailSent?: boolean
+  cancellationEmailSent?: boolean
   trackingCode?: string
   carrier?: string
+  shipmentId?: string
+  parcel?: {
+    weightKg: number
+    lengthCm: number
+    widthCm: number
+    heightCm: number
+    preset?: string
+    contentsDescription?: string
+  }
   authorizedAt?: Date
   paidAt?: Date
   packedAt?: Date
@@ -156,6 +175,7 @@ const OrderItemSchema = new Schema<IOrderItem>(
       default: 'NONE',
     },
     isPacked: { type: Boolean, default: false },
+    grossWeight: { type: Number, default: 0 },
   },
   { _id: false }
 )
@@ -180,6 +200,7 @@ const ShortageAdjustmentSchema = new Schema<IShortageAdjustment>(
       en: { type: String },
     },
     originalMomsRate: { type: Number, enum: [6, 12, 25] },
+    originalGrossWeight: { type: Number },
     substitutedProductId: { type: Schema.Types.ObjectId, ref: 'Product' },
     substitutedSku: { type: String },
     substitutedUnitPriceMinor: { type: Number },
@@ -200,7 +221,7 @@ const OrderSchema = new Schema<IOrder>(
     paymentProvider: {
       type: String,
       required: true,
-      enum: ['STRIPE', 'SWISH', 'KLARNA'],
+      enum: ['STRIPE', 'SWISH', 'KLARNA', 'MOLLIE'],
     },
     paymentId: { type: String, sparse: true, index: true },
     paymentStatus: {
@@ -245,6 +266,13 @@ const OrderSchema = new Schema<IOrder>(
         postalCode: { type: String },
         city: { type: String },
       },
+      servicePoint: {
+        id: { type: String },
+        name: { type: String },
+        street: { type: String },
+        postalCode: { type: String },
+        city: { type: String },
+      },
     },
     items: { type: [OrderItemSchema], required: true },
     shortageAdjustments: { type: [ShortageAdjustmentSchema], default: [] },
@@ -259,12 +287,23 @@ const OrderSchema = new Schema<IOrder>(
     },
     inventoryDecremented: { type: Boolean, default: false },
     confirmationEmailSent: { type: Boolean, default: false },
+    cancellationEmailSent: { type: Boolean, default: false },
     trackingCode: { type: String },
     carrier: { type: String },
+    shipmentId: { type: String },
+    parcel: {
+      weightKg: { type: Number },
+      lengthCm: { type: Number },
+      widthCm: { type: Number },
+      heightCm: { type: Number },
+      preset: { type: String },
+      contentsDescription: { type: String },
+    },
     authorizedAt: { type: Date },
     paidAt: { type: Date },
     packedAt: { type: Date },
     dispatchedAt: { type: Date },
+    cancelledAt: { type: Date },
   },
   {
     timestamps: true,
