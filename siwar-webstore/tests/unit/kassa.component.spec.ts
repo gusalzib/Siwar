@@ -184,4 +184,28 @@ describe('Rigorous Component Test: pages/kassa.vue', () => {
       expect(json.legal.terms.sec4_delivery_desc).toContain('{max}')
     }
   })
+
+  it('verifies DHL service point localization parity across sv, en, and ar locales', () => {
+    const requiredKeys = [
+      'dhlServicePointTitle',
+      'dhlServicePointSubtitle',
+      'loadingServicePoints',
+      'noServicePointsFound',
+      'distanceKm',
+      'closestBadge',
+      'selectedOmbud',
+    ]
+
+    for (const locName of ['sv.json', 'en.json', 'ar.json']) {
+      const json = JSON.parse(
+        fs.readFileSync(path.resolve(__dirname, `../../i18n/locales/${locName}`), 'utf-8')
+      )
+      for (const key of requiredKeys) {
+        expect(json.checkout[key]).toBeDefined()
+        expect(typeof json.checkout[key]).toBe('string')
+        expect(json.checkout[key].length).toBeGreaterThan(0)
+      }
+      expect(json.checkout.distanceKm).toContain('{distance}')
+    }
+  })
 })

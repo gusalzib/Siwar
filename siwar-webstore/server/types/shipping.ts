@@ -79,6 +79,17 @@ export interface CreateShipmentOptions {
    */
   servicePointId?: string
   /**
+   * Optional full details of the customer-chosen DHL Service Point / AccessPoint.
+   * When provided, carrier adapters route the consignment directly to this pickup ombud.
+   */
+  servicePoint?: {
+    id: string
+    name?: string
+    street?: string
+    postalCode?: string
+    city?: string
+  }
+  /**
    * Carrier specific product code (defaults to '103' for DHL Freight Sweden Servicepoint).
    */
   productCode?: string

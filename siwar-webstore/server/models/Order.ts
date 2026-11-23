@@ -82,6 +82,13 @@ export interface IOrderCustomer {
     postalCode: string
     city: string
   } | null
+  servicePoint?: {
+    id: string
+    name?: string
+    street?: string
+    postalCode?: string
+    city?: string
+  } | null
 }
 
 export interface IOrderPricing {
@@ -255,6 +262,13 @@ const OrderSchema = new Schema<IOrder>(
         enum: ['DELIVERY', 'PICKUP'],
       },
       address: {
+        street: { type: String },
+        postalCode: { type: String },
+        city: { type: String },
+      },
+      servicePoint: {
+        id: { type: String },
+        name: { type: String },
         street: { type: String },
         postalCode: { type: String },
         city: { type: String },

@@ -32,6 +32,13 @@ interface CreateSessionRequestBody {
     phone: string
     fulfillmentMethod: 'DELIVERY' | 'PICKUP'
     address?: { street: string; postalCode: string; city: string } | null
+    servicePoint?: {
+      id: string
+      name?: string
+      street?: string
+      postalCode?: string
+      city?: string
+    } | null
   }
 }
 
@@ -140,6 +147,17 @@ export default defineEventHandler(async (event) => {
   const idempotencyKey = randomUUID()
   const customerLocale = (['ar', 'sv', 'en'].includes(body.locale || '') ? body.locale : 'sv') as 'ar' | 'sv' | 'en'
 
+  const servicePoint =
+    body.customer?.servicePoint ||
+    (body.customer as any)?.shippingServicePoint ||
+    (body as any).shippingServicePoint ||
+    undefined
+
+  const customerData = {
+    ...body.customer,
+    ...(servicePoint ? { servicePoint } : {}),
+  }
+
   // Create draft Order in database with PENDING status prior to contacting external gateway
   const draftOrder = await Order.create({
     orderReference,
@@ -149,7 +167,7 @@ export default defineEventHandler(async (event) => {
     paymentStatus: 'PENDING',
     confirmationEmailSent: false,
     currency: body.currency,
-    customer: body.customer,
+    customer: customerData,
     items: orderItems,
     pricing: {
       itemsTotalMinor: grossProductsMinor,

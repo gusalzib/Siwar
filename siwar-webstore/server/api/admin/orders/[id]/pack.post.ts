@@ -105,6 +105,16 @@ export default defineEventHandler(async (event) => {
             contentsDescription: parcelInput.contentsDescription || 'Livsmedel / Food items',
           },
           productCode: '103',
+          servicePointId: order.customer.servicePoint?.id,
+          servicePoint: order.customer.servicePoint
+            ? {
+                id: order.customer.servicePoint.id,
+                name: order.customer.servicePoint.name,
+                street: order.customer.servicePoint.street,
+                postalCode: order.customer.servicePoint.postalCode,
+                city: order.customer.servicePoint.city,
+              }
+            : undefined,
         })
       } catch (dhlErr: any) {
         console.warn('[PackAPI] Live DHL booking failed in retroactive dispatch; using mock:', dhlErr?.message)
@@ -127,6 +137,16 @@ export default defineEventHandler(async (event) => {
             heightCm: parcelInput.heightCm,
             preset: parcelInput.preset as any,
           },
+          servicePointId: order.customer.servicePoint?.id,
+          servicePoint: order.customer.servicePoint
+            ? {
+                id: order.customer.servicePoint.id,
+                name: order.customer.servicePoint.name,
+                street: order.customer.servicePoint.street,
+                postalCode: order.customer.servicePoint.postalCode,
+                city: order.customer.servicePoint.city,
+              }
+            : undefined,
         })
       }
 
@@ -470,6 +490,16 @@ export default defineEventHandler(async (event) => {
               contentsDescription: parcelInput.contentsDescription || 'Livsmedel / Food items',
             },
             productCode: '103',
+            servicePointId: order.customer.servicePoint?.id,
+            servicePoint: order.customer.servicePoint
+              ? {
+                  id: order.customer.servicePoint.id,
+                  name: order.customer.servicePoint.name,
+                  street: order.customer.servicePoint.street,
+                  postalCode: order.customer.servicePoint.postalCode,
+                  city: order.customer.servicePoint.city,
+                }
+              : undefined,
           })
 
           order.carrier = 'DHL'
@@ -497,6 +527,16 @@ export default defineEventHandler(async (event) => {
               heightCm: parcelInput.heightCm,
               preset: parcelInput.preset as any,
             },
+            servicePointId: order.customer.servicePoint?.id,
+            servicePoint: order.customer.servicePoint
+              ? {
+                  id: order.customer.servicePoint.id,
+                  name: order.customer.servicePoint.name,
+                  street: order.customer.servicePoint.street,
+                  postalCode: order.customer.servicePoint.postalCode,
+                  city: order.customer.servicePoint.city,
+                }
+              : undefined,
           })
           order.carrier = 'DHL'
           order.trackingCode = mockResult.trackingCode

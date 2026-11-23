@@ -164,18 +164,94 @@ watch(
   }
 )
 
-// 3. Include Mollie provider and chosen sub-method in the stored session payload before routing
-function proceedToPayment() {
-  const payload = {
-    customer: { ...form.value, fulfillmentMethod: fulfillmentMethod.value },
-    shippingFeeMinor: effectiveShippingFeeMinor.value,
-    paymentMethod: selectedPaymentMethod.value, // 'MOLLIE'
-    paymentSubMethod: selectedPaymentSubMethod.value, // 'creditcard' | 'swish'
+/**
+ * DHL Service Point Selection (Issue #52: Delivery to Ombud)
+ *
+ * When fulfillmentMethod is 'DELIVERY' and postalCode is valid, nearby DHL Service Points
+ * are fetched and displayed so the customer can pick their preferred pickup shop.
+ */
+export interface ServicePointOption {
+  id: string
+  name: string
+  street: string
+  postalCode: string
+  city: string
+  distanceMeters?: number
+  openingHours?: string
+}
+
+const nearbyServicePoints = ref<ServicePointOption[]>([])
+const selectedServicePoint = ref<ServicePointOption | null>(null)
+const isLoadingServicePoints = ref(false)
+const servicePointsError = ref<string | null>(null)
+let servicePointTimer: any = null
+
+async function fetchNearbyServicePoints() {
+  if (fulfillmentMethod.value !== 'DELIVERY' || !isPostalCodeValid.value) {
+    nearbyServicePoints.value = []
+    selectedServicePoint.value = null
+    servicePointsError.value = null
+    return
   }
 
-  sessionStorage.setItem('siwar_checkout_payload', JSON.stringify(payload))
-  router.push(localePath('/checkout/payment'))
+  const cleanPostal = form.value.postalCode.replace(/\s+/g, '').trim()
+  if (!cleanPostal || typeof $fetch !== 'function') return
+
+  isLoadingServicePoints.value = true
+  servicePointsError.value = null
+
+  try {
+    const res = await $fetch<{ servicePoints: ServicePointOption[] }>('/api/shipping/service-points', {
+      method: 'POST',
+      body: {
+        postalCode: cleanPostal,
+        street: form.value.streetAddress.trim() || undefined,
+        city: form.value.city.trim() || undefined,
+      },
+    })
+
+    const points = res?.servicePoints || []
+    nearbyServicePoints.value = points
+
+    if (points.length > 0) {
+      const existing = points.find((p) => p.id === selectedServicePoint.value?.id)
+      selectedServicePoint.value = existing || points[0] || null
+    } else {
+      selectedServicePoint.value = null
+    }
+  } catch (err: any) {
+    console.warn('[Checkout] Failed to fetch DHL service points:', err?.message || err)
+    servicePointsError.value = t(
+      'checkout.noServicePointsFound',
+      'Kunde inte hitta några ombud för detta postnummer. Paketet styrs till närmaste tillgängliga ombud.'
+    )
+    nearbyServicePoints.value = []
+    selectedServicePoint.value = null
+  } finally {
+    isLoadingServicePoints.value = false
+  }
 }
+
+watch(
+  [() => form.value.postalCode, () => form.value.streetAddress, () => fulfillmentMethod.value],
+  ([newPostal, _newStreet, newMethod]) => {
+    if (newMethod !== 'DELIVERY') {
+      nearbyServicePoints.value = []
+      selectedServicePoint.value = null
+      return
+    }
+
+    if (servicePointTimer) clearTimeout(servicePointTimer)
+    if (/^\d{3}\s?\d{2}$/.test((newPostal || '').trim())) {
+      servicePointTimer = setTimeout(() => {
+        fetchNearbyServicePoints()
+      }, 400)
+    } else {
+      nearbyServicePoints.value = []
+      selectedServicePoint.value = null
+    }
+  }
+)
 
 /**
  * Form validity check:
@@ -296,6 +372,16 @@ async function handleProceedToPayment() {
                   street: form.value.streetAddress,
                   postalCode: form.value.postalCode,
                   city: form.value.city,
+                }
+              : null,
+          servicePoint:
+            fulfillmentMethod.value === 'DELIVERY' && selectedServicePoint.value
+              ? {
+                  id: selectedServicePoint.value.id,
+                  name: selectedServicePoint.value.name,
+                  street: selectedServicePoint.value.street,
+                  postalCode: selectedServicePoint.value.postalCode,
+                  city: selectedServicePoint.value.city,
                 }
               : null,
         },
@@ -588,6 +674,99 @@ async function handleProceedToPayment() {
                   <span v-if="touched.city && !isCityValid" class="text-error text-xs mt-1">
                     {{ t('checkout.validation.cityRequired', 'Vänligen ange ort.') }}
                   </span>
+                </div>
+              </div>
+
+              <!-- DHL Service Point Selection (Ombud) -->
+              <div class="border-t border-base-200 pt-4 mt-2 space-y-3">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <h3 class="font-bold text-sm sm:text-base text-base-content flex items-center gap-2">
+                      <Icon name="lucide:truck" class="size-4 text-warning" />
+                      {{ t('checkout.dhlServicePointTitle', 'Välj DHL Ombud') }}
+                    </h3>
+                    <p class="text-xs text-base-content/70 mt-0.5">
+                      {{ t('checkout.dhlServicePointSubtitle', 'Ditt paket levereras till valt ombud. Vi har förvalt det närmaste.') }}
+                    </p>
+                  </div>
+                  <span class="badge badge-sm badge-warning font-semibold text-neutral gap-1">
+                    <Icon name="lucide:package-check" class="size-3" />
+                    DHL Servicepoint
+                  </span>
+                </div>
+
+                <!-- Loading State -->
+                <div
+                  v-if="isLoadingServicePoints"
+                  class="flex items-center gap-2 p-3 bg-base-200/50 rounded-lg text-sm text-base-content/70"
+                >
+                  <span class="loading loading-spinner loading-sm text-primary"></span>
+                  <span>{{ t('checkout.loadingServicePoints', 'Söker efter närliggande DHL-ombud...') }}</span>
+                </div>
+
+                <!-- Error / No Ombud Found State (when postal code is entered but no ombud returned or fetch failed) -->
+                <div
+                  v-else-if="servicePointsError || (isPostalCodeValid && nearbyServicePoints.length === 0)"
+                  class="alert alert-warning text-xs sm:text-sm py-2.5 px-3 rounded-lg"
+                >
+                  <Icon name="lucide:info" class="size-4 shrink-0" />
+                  <span>
+                    {{
+                      servicePointsError ||
+                      t('checkout.noServicePointsFound', 'Kunde inte hitta några ombud för detta postnummer. Paketet styrs till närmaste tillgängliga ombud.')
+                    }}
+                  </span>
+                </div>
+
+                <!-- Service Points List -->
+                <div v-else-if="nearbyServicePoints.length > 0" class="space-y-2">
+                  <label
+                    v-for="(point, idx) in nearbyServicePoints"
+                    :key="point.id"
+                    class="flex items-start sm:items-center justify-between gap-3 p-3 rounded-xl border transition-all cursor-pointer"
+                    :class="
+                      selectedServicePoint?.id === point.id
+                        ? 'border-primary bg-primary/5 shadow-xs'
+                        : 'border-base-200 hover:border-base-300 bg-base-100'
+                    "
+                  >
+                    <div class="flex items-start sm:items-center gap-3">
+                      <input
+                        type="radio"
+                        name="selected_dhl_service_point"
+                        class="radio radio-primary radio-sm mt-0.5 sm:mt-0"
+                        :value="point.id"
+                        :checked="selectedServicePoint?.id === point.id"
+                        @change="selectedServicePoint = point"
+                      />
+                      <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="font-semibold text-sm text-base-content">{{ point.name }}</span>
+                          <span
+                            v-if="idx === 0"
+                            class="badge badge-xs badge-primary text-primary-content font-medium"
+                          >
+                            {{ t('checkout.closestBadge', 'Närmast') }}
+                          </span>
+                          <span
+                            v-if="selectedServicePoint?.id === point.id"
+                            class="badge badge-xs badge-ghost text-base-content/70 font-medium"
+                          >
+                            {{ t('checkout.selectedOmbud', 'Valt ombud') }}
+                          </span>
+                        </div>
+                        <p class="text-xs text-base-content/70 mt-0.5">
+                          {{ point.street }}, {{ point.postalCode }} {{ point.city }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div v-if="point.distanceMeters !== undefined && point.distanceMeters !== null" class="shrink-0 text-end">
+                      <span class="badge badge-sm badge-ghost text-xs text-base-content/80 font-medium">
+                        {{ t('checkout.distanceKm', { distance: (point.distanceMeters / 1000).toFixed(1) }) }}
+                      </span>
+                    </div>
+                  </label>
                 </div>
               </div>
             </div>

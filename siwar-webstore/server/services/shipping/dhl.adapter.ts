@@ -172,7 +172,7 @@ export class DhlAdapter implements ShippingCarrierAdapter {
     const cleanSenderPostal = sender.postalCode.replace(/\s+/g, '')
     const cleanRecipientPostal = recipient.postalCode.replace(/\s+/g, '')
 
-    // Resolve nearest service point for Product 103 delivery (AccessPoint party)
+    // Resolve access point for Product 103 delivery (AccessPoint party)
     let resolvedAccessPoint: {
       id: string
       name: string
@@ -181,41 +181,53 @@ export class DhlAdapter implements ShippingCarrierAdapter {
       postalCode: string
     } | null = null
 
-    try {
-      const nearby = await this.findNearestServicePoints({
-        postalCode: cleanRecipientPostal,
-        countryCode: recipient.countryCode || 'SE',
-        city: recipient.city,
-        street: recipient.street,
-        maxResults: 5,
-      })
+    // 1. First priority: Explicit servicePoint provided in options (customer-selected at checkout)
+    if (options.servicePoint?.id) {
+      resolvedAccessPoint = {
+        id: options.servicePoint.id,
+        name: options.servicePoint.name || 'DHL ServicePoint',
+        street: options.servicePoint.street || recipient.street,
+        city: options.servicePoint.city || recipient.city,
+        postalCode: (options.servicePoint.postalCode || cleanRecipientPostal).replace(/\s+/g, ''),
+      }
+    } else {
+      // 2. Second priority: Match servicePointId or auto-resolve nearest via ServicePointLocator API
+      try {
+        const nearby = await this.findNearestServicePoints({
+          postalCode: cleanRecipientPostal,
+          countryCode: recipient.countryCode || 'SE',
+          city: recipient.city,
+          street: recipient.street,
+          maxResults: 5,
+        })
 
-      if (nearby && nearby.length > 0) {
-        const matched = servicePointId
-          ? nearby.find((p) => p.id === servicePointId || p.id.includes(servicePointId)) || nearby[0]
-          : nearby[0]
+        if (nearby && nearby.length > 0) {
+          const matched = servicePointId
+            ? nearby.find((p) => p.id === servicePointId || p.id.includes(servicePointId)) || nearby[0]
+            : nearby[0]
 
-        if (matched) {
-          resolvedAccessPoint = {
-            id: matched.id,
-            name: matched.name,
-            street: matched.street || recipient.street,
-            city: matched.city || recipient.city,
-            postalCode: matched.postalCode || cleanRecipientPostal,
+          if (matched) {
+            resolvedAccessPoint = {
+              id: matched.id,
+              name: matched.name,
+              street: matched.street || recipient.street,
+              city: matched.city || recipient.city,
+              postalCode: matched.postalCode || cleanRecipientPostal,
+            }
           }
         }
+      } catch (spErr) {
+        console.warn('[DhlAdapter] Could not auto-resolve nearest service point for shipment:', spErr)
       }
-    } catch (spErr) {
-      console.warn('[DhlAdapter] Could not auto-resolve nearest service point for shipment:', spErr)
-    }
 
-    if (!resolvedAccessPoint && servicePointId) {
-      resolvedAccessPoint = {
-        id: servicePointId,
-        name: 'DHL ServicePoint',
-        street: recipient.street,
-        city: recipient.city,
-        postalCode: cleanRecipientPostal,
+      if (!resolvedAccessPoint && servicePointId) {
+        resolvedAccessPoint = {
+          id: servicePointId,
+          name: 'DHL ServicePoint',
+          street: recipient.street,
+          city: recipient.city,
+          postalCode: cleanRecipientPostal,
+        }
       }
     }
 
@@ -483,15 +495,23 @@ export class DhlAdapter implements ShippingCarrierAdapter {
       trackingCode: kolliId,
       trackingUrl: this.getTrackingUrl(kolliId),
       routingCode: 'STO-103',
-      servicePoint: options.servicePointId
+      servicePoint: options.servicePoint
         ? {
-            id: options.servicePointId,
-            name: 'DHL Service Point Ombud',
-            address: options.recipient.street,
-            postalCode: options.recipient.postalCode,
-            city: options.recipient.city,
+            id: options.servicePoint.id,
+            name: options.servicePoint.name || 'DHL Service Point Ombud',
+            address: options.servicePoint.street || options.recipient.street,
+            postalCode: options.servicePoint.postalCode || options.recipient.postalCode,
+            city: options.servicePoint.city || options.recipient.city,
           }
-        : undefined,
+        : options.servicePointId
+          ? {
+              id: options.servicePointId,
+              name: 'DHL Service Point Ombud',
+              address: options.recipient.street,
+              postalCode: options.recipient.postalCode,
+              city: options.recipient.city,
+            }
+          : undefined,
       rawResponse: {
         status: 'MOCK_SUCCESS',
         productCode: options.productCode || '103',
@@ -534,13 +554,24 @@ export class DhlAdapter implements ShippingCarrierAdapter {
 
     return rawList.map((item: any, idx: number) => {
       const addr = item.address || item.location || {}
+
+      // DHL's servicepointlocatorapi returns distance in km (e.g. 0.74 with distanceUnit: "km")
+      let distanceMeters: number | undefined
+      if (typeof item.distance === 'number') {
+        if (item.distanceUnit === 'km' || item.distance < 100) {
+          distanceMeters = Math.round(item.distance * 1000)
+        } else {
+          distanceMeters = Math.round(item.distance)
+        }
+      }
+
       return {
         id: String(item.id || item.servicePointId || `SP-${idx + 1}`),
         name: String(item.name || item.servicePointName || 'DHL Ombud'),
         street: String(item.street || addr.street || addr.streetAddress || ''),
         postalCode: String(item.postalCode || addr.postalCode || addr.zipCode || ''),
         city: String(item.cityName || item.city || addr.cityName || addr.city || ''),
-        distanceMeters: typeof item.distance === 'number' ? Math.round(item.distance) : undefined,
+        distanceMeters,
         openingHours: item.openingHours ? String(item.openingHours) : undefined,
       }
     })

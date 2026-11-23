@@ -188,6 +188,24 @@ describe('Carrier Adapter Architecture & Environment Configuration', () => {
       expect(mockResult1.trackingCode).toBe(mockResult2.trackingCode)
       expect(mockResult1.consignmentNumber).toBe(mockResult2.consignmentNumber)
     })
+
+    it('preserves customer-selected servicePoint on mock shipment', () => {
+      const optionsWithOmbud: CreateShipmentOptions = {
+        ...sampleOptions,
+        servicePoint: {
+          id: '2510',
+          name: 'Coop Halmstad',
+          street: 'Köpmansgatan 12',
+          postalCode: '30242',
+          city: 'Halmstad',
+        },
+      }
+      const mockResult = adapter.generateMockShipment(optionsWithOmbud)
+      expect(mockResult.servicePoint).toBeDefined()
+      expect(mockResult.servicePoint?.id).toBe('2510')
+      expect(mockResult.servicePoint?.name).toBe('Coop Halmstad')
+      expect(mockResult.servicePoint?.address).toBe('Köpmansgatan 12')
+    })
   })
 
   describe('5. Service Point Locator', () => {
@@ -207,6 +225,40 @@ describe('Carrier Adapter Architecture & Environment Configuration', () => {
       expect(first.postalCode).toBe('30243')
       expect(first.openingHours).toBeDefined()
       expect(typeof first.distanceMeters).toBe('number')
+    })
+
+    it('normalizes distance in kilometers into integer meters cleanly', () => {
+      const rawDhlResponse = {
+        servicePoints: [
+          {
+            id: 'SE-251000',
+            name: 'Willys Halmstad',
+            distance: 0.74,
+            distanceUnit: 'km',
+            address: {
+              street: 'Laholmsvägen 21',
+              postalCode: '30244',
+              city: 'Halmstad',
+            },
+          },
+          {
+            id: 'SE-302001',
+            name: 'Pressbyrån Stationen',
+            distance: 1250,
+            distanceUnit: 'm',
+            address: {
+              street: 'Stationsgatan 1',
+              postalCode: '30245',
+              city: 'Halmstad',
+            },
+          },
+        ],
+      }
+
+      const normalized = (adapter as any).normalizeServicePoints(rawDhlResponse)
+      expect(normalized).toHaveLength(2)
+      expect(normalized[0].distanceMeters).toBe(740)
+      expect(normalized[1].distanceMeters).toBe(1250)
     })
   })
 
