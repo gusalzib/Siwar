@@ -687,9 +687,21 @@ async function handleSubmit() {
           <!-- 2. Independent Multi-Currency Pricing (AC-1) -->
           <div class="card bg-base-100 border border-base-200 shadow-sm">
             <div class="card-body space-y-4">
-              <h2 class="card-title text-base font-semibold">
-                {{ t('admin.productForm.sections.pricing') }}
-              </h2>
+              <div class="flex items-center justify-between flex-wrap gap-2 border-b border-base-200 pb-2">
+                <h2 class="card-title text-base font-semibold">
+                  {{ t('admin.productForm.sections.pricing') }}
+                </h2>
+                <NuxtLink
+                  :to="localePath('/admin/docs') + '?section=discounts'"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline py-1 px-2 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-950/40 transition-colors"
+                >
+                  <Icon name="lucide:help-circle" class="size-3.5" />
+                  <span>{{ t('admin.docs.pricingHelpLink', 'Rabatthierarki & Regler') }}</span>
+                  <Icon name="lucide:external-link" class="size-3 opacity-70" />
+                </NuxtLink>
+              </div>
 
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <!-- SEK -->
