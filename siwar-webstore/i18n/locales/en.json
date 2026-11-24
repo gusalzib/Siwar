@@ -24,7 +24,8 @@
     "favorites": "Favorites",
     "trackOrder": "Track Order",
     "about": "About Us",
-    "contact": "Contact"
+    "contact": "Contact",
+    "selectLanguage": "Select Language"
   },
   "theme": {
     "dark": "Dark mode",
@@ -97,7 +98,60 @@
       "allergens": "Allergens",
       "orders": "Orders",
       "settings": "Store Settings",
-      "management": "Administration"
+      "management": "Administration",
+      "docs": "Documentation"
+    },
+    "docs": {
+      "title": "Internal Documentation & Business Rules",
+      "subtitle": "Reference guide for store administrators and staff",
+      "backToAdmin": "Back to Administration",
+      "backToProducts": "Back to Products",
+      "tableOfContents": "Table of Contents",
+      "pricingHelpLink": "Discount Hierarchy & Rules",
+      "sections": {
+        "discounts": "Discount Hierarchy (4 Tiers)",
+        "shipping": "Shipping & Carrier Rules",
+        "inventory": "Inventory & Safety Buffer"
+      },
+      "status": {
+        "active": "Active Guide",
+        "comingSoon": "Coming Soon"
+      },
+      "discounts": {
+        "title": "Discount Hierarchy & Campaign Priority",
+        "subtitle": "Siwar enforces a deterministic 4-tier discount hierarchy to guarantee consistent pricing across the storefront, cart, and checkout.",
+        "badgeText": "4-Tier Business Rule",
+        "priorityBadge": "Priority {level}",
+        "tier1Title": "Kortdatum / Clearance (Short-Dated Items)",
+        "tier1Subtitle": "Highest Priority (Tier 1) — Operational clearance imperative",
+        "tier1Description": "When an item is designated as short-dated (Kortdatum), the clearance discount always takes precedence. This minimizes food waste and accelerates clearance of perishable goods.",
+        "tier1Rule1": "Automatically overrides both category promotions and ordinary product discounts.",
+        "tier1Rule2": "Valid as long as the best-before date has not passed. Expires automatically at midnight on the best-before date.",
+        "tier1Rule3": "Displays a prominent Kortdatum badge and best-before date on the storefront.",
+        "tier2Title": "Category Campaign (Category-Wide Sale)",
+        "tier2Subtitle": "Priority 2 — Broad marketing campaign across a whole category",
+        "tier2Description": "Category campaigns are configured under Store Settings and apply uniformly to all products belonging to that category during the promotion period.",
+        "tier2Rule1": "Overrides ordinary single-product discounts (Tier 3) to enforce uniform promotional pricing.",
+        "tier2Rule2": "Short-dated items (Tier 1) retain their clearance pricing and are never overridden by category campaigns.",
+        "tier2Rule3": "Activates and deactivates automatically according to scheduled start and end dates.",
+        "tier3Title": "Ordinary Product Discount (Item-Level Sale)",
+        "tier3Subtitle": "Priority 3 — Promotional discount on a single product",
+        "tier3Description": "Configured directly on the product edit form with optional start and expiration dates.",
+        "tier3Rule1": "Applies only when Kortdatum is inactive and the parent category has no active campaign.",
+        "tier3Rule2": "Can be scheduled with future start/end timestamps or set to remain active indefinitely.",
+        "tier3Rule3": "Displays discount percentage badge (e.g. -15%) and strikethrough original price.",
+        "tier4Title": "Standard Retail Price (Regular Price)",
+        "tier4Subtitle": "Priority 4 — Baseline retail price without discounts",
+        "tier4Description": "The regular retail catalog price. This price applies when no promotions are active or when scheduled campaigns expire.",
+        "tier4Rule1": "Defined independently for SEK, EUR, and USD in the product form.",
+        "tier4Rule2": "Forms the mathematical baseline for all percentage discount calculations.",
+        "mutualExclusionTitle": "Mutual Exclusion in the Product Form",
+        "mutualExclusionDesc": "To prevent conflicting inputs, enabling Kortdatum immediately disables and greys out ordinary discount inputs in the product form. This guarantees an item cannot have competing discount percentages entered simultaneously.",
+        "taxAndComparisonTitle": "VAT & Unit Price (Jämförpris) Invariance",
+        "taxAndComparisonDesc": "Swedish VAT (6%, 12%, or 25%) and mandatory unit comparison pricing (kr/kg or kr/L) are computed directly from the resolved discounted unit price, ensuring statutory compliance with Swedish consumer authorities.",
+        "checkoutValidationTitle": "Atomic Checkout Invariance Validation",
+        "checkoutValidationDesc": "When a customer proceeds to checkout, the server executes an atomic pre-flight check against the exact same 4-tier hierarchy. If a campaign expires or starts concurrently, the cart is transparently reconciled before payment initialization."
+      }
     },
     "login": {
       "adminLogin": "Admin Login",

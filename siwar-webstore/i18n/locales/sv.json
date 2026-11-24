@@ -24,7 +24,8 @@
       "favorites": "Favoriter",
       "trackOrder": "Spåra order",
       "about": "Om oss",
-      "contact": "Kontakt"
+      "contact": "Kontakt",
+      "selectLanguage": "Välj språk"
     },
   "theme": {
     "dark": "Mörkt läge",
@@ -98,7 +99,60 @@
       "allergens": "Allergener",
       "orders": "Beställningar",
       "settings": "Butiksinställningar",
-      "management": "Administration"
+      "management": "Administration",
+      "docs": "Dokumentation"
+    },
+    "docs": {
+      "title": "Intern Dokumentation & Affärsregler",
+      "subtitle": "Referensguide för butiksadministratörer och personal",
+      "backToAdmin": "Tillbaka till administrationen",
+      "backToProducts": "Tillbaka till produkter",
+      "tableOfContents": "Innehållsförteckning",
+      "pricingHelpLink": "Rabatthierarki & Regler",
+      "sections": {
+        "discounts": "Rabatthierarki (4 nivåer)",
+        "shipping": "Frakt- & Leveransregler",
+        "inventory": "Lagersaldo & Säkerhetsmarginal"
+      },
+      "status": {
+        "active": "Aktiv guide",
+        "comingSoon": "Kommer snart"
+      },
+      "discounts": {
+        "title": "Rabatthierarki & Kampanjprioritet",
+        "subtitle": "Siwar tillämpar en strikt deterministisk rabatthierarki i 4 nivåer för att säkerställa korrekta priser i butiken, varukorgen och kassan.",
+        "badgeText": "4-nivåers affärsregel",
+        "priorityBadge": "Prioritet {level}",
+        "tier1Title": "Kortdatum / Utförsäljning (Kort bäst-före)",
+        "tier1Subtitle": "Högsta prioritet (Nivå 1) — Operativt företräde för färskvaror",
+        "tier1Description": "När en vara markeras med kort datum gäller alltid utförsäljningsrabatten först. Detta förhindrar matsvinn och säkerställer att varor med nära utgångsdatum säljs ut snabbt.",
+        "tier1Rule1": "Åsidosätter automatiskt både kategorikampanjer och vanliga produktrabatter.",
+        "tier1Rule2": "Gäller så länge bäst-före-datumet inte har passerat. Efter midnatt på bäst-före-dagen avaktiveras rabatten automatiskt.",
+        "tier1Rule3": "Visar ett framträdande Kortdatum-märke och bäst-före-datum i butikens gränssnitt.",
+        "tier2Title": "Kategorikampanj (Övergripande rea)",
+        "tier2Subtitle": "Prioritet 2 — Gemensam marknadsföringskampanj för en hel kategori",
+        "tier2Description": "Kategorikampanjer ställs in under butiksinställningar och gäller för samtliga produkter som tillhör den kategorin under en tidsbegränsad period.",
+        "tier2Rule1": "Åsidosätter vanliga produktrabatter (Nivå 3) för att garantera enhetliga kampanjpriser.",
+        "tier2Rule2": "Kortdatumvaror (Nivå 1) behåller sitt kortdatumpris och påverkas inte av kategorikampanjen.",
+        "tier2Rule3": "Aktiveras och inaktiveras automatiskt baserat på start- och slutdatum.",
+        "tier3Title": "Ordinarie Produktrabatt (Enskild produktrea)",
+        "tier3Subtitle": "Prioritet 3 — Tillfällig kampanj på en enskild artikel",
+        "tier3Description": "Gäller för en specifik vara och ställs in direkt i produktformuläret med valfria start- och slutdatum.",
+        "tier3Rule1": "Gäller endast när produkten inte har en aktiv kortdatumrabatt och kategorin saknar aktiv kampanj.",
+        "tier3Rule2": "Kan schemaläggas i förväg med startdatum och slutdatum, eller gälla tillsvidare.",
+        "tier3Rule3": "Visar rabattmärke (t.ex. -15%) och ordinarie pris genomstruket.",
+        "tier4Title": "Ordinarie Butikspris (Baspris)",
+        "tier4Subtitle": "Prioritet 4 — Standardpris utan rabatter",
+        "tier4Description": "Produktens ordinarie pris i butiken. Detta pris gäller när inga rabatter eller kampanjer är aktiva, eller när en tidsbegränsad kampanj har löpt ut.",
+        "tier4Rule1": "Anges separat för SEK, EUR och USD i produktformuläret.",
+        "tier4Rule2": "Ligger till grund för alla procentuella rabattberäkningar.",
+        "mutualExclusionTitle": "Ömsesidig Uteslutning i Produktformuläret",
+        "mutualExclusionDesc": "För att förhindra motstridiga inställningar inaktiveras fälten för ordinarie produktrabatt i produktformuläret så fort kortdatum aktiveras. På så sätt kan en produkt aldrig ha två konkurrerande rabattsatser inmatade samtidigt.",
+        "taxAndComparisonTitle": "Moms & Jämförprisberäkning",
+        "taxAndComparisonDesc": "Svensk moms (6%, 12% eller 25%) samt lagstadgat jämförpris (kr/kg eller kr/l) beräknas alltid på det slutgiltiga rabatterade priset, vilket garanterar full överensstämmelse med Konsumentverkets och Skatteverkets regler.",
+        "checkoutValidationTitle": "Atomisk Validering vid Kassan",
+        "checkoutValidationDesc": "När kunden klickar på 'Gå till betalning' utförs en omedelbar serverkontroll mot exakt samma 4-nivåers rabatthierarki. Om en kampanj hinner löpa ut eller aktiveras justeras priset transparent innan betalsessionen öppnas hos Mollie."
+      }
     },
     "login": {
       "adminLogin": "Admininloggning",
