@@ -14,7 +14,18 @@ const cartStore = useCartStore()
 const favoritesStore = useFavoritesStore()
 
 // Supported store currencies for AC-1 switching
-const availableCurrencies: CurrencyCode[] = ['SEK', 'EUR', 'USD']
+const availableCurrencies: CurrencyCode[] = ['SEK', 'EUR']
+
+// Flag mapping for supported locales (using Iconify circle-flags via online API)
+const localeFlagMap: Record<string, string> = {
+  sv: 'circle-flags:se',
+  ar: 'circle-flags:sa',
+  en: 'circle-flags:gb',
+}
+
+const currentLocaleFlag = computed(() => {
+  return localeFlagMap[locale.value] || 'lucide:globe'
+})
 
 // Current localized language display name
 const currentLocaleName = computed(() => {
@@ -343,24 +354,36 @@ const logout = async () => {
           </ul>
         </div>
 
-        <!-- Language Dropdown (Fixes the Arabic Reset Glitch) -->
+        <!-- Language Dropdown -->
         <div class="dropdown dropdown-end">
-          <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm sm:btn-sm sm:w-auto sm:px-2.5 sm:rounded-btn gap-1">
-            <Icon name="lucide:globe" class="h-4 w-4" />
-            <span class="hidden sm:inline-block text-xs sm:text-sm">{{ currentLocaleName }}</span>
+          <div
+            tabindex="0"
+            role="button"
+            class="btn btn-ghost btn-circle btn-sm sm:btn-sm sm:w-auto sm:px-2.5 sm:rounded-btn gap-1.5"
+            :aria-label="t('nav.selectLanguage', 'Välj språk')"
+          >
+            <Icon :name="currentLocaleFlag" class="size-4 shrink-0 rounded-full" />
+            <span class="hidden sm:inline-block text-xs sm:text-sm font-medium">{{ currentLocaleName }}</span>
             <Icon name="lucide:chevron-down" class="h-3 w-3 opacity-50 hidden sm:inline-block" />
           </div>
           <ul
             tabindex="0"
-            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[20] w-36 p-1.5 shadow-lg border border-base-200 flex-col flex-nowrap"
+            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[20] w-40 p-1.5 shadow-lg border border-base-200 flex-col flex-nowrap"
           >
             <li v-for="item in (locales as any[])" :key="item.code" class="w-full">
               <NuxtLink
                 :to="switchLocalePath(item.code)"
                 class="w-full flex items-center justify-between text-start px-3 py-1.5 rounded-lg transition-colors"
                 :class="{ 'active font-bold !bg-primary !text-white': locale === item.code }"
+                :aria-label="item.name"
               >
-                <span>{{ item.name }}</span>
+                <div class="flex items-center gap-2">
+                  <Icon
+                    :name="localeFlagMap[item.code] || 'lucide:globe'"
+                    class="size-4 shrink-0 rounded-full"
+                  />
+                  <span>{{ item.name }}</span>
+                </div>
                 <Icon
                   v-if="locale === item.code"
                   name="lucide:check"
@@ -417,9 +440,14 @@ const logout = async () => {
           </div>
         </button>
 
-        <!-- Account / Profile Dropdown -->
-        <div class="dropdown dropdown-end">
-          <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm avatar">
+        <!-- Account / Profile Dropdown (Authenticated Admins Only) -->
+        <div v-if="isAdmin" class="dropdown dropdown-end">
+          <div
+            tabindex="0"
+            role="button"
+            class="btn btn-ghost btn-circle btn-sm avatar"
+            :aria-label="t('admin.nav.management', 'Administration')"
+          >
             <div class="w-7 sm:w-8 rounded-full bg-base-300 flex items-center justify-center text-base-content">
               <Icon name="lucide:user" class="h-4 w-4 sm:h-5 sm:w-5 mt-1 sm:mt-1.5" />
             </div>
@@ -428,26 +456,16 @@ const logout = async () => {
             tabindex="0"
             class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[20] mt-3 w-52 p-2 shadow-lg border border-base-200 flex-col flex-nowrap"
           >
-            <template v-if="isAdmin">
-              <li class="w-full">
-                <button
-                  type="button"
-                  @click="logout"
-                  class="w-full text-error font-bold hover:bg-base-300 transition-colors flex items-center gap-2"
-                >
-                  <Icon name="lucide:log-out" class="h-4 w-4" />
-                  {{ t('admin.nav.logout', 'Logga ut') }}
-                </button>
-              </li>
-            </template>
-            <template v-else>
-              <li class="w-full">
-                <NuxtLink :to="localePath('/admin/login')" class="w-full flex items-center gap-2">
-                  <Icon name="lucide:lock" class="h-4 w-4" />
-                  {{ t('admin.login.adminLogin', 'Admininloggning') }}
-                </NuxtLink>
-              </li>
-            </template>
+            <li class="w-full">
+              <button
+                type="button"
+                @click="logout"
+                class="w-full text-error font-bold hover:bg-base-300 transition-colors flex items-center gap-2"
+              >
+                <Icon name="lucide:log-out" class="h-4 w-4" />
+                {{ t('admin.nav.logout', 'Logga ut') }}
+              </button>
+            </li>
           </ul>
         </div>
       </div>
