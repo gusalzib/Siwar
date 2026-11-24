@@ -5,8 +5,6 @@
  * and client-side navigation. Unauthenticated visits are redirected to /admin/login.
  */
 
-import { defineNuxtRouteMiddleware, navigateTo, useRequestHeaders } from '#app'
-
 export default defineNuxtRouteMiddleware(async (to) => {
   const localePath = useLocalePath()
   // Allow unauthenticated access to the login screen itself
@@ -16,19 +14,22 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   try {
     // Forward incoming request cookies during SSR so Nitro can inspect the session
-    const headers = useRequestHeaders(['cookie']) as Record<string, string>
+    const headers = (typeof useRequestHeaders === 'function' ? useRequestHeaders(['cookie']) : {}) as Record<string, string>
 
     // Use $fetch directly instead of useFetch inside middleware to prevent lifecycle issues
     const response = await $fetch<{
       statusCode: number
-      id: string
-      email: string
-      role: string
+      authenticated?: boolean
+      user?: {
+        id: string
+        email: string
+        role: string
+      } | null
     }>('/api/admin/auth/me', {
       headers,
     })
 
-    if (!response || response.statusCode !== 200) {
+    if (!response || response.statusCode !== 200 || !response.authenticated) {
       return navigateTo(localePath('/admin/login'), { replace: true })
     }
   } catch {
