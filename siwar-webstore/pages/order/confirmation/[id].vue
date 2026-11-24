@@ -175,9 +175,13 @@ const milestoneStep = computed(() => {
   return 0
 })
 
-const postNordTrackingUrl = computed(() => {
+// const postNordTrackingUrl = computed(() => {
+//   if (!order.value?.trackingCode) return ''
+//   return `https://www.postnord.se/vara-verktyg/spara-brev-paket-och-pall?shipmentId=${encodeURIComponent(order.value.trackingCode)}`
+// })
+const dhlTrackingUrl = computed(() => {
   if (!order.value?.trackingCode) return ''
-  return `https://www.postnord.se/vara-verktyg/spara-brev-paket-och-pall?shipmentId=${encodeURIComponent(order.value.trackingCode)}`
+  return `https://www.dhl.com/se-en/home/tracking.html?tracking-id=${encodeURIComponent(order.value.trackingCode)}`
 })
 
 const totalDiscountSavings = computed(() => {
@@ -403,7 +407,7 @@ const hasAnyTaxSplitRows = computed(() => {
 
             <div v-if="order.trackingCode">
               <a
-                :href="postNordTrackingUrl"
+                :href="dhlTrackingUrl"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="btn bg-brand-600 hover:bg-brand-700 text-white font-bold btn-sm gap-2 rounded-xl border-none shadow-xs"
