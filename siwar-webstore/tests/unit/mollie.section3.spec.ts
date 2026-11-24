@@ -598,7 +598,7 @@ describe('Issue #53 - Section 3: Enums, Checkout Session, Fulfillment & Mollie W
 
     it('pack.post.ts dispatches PAID Mollie Swish order with packing shortage via refundPayment', async () => {
       const orderDoc = buildMockOrder({ paymentStatus: 'PAID', paymentId: 'tr_swish_pack' })
-      const prodIdStr = String(orderDoc.items[0].productId)
+      const prodIdStr = String(orderDoc.items[0]!.productId)
       mockState.params = { id: String(orderDoc._id) }
       mockState.body = {
         markDispatched: true,

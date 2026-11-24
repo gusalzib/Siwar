@@ -10,7 +10,7 @@ interface ServicePointsRequestBody {
 }
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody<ServicePointsRequestBody>(event).catch(() => ({}))
+  const body = (await readBody<ServicePointsRequestBody>(event).catch(() => ({}))) as ServicePointsRequestBody
 
   const postalCode = body?.postalCode ? String(body.postalCode).trim() : ''
   if (!postalCode) {
