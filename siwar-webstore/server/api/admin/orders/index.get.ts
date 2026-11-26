@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
   const fulfillmentStatus = query.fulfillmentStatus ? String(query.fulfillmentStatus) : 'all'
   const paymentStatus = query.paymentStatus ? String(query.paymentStatus) : 'all'
   const staleOnly = query.staleOnly === 'true'
+  const includeCancelled = query.includeCancelled === 'true'
   const search = query.search ? String(query.search).trim() : ''
   const page = Math.max(1, Number(query.page) || 1)
   const limitParam = query.limit !== undefined ? Number(query.limit) : 10
@@ -30,6 +31,9 @@ export default defineEventHandler(async (event) => {
     filter.createdAt = { $lte: cutoff }
   } else if (fulfillmentStatus !== 'all') {
     filter.fulfillmentStatus = fulfillmentStatus as OrderFulfillmentStatus
+  } else if (!includeCancelled) {
+    // Default view: exclude CANCELLED orders from overview and total counts
+    filter.fulfillmentStatus = { $ne: 'CANCELLED' } as any
   }
 
   // 2. Filter by Payment Status

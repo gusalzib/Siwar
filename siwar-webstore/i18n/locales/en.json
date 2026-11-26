@@ -675,6 +675,7 @@
       "filters": {
         "searchPlaceholder": "Search order no, customer, phone...",
         "staleOnly": "Overdue (> {days} days)",
+        "includeCancelled": "Show cancelled orders",
         "allFulfillmentStatuses": "All packing statuses",
         "pendingPacking": "To Pack (Pending Packing)",
         "packed": "Packed",

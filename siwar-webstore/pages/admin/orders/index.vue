@@ -8,11 +8,13 @@ definePageMeta({
 
 const { t } = useI18n()
 const localePath = useLocalePath()
+const route = useRoute()
 
 const searchQuery = ref('')
 const selectedFulfillmentStatus = ref('all')
 const selectedPaymentStatus = ref('all')
 const filterStaleOnly = ref(false)
+const includeCancelled = ref(route?.query?.includeCancelled === 'true')
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 
@@ -34,6 +36,7 @@ const {
     paymentStatus:
       selectedPaymentStatus.value !== 'all' ? selectedPaymentStatus.value : undefined,
     staleOnly: filterStaleOnly.value ? 'true' : undefined,
+    includeCancelled: includeCancelled.value ? 'true' : undefined,
     page: currentPage.value,
     limit: itemsPerPage.value,
   })),
@@ -63,9 +66,13 @@ function toggleStaleFilter() {
 }
 
 const orders = computed(() => {
-  const raw = Array.isArray(ordersResponse.value) ? ordersResponse.value : (ordersResponse.value?.orders || [])
+  let raw = Array.isArray(ordersResponse.value) ? ordersResponse.value : (ordersResponse.value?.orders || [])
   if (filterStaleOnly.value) {
-    return raw.filter((o: any) => isOrderStale(o))
+    raw = raw.filter((o: any) => isOrderStale(o))
+  }
+  // Client-side fallback: exclude CANCELLED orders when on default view (fulfillmentStatus == 'all' and !includeCancelled)
+  if (selectedFulfillmentStatus.value === 'all' && !includeCancelled.value) {
+    raw = raw.filter((o: any) => o.fulfillmentStatus !== 'CANCELLED')
   }
   return raw
 })
@@ -92,6 +99,7 @@ function resetFilters() {
   selectedFulfillmentStatus.value = 'all'
   selectedPaymentStatus.value = 'all'
   filterStaleOnly.value = false
+  includeCancelled.value = false
   currentPage.value = 1
 }
 
@@ -117,7 +125,7 @@ function visiblePages(current: number, total: number): (number | string)[] {
 }
 
 // Reset page when filters change
-watch([searchQuery, selectedFulfillmentStatus, selectedPaymentStatus, filterStaleOnly, itemsPerPage], () => {
+watch([searchQuery, selectedFulfillmentStatus, selectedPaymentStatus, filterStaleOnly, includeCancelled, itemsPerPage], () => {
   currentPage.value = 1
 })
 
@@ -245,7 +253,7 @@ function canPackOrder(order: any): boolean {
             <!-- Reset Filter CTA -->
             <div class="flex items-center justify-end">
               <button
-                v-if="searchQuery || selectedFulfillmentStatus !== 'all' || selectedPaymentStatus !== 'all' || filterStaleOnly"
+                v-if="searchQuery || selectedFulfillmentStatus !== 'all' || selectedPaymentStatus !== 'all' || filterStaleOnly || includeCancelled"
                 type="button"
                 class="btn btn-ghost btn-sm text-xs font-bold gap-1.5 text-base-content/80 hover:text-base-content"
                 @click="resetFilters"
@@ -256,9 +264,9 @@ function canPackOrder(order: any): boolean {
             </div>
           </div>
 
-          <!-- Quick Filters Toolbar (Isolate Overdue Orders) -->
+          <!-- Quick Filters Toolbar (Isolate Overdue Orders & Cancelled Orders Toggle) -->
           <div class="flex flex-wrap items-center justify-between gap-2.5 pt-3 mt-1 border-t border-slate-100 dark:border-zinc-800">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 class="btn btn-sm h-8 px-3 rounded-lg text-xs font-bold gap-1.5 transition-all shadow-xs border-2"
@@ -279,6 +287,34 @@ function canPackOrder(order: any): boolean {
                   {{ staleOrdersCount }}
                 </span>
               </button>
+
+              <!-- Include Cancelled Orders Toggle -->
+              <label
+                class="inline-flex items-center gap-2 px-3 h-8 rounded-lg text-xs font-bold border-2 transition-all cursor-pointer shadow-xs select-none"
+                :class="[
+                  selectedFulfillmentStatus !== 'all'
+                    ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-800 text-base-content/50 border-slate-200 dark:border-zinc-700'
+                    : includeCancelled
+                      ? 'bg-zinc-800 text-white border-zinc-800 dark:bg-zinc-700 dark:border-zinc-500'
+                      : 'bg-white dark:bg-zinc-800 text-base-content/80 border-slate-300 dark:border-zinc-600 hover:border-slate-400 dark:hover:border-zinc-500'
+                ]"
+              >
+                <input
+                  v-model="includeCancelled"
+                  type="checkbox"
+                  :disabled="selectedFulfillmentStatus !== 'all'"
+                  class="toggle toggle-xs toggle-primary"
+                  :aria-label="t('admin.orders.filters.includeCancelled', 'Visa avbrutna ordrar')"
+                />
+                <span class="flex items-center gap-1.5">
+                  <Icon
+                    name="lucide:ban"
+                    class="size-3.5 shrink-0"
+                    :class="includeCancelled && selectedFulfillmentStatus === 'all' ? 'text-amber-400' : 'text-base-content/60'"
+                  />
+                  <span>{{ t('admin.orders.filters.includeCancelled', 'Visa avbrutna ordrar') }}</span>
+                </span>
+              </label>
             </div>
           </div>
         </div>

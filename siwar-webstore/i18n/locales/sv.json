@@ -674,6 +674,7 @@
       "filters": {
         "searchPlaceholder": "Sök ordernr, kund, telefon...",
         "staleOnly": "Försenade (> {days} dgr)",
+        "includeCancelled": "Visa avbrutna ordrar",
         "allFulfillmentStatuses": "Alla packstatusar",
         "pendingPacking": "Att packa (Pending Packing)",
         "packed": "Packad (Packed)",

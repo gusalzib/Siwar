@@ -675,6 +675,7 @@
       "filters": {
         "searchPlaceholder": "ابحث برقم الطلب، العميل، الهاتف...",
         "staleOnly": "متأخرة (> {days} يوم)",
+        "includeCancelled": "عرض الطلبات الملغاة",
         "allFulfillmentStatuses": "جميع حالات التجهيز",
         "pendingPacking": "قيد التجهيز (Pending Packing)",
         "packed": "مجهز (Packed)",
