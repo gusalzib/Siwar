@@ -1,2 +1,9 @@
 User-Agent: *
-Disallow:
+Disallow: /admin
+Disallow: /checkout
+Disallow: /kassa
+Disallow: /order
+Disallow: /favoriter
+Disallow: /spara-order
+
+Sitemap: https://siwar.se/sitemap.xml
