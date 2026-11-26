@@ -475,6 +475,97 @@ export const mailService = {
     console.log(` [Resend Success] Contact message delivered to ${to}, Resend ID: ${result.data?.id}`)
     return result
   },
+
+  /**
+   * 6. Admin Password Reset (Sent when an admin requests a password reset)
+   */
+  async sendAdminPasswordReset(to: string, resetUrl: string) {
+    const resend = getResendClient()
+    const from = getMailFrom()
+
+    const subject = 'Återställ ditt administratörslösenord / Reset your admin password - Siwar'
+
+    const html = `
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Återställ administratörslösenord</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #1e293b;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+    <tr>
+      <td style="padding: 32px 32px 24px; text-align: center; background-color: #0f172a; color: #ffffff;">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em;">Siwar Butiksadministration</h1>
+        <p style="margin: 8px 0 0; font-size: 14px; color: #94a3b8;">Återställning av administratörslösenord / Password Reset</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 32px;">
+        <p style="font-size: 15px; line-height: 1.6; margin: 0 0 16px;">
+          Hej / Hello,
+        </p>
+        <p style="font-size: 15px; line-height: 1.6; margin: 0 0 20px;">
+          En begäran om att återställa lösenordet för ditt administratörskonto har mottagits. Klicka på knappen nedan för att välja ett nytt lösenord.
+          <br><br>
+          <em style="color: #64748b;">A request was received to reset the password for your administrator account. Click the button below to set a new password.</em>
+        </p>
+        
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${resetUrl}" style="background-color: #2563eb; color: #ffffff; display: inline-block; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 28px; border-radius: 10px; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);">
+            Återställ lösenord / Reset Password
+          </a>
+        </div>
+
+        <div style="background-color: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; margin: 24px 0;">
+          <p style="margin: 0; font-size: 13px; color: #92400e; font-weight: 500;">
+            ⏳ <strong>Giltighetstid / Expiration:</strong> Denna länk är giltig i <strong>30 minuter</strong>. / <em>This link is valid for 30 minutes.</em>
+          </p>
+        </div>
+
+        <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 24px 0 8px;">
+          Om du inte har begärt denna återställning kan du bortse från detta meddelande. Ditt nuvarande lösenord förblir oförändrat.
+          <br>
+          <em>If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.</em>
+        </p>
+
+        <p style="font-size: 12px; color: #94a3b8; word-break: break-all; margin: 24px 0 0; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          Fungerar inte knappen? Kopiera denna länk i din webbläsare:<br>
+          <a href="${resetUrl}" style="color: #2563eb;">${resetUrl}</a>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; font-size: 12px; color: #94a3b8;">
+        © ${new Date().getFullYear()} Siwar Webstore. Alla rättigheter förbehållna.
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`
+
+    if (!resend) {
+      console.log(`[MOCK EMAIL: ADMIN PASSWORD RESET] To: ${to} | Reset URL: ${resetUrl}`)
+      return { id: 'mock-mail-id' }
+    }
+
+    const result = await resend.emails.send({
+      from,
+      to,
+      subject,
+      html,
+    })
+
+    if (result.error) {
+      console.error(` [Resend Error] Failed to send admin password reset to ${to}:`, result.error)
+      throw new Error(`Resend error: ${result.error.message}`)
+    }
+
+    console.log(` [Resend Success] Admin password reset sent to ${to}, Resend ID: ${result.data?.id}`)
+    return result
+  },
 }
 
 // -------------------------------------------------------------

@@ -99,9 +99,17 @@ async function handleLogin() {
         </div>
 
         <div>
-          <label for="password" class="block text-sm font-medium text-base-content/80">
-            {{ t('admin.login.passwordLabel') }}
-          </label>
+          <div class="flex items-center justify-between">
+            <label for="password" class="block text-sm font-medium text-base-content/80">
+              {{ t('admin.login.passwordLabel') }}
+            </label>
+            <NuxtLink
+              :to="localePath('/admin/forgot-password')"
+              class="text-xs font-semibold text-primary hover:underline focus:outline-none"
+            >
+              {{ t('admin.login.forgotPassword') }}
+            </NuxtLink>
+          </div>
           <div class="relative mt-1">
             <input
               id="password"

@@ -7,8 +7,13 @@
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const localePath = useLocalePath()
-  // Allow unauthenticated access to the login screen itself
-  if (to.path.endsWith('/admin/login')) {
+  // Allow unauthenticated access to login and password recovery screens
+  const publicAdminRoutes = [
+    '/admin/login',
+    '/admin/forgot-password',
+    '/admin/reset-password',
+  ]
+  if (publicAdminRoutes.some((route) => to.path.endsWith(route))) {
     return
   }
 

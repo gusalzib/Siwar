@@ -143,7 +143,7 @@ describe('Issue #53 - Section 2: Mollie Gateway Adapter & Provider Registry', ()
       )
 
       // Ensure captureMode is NOT set on Swish to avoid Mollie hiding Swish
-      const createCall = mockPayments.create.mock.calls[0][0]
+      const createCall = mockPayments.create.mock.calls[0]![0]
       expect(createCall.captureMode).toBeUndefined()
 
       expect(result.paymentId).toBe('tr_test_swish_1')
@@ -160,7 +160,7 @@ describe('Issue #53 - Section 2: Mollie Gateway Adapter & Provider Registry', ()
       const adapter = new MollieGatewayAdapter()
       await adapter.createSession(baseParams)
 
-      const createCall = mockPayments.create.mock.calls[0][0]
+      const createCall = mockPayments.create.mock.calls[0]![0]
       expect(createCall.webhookUrl).toBeUndefined()
     })
 
@@ -175,7 +175,7 @@ describe('Issue #53 - Section 2: Mollie Gateway Adapter & Provider Registry', ()
       const adapter = new MollieGatewayAdapter()
       await adapter.createSession(baseParams)
 
-      const createCall = mockPayments.create.mock.calls[0][0]
+      const createCall = mockPayments.create.mock.calls[0]![0]
       expect(createCall.webhookUrl).toBe('https://siwar.se/api/webhooks/mollie')
     })
   })

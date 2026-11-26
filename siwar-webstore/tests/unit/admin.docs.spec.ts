@@ -142,7 +142,7 @@ describe('Internal Admin Documentation (Issue #56 - Task 1)', () => {
         }) as any
 
         const middleware = (await import('~/middleware/admin')).default
-        const result = (await middleware({ path: '/admin/docs' } as any)) as any
+        const result = (await (middleware as any)({ path: '/admin/docs' }, {})) as any
         expect(result).toBeDefined()
         expect(result.to).toBe('/admin/login')
       } finally {
@@ -160,7 +160,7 @@ describe('Internal Admin Documentation (Issue #56 - Task 1)', () => {
         }) as any
 
         const middleware = (await import('~/middleware/admin')).default
-        const result = await middleware({ path: '/admin/docs' } as any)
+        const result = await (middleware as any)({ path: '/admin/docs' }, {})
         expect(result).toBeUndefined()
       } finally {
         globalThis.$fetch = prevFetch

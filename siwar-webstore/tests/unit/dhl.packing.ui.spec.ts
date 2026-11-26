@@ -90,7 +90,7 @@ describe('Section 2: Admin Packing UI Enhancements & DHL Handover', () => {
       const scaleInput = wrapper.find('input[type="number"]')
       await scaleInput.setValue(3.7) // Staff enters measured 3.7 kg on the scale
 
-      expect(scaleInput.element.value).toBe('3.7')
+      expect((scaleInput.element as HTMLInputElement).value).toBe('3.7')
       // Emits confirmed parcel with measured scale weight (3.7 kg)
       const confirmBtn = wrapper.find('button.btn-brand-600, button.bg-brand-600')
       await confirmBtn.trigger('click')

@@ -14,6 +14,8 @@ export interface IAdmin extends Document {
   email: string
   passwordHash: string
   role: 'admin' | 'staff'
+  resetTokenHash?: string
+  resetTokenExpiresAt?: Date
   createdAt: Date
   updatedAt: Date
 }
@@ -43,6 +45,14 @@ const AdminSchema = new Schema<IAdmin>(
         message: '{VALUE} is not a supported role',
       },
       default: 'admin',
+    },
+    resetTokenHash: {
+      type: String,
+      select: false,
+    },
+    resetTokenExpiresAt: {
+      type: Date,
+      select: false,
     },
   },
   {

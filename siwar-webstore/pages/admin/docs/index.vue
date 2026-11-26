@@ -62,7 +62,8 @@ const navSections: NavSectionItem[] = [
 
 // Resolve initial section from URL query (?section=...) or hash (#...)
 function resolveInitialSection(): DocSection {
-  const querySection = route?.query?.section
+  const query = route?.query as Record<string, any> | undefined
+  const querySection = query?.section
   if (typeof querySection === 'string' && ['discounts', 'shipping', 'inventory'].includes(querySection)) {
     return querySection as DocSection
   }
@@ -80,7 +81,7 @@ function selectSection(id: DocSection) {
   activeSection.value = id
   if (router?.replace) {
     router.replace({
-      query: { ...(route?.query || {}), section: id },
+      query: { ...((route?.query as Record<string, any>) || {}), section: id },
       hash: `#${id}`,
     })
   }
@@ -88,7 +89,7 @@ function selectSection(id: DocSection) {
 
 // Keep active section in sync if route query or hash changes externally
 watch(
-  () => [route?.query?.section, route?.hash],
+  () => [(route?.query as Record<string, any>)?.section, route?.hash],
   ([newQuery, newHash]) => {
     if (typeof newQuery === 'string' && ['discounts', 'shipping', 'inventory'].includes(newQuery)) {
       activeSection.value = newQuery as DocSection
@@ -103,9 +104,10 @@ watch(
 
 onMounted(() => {
   // Ensure URL reflects current section on first mount if query was absent
-  if (router?.replace && !route?.query?.section && !route?.hash) {
+  const query = route?.query as Record<string, any> | undefined
+  if (router?.replace && !query?.section && !route?.hash) {
     router.replace({
-      query: { ...(route?.query || {}), section: activeSection.value },
+      query: { ...(query || {}), section: activeSection.value },
       hash: `#${activeSection.value}`,
     })
   }
